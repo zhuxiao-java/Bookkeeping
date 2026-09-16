@@ -3,6 +3,7 @@ package com.bookkeeping.service.impl;
 import com.bookkeeping.constant.MessageType;
 import com.bookkeeping.service.MessageService;
 import com.bookkeeping.service.WeatherService;
+import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.core.io.ClassPathResource;
@@ -19,12 +20,14 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+
+import javax.net.ssl.SSLException;
 
 /**
  * @author zhuxiao
@@ -119,10 +122,8 @@ public class WeatherServiceImpl implements WeatherService {
 
     @Override
     public Weather todayWeather(String city) {
-        HttpRequest request = buildRequest(city);
         try {
-            HttpResponse<String> response
-                    = httpClient.send(request, HttpResponse.BodyHandlers.ofString(Charset.defaultCharset()));
+            HttpResponse<String> response = sendWeatherRequest(city);
             if (!Objects.equals(response.statusCode(), HttpStatus.OK.value())) {
                 log.error("Failed to get weather, status code: {}", response.statusCode());
                 return null;
@@ -163,8 +164,21 @@ public class WeatherServiceImpl implements WeatherService {
         return null;
     }
 
-    private HttpRequest buildRequest(String city) {
-        URI uri = createURI(StringUtils.isNotBlank(city) ? "/" + city : "");
+    /**
+     * 发送天气请求：优先 https，TLS 失败（如证书过期，wttr.in 历史上发生过）时降级纯 HTTP 重试一次。
+     * 天气数据不含敏感信息，wttr.in 官方支持纯 HTTP 访问，降级可接受。
+     */
+    private HttpResponse<String> sendWeatherRequest(String city) throws IOException, InterruptedException {
+        try {
+            return httpClient.send(buildRequest(city, true), HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+        } catch (SSLException e) {
+            log.warn("wttr.in https 请求失败（{}），降级 http 重试", e.getMessage());
+            return httpClient.send(buildRequest(city, false), HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+        }
+    }
+
+    private HttpRequest buildRequest(String city, boolean tls) {
+        URI uri = createURI(StringUtils.isNotBlank(city) ? "/" + city : "", tls);
         return HttpRequest
                 .newBuilder()
                 .uri(uri)
@@ -172,9 +186,9 @@ public class WeatherServiceImpl implements WeatherService {
                 .GET().build();
     }
 
-    private URI createURI(String city) {
+    private URI createURI(String city, boolean tls) {
         // lang=zh 让 wttr.in 返回 lang_zh 字段（当前多为英文回声，上游补齐翻译后自动生效）
-        return URI.create("https://wttr.in" + city + "?format=j1&lang=zh");
+        return URI.create((tls ? "https://" : "http://") + "wttr.in" + city + "?format=j1&lang=zh");
     }
 
     /** 是否含汉字：lang_zh 未翻译时是英文回声，不能当作中文采纳 */
@@ -194,6 +208,7 @@ public class WeatherServiceImpl implements WeatherService {
         return "";
     }
 
+    @PostConstruct
     public void init() {
         dailyWeather();
     }
