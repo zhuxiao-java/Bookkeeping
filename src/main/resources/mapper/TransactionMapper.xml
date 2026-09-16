@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bookkeeping.dao.mapper.TransactionMapper">
+    <select id="recent" resultType="com.bookkeeping.dao.entity.TransactionEntity">
+        select
+        f_id as id,
+        f_type as type,
+        f_amount as amount,
+        f_fee as fee,
+        f_account_id as accountId,
+        f_to_account_id as toAccountId,
+        f_category_id as categoryId,
+        f_date as date,
+        f_note as note,
+        f_tags as tags
+        from t_transaction
+        order by f_date desc limit 5
+    </select>
+</mapper>

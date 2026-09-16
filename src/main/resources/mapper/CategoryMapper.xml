@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bookkeeping.dao.mapper.CategoryMapper">
+
+    <select id="getCategoryListByIds" resultType="com.bookkeeping.dao.entity.CategoryEntity">
+        WITH RECURSIVE category_tree AS (
+        SELECT
+        f_id,
+        f_parent_id,
+        f_name
+        FROM t_category
+        WHERE f_parent_id = #{id}
+
+        UNION ALL
+
+        -- 递归查询：通过上一轮结果中的 f_id 继续查找子分类
+        SELECT
+        c.f_id,
+        c.f_parent_id,
+        c.f_name
+        FROM t_category c
+        INNER JOIN category_tree ct ON c.f_parent_id = ct.f_id
+        )
+        SELECT
+        f_id as id,
+        f_parent_id as parentId,
+        f_name as name
+        FROM category_tree order by f_id asc;
+    </select>
+
+    <select id="getAllCategoryByCategoryId" resultType="com.bookkeeping.dao.entity.CategoryEntity">
+        WITH RECURSIVE
+        -- 向上递归：查找所有祖先分类（父、祖父、...）
+        ancestors AS (
+        SELECT c.*
+        FROM t_category c
+        INNER JOIN t_category child ON child.f_parent_id = c.f_id
+        WHERE child.f_id = #{id}
+
+        UNION ALL
+
+        SELECT c.*
+        FROM t_category c
+        INNER JOIN ancestors a ON c.f_id = a.f_parent_id
+        ),
+        -- 向下递归：查找所有后代分类（子、孙、...）
+        descendants AS (
+        SELECT c.*
+        FROM t_category c
+        WHERE c.f_parent_id = #{id}
+
+        UNION ALL
+
+        SELECT c.*
+        FROM t_category c
+        INNER JOIN descendants d ON c.f_parent_id = d.f_id
+        )
+        -- 合并三部分：自身、祖先、后代
+
+        SELECT
+        f_id as id,
+        f_name as name,
+        f_parent_id as parentId,
+        f_icon as icon,
+        f_color as color,
+        f_type as type,
+        f_sort_order as sortOrder,
+        f_is_archived as archived
+        FROM ancestors
+        UNION ALL
+        SELECT
+        f_id as id,
+        f_name as name,
+        f_parent_id as parentId,
+        f_icon as icon,
+        f_color as color,
+        f_type as type,
+        f_sort_order as sortOrder,
+        f_is_archived as archived
+        FROM t_category WHERE f_id = #{id}
+        UNION ALL
+        SELECT
+        f_id as id,
+        f_name as name,
+        f_parent_id as parentId,
+        f_icon as icon,
+        f_color as color,
+        f_type as type,
+        f_sort_order as sortOrder,
+        f_is_archived as archived
+        FROM descendants;
+    </select>
+
+</mapper>
