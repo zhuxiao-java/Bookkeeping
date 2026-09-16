@@ -21,12 +21,15 @@ jobs:
           java-version: 17
           cache: maven
 
-      - name: Install vendored self-framework artifacts
-        shell: pwsh
-        run: |
-          New-Item -ItemType Directory -Force "$HOME/.m2/repository" | Out-Null
-          Copy-Item -Recurse -Force "ci/m2-repo/*" "$HOME/.m2/repository/"
-          Get-ChildItem -Recurse "$HOME/.m2/repository/org/sf" -Filter "_remote.repositories" | Remove-Item -Force
+      - name: Checkout self-framework
+        uses: actions/checkout@v4
+        with:
+          repository: zhuxiao-java/self-framework
+          path: self-framework
+
+      - name: Install self-framework into local Maven repo
+        working-directory: self-framework
+        run: mvn -B install -DskipTests
 
       - name: Build backend jar
         run: mvn -B clean package -DskipTests
