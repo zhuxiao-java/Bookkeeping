@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 360" width="800" height="360" role="img" aria-label="里程碑贺卡">
+  <defs>
+    <linearGradient id="msBg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#2f54eb"/>
+      <stop offset="1" stop-color="#722ed1"/>
+    </linearGradient>
+    <linearGradient id="msGold" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffe066"/>
+      <stop offset="1" stop-color="#f4a300"/>
+    </linearGradient>
+    <radialGradient id="msHalo" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.35"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <rect width="800" height="360" fill="url(#msBg)"/>
+  <circle cx="400" cy="160" r="150" fill="url(#msHalo)"/>
+
+  <!-- 光芒 -->
+  <g stroke="#ffffff" stroke-width="3" opacity="0.25" stroke-linecap="round">
+    <line x1="400" y1="20" x2="400" y2="52"/>
+    <line x1="250" y1="70" x2="272" y2="92"/>
+    <line x1="550" y1="70" x2="528" y2="92"/>
+    <line x1="180" y1="170" x2="212" y2="170"/>
+    <line x1="620" y1="170" x2="588" y2="170"/>
+  </g>
+
+  <!-- 星星点缀 -->
+  <g fill="#ffe066" opacity="0.9">
+    <circle cx="300" cy="60" r="3.5"/>
+    <circle cx="510" cy="52" r="3"/>
+    <circle cx="150" cy="240" r="3"/>
+    <circle cx="660" cy="250" r="3.5"/>
+  </g>
+
+  <!-- 奖杯 -->
+  <g>
+    <path d="M356 96 h88 v34 a44 44 0 0 1 -88 0 z" fill="url(#msGold)"/>
+    <path d="M356 104 h-22 a22 22 0 0 0 22 30 z" fill="url(#msGold)" opacity="0.85"/>
+    <path d="M444 104 h22 a22 22 0 0 1 -22 30 z" fill="url(#msGold)" opacity="0.85"/>
+    <rect x="392" y="172" width="16" height="30" fill="url(#msGold)"/>
+    <rect x="366" y="202" width="68" height="14" rx="6" fill="url(#msGold)"/>
+    <rect x="352" y="216" width="96" height="16" rx="8" fill="#e08600"/>
+    <!-- 奖杯上的星 -->
+    <path d="M400 112 l7 15 16 2 -12 12 3 16 -14 -8 -14 8 3 -16 -12 -12 16 -2 z" fill="#fff6d8"/>
+  </g>
+
+  <text x="400" y="300" text-anchor="middle" font-family="'PingFang SC','Microsoft YaHei',sans-serif" font-size="30" font-weight="700" fill="#f3e8ff" letter-spacing="6">里程碑达成</text>
+</svg>

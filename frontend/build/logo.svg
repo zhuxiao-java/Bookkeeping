@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <!-- 应用 Logo 唯一矢量源（方案 A · 字标「记」）。光栅产物由 build/gen-icons.cjs 生成，勿手改 png。 -->
+  <rect width="512" height="512" rx="115" fill="#2F7FE0"/>
+  <text x="256" y="262" text-anchor="middle" dominant-baseline="central"
+        font-family="'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif"
+        font-size="290" font-weight="600" fill="#ffffff">记</text>
+</svg>

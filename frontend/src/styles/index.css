@@ -1,0 +1,889 @@
+/* 全局样式与通用工具类 */
+
+:root {
+  --bk-income-color: var(--bk-income-text);
+  --bk-expense-color: var(--bk-expense-text);
+  --bk-transfer-color: var(--bk-transfer);
+  /* 背景遮罩基色（空格分隔，配合 rgb(… / alpha) 现代语法使用）——暖白 */
+  --bk-bg-mask-rgb: 246 244 239;
+}
+
+/* 深色主题下遮罩使用暗色基色，避免亮图配深字导致对比度失控 */
+html.dark {
+  --bk-bg-mask-rgb: 20 24 26;
+}
+
+html,
+body,
+#app {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family:
+    'PingFang SC',
+    'Helvetica Neue',
+    Helvetica,
+    'Microsoft YaHei',
+    Arial,
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  background: var(--bk-bg);
+  color: var(--bk-text);
+}
+
+/* 金额着色 */
+.amount-income {
+  color: var(--bk-income-color);
+}
+
+.amount-expense {
+  color: var(--bk-expense-color);
+}
+
+.amount-transfer {
+  color: var(--bk-transfer-color);
+}
+
+.amount-strong {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+/* 通用页面容器 */
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--bk-gap);
+}
+
+/* 空状态容器 */
+.empty-block {
+  padding: 32px 0;
+}
+
+/* 滚动条美化（桌面端） */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--el-border-color-dark);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* =============================================================
+ * Element Plus 全局组件重塑（去 admin 化：无边框、大圆角、柔和阴影）
+ * ============================================================= */
+
+/* 卡片：去边框 + 大圆角 + 柔和阴影，hover 微浮 */
+.el-card {
+  --el-card-border-radius: var(--bk-radius-lg);
+  border: none;
+  background: var(--bk-surface);
+  box-shadow: var(--bk-shadow-sm);
+  transition: box-shadow 0.24s ease, transform 0.24s ease;
+}
+
+.el-card.is-hover-shadow:hover,
+.el-card[shadow="hover"]:hover {
+  box-shadow: var(--bk-shadow-md);
+  transform: translateY(-2px);
+}
+
+.el-card__header {
+  border-bottom: none;
+  padding: 18px 20px 6px;
+  font-size: var(--bk-font-h2);
+  font-weight: 700;
+  color: var(--bk-text);
+  letter-spacing: 0.01em;
+}
+
+.el-card__body {
+  padding: 18px 20px;
+}
+
+/* 全应用按钮：低饱和填充、细边框、稳定尺寸；弹窗和通知挂到 body 后同样生效 */
+.el-button {
+  --bk-button-tone: var(--bk-button-neutral);
+  --el-button-bg-color: var(--bk-surface);
+  --el-button-text-color: var(--bk-text-regular);
+  --el-button-border-color: var(--bk-border);
+  --el-button-hover-bg-color: var(--bk-surface-2);
+  --el-button-hover-text-color: var(--bk-text);
+  --el-button-hover-border-color: color-mix(in srgb, var(--bk-button-tone) 28%, var(--bk-surface));
+  --el-button-active-bg-color: color-mix(in srgb, var(--bk-button-tone) 14%, var(--bk-surface));
+  --el-button-active-text-color: var(--bk-text);
+  --el-button-active-border-color: var(--el-button-hover-border-color);
+  --el-button-outline-color: var(--bk-button-tone);
+  border-radius: var(--bk-button-radius);
+  font-family: inherit;
+  font-weight: 500;
+  box-shadow: none;
+  transition: color 0.18s ease, background-color 0.18s ease, border-color 0.18s ease;
+}
+
+.el-button--primary,
+.el-button.bk-guide-start {
+  --bk-button-tone: var(--bk-button-primary);
+}
+
+.el-button--success { --bk-button-tone: var(--bk-button-success); }
+.el-button--warning { --bk-button-tone: var(--bk-button-warning); }
+.el-button--danger { --bk-button-tone: var(--bk-button-danger); }
+.el-button--info { --bk-button-tone: var(--bk-button-neutral); }
+.el-button.cta-record { --bk-button-tone: var(--bk-button-accent); }
+
+/* 保留操作语义：新增/保存为松绿，删除为柔红，记一笔为暖橙，不再使用彩色投影 */
+.el-button:is(.el-button--primary, .el-button--success, .el-button--warning, .el-button--danger, .el-button--info, .bk-guide-start, .cta-record) {
+  --el-button-bg-color: color-mix(in srgb, var(--bk-button-tone) 10%, var(--bk-surface));
+  --el-button-text-color: var(--bk-button-tone);
+  --el-button-border-color: color-mix(in srgb, var(--bk-button-tone) 18%, var(--bk-surface));
+  --el-button-hover-bg-color: color-mix(in srgb, var(--bk-button-tone) 16%, var(--bk-surface));
+  --el-button-hover-text-color: var(--bk-button-tone);
+  --el-button-hover-border-color: color-mix(in srgb, var(--bk-button-tone) 30%, var(--bk-surface));
+  --el-button-active-bg-color: color-mix(in srgb, var(--bk-button-tone) 22%, var(--bk-surface));
+  --el-button-active-text-color: var(--bk-button-tone);
+  --el-button-active-border-color: var(--el-button-hover-border-color);
+}
+
+.el-button:is(.el-button--primary, .bk-guide-start, .cta-record):not(.is-link):not(.is-text) {
+  font-weight: 600;
+}
+
+.el-button.is-plain {
+  --el-button-bg-color: color-mix(in srgb, var(--bk-button-tone) 4%, var(--bk-surface));
+}
+
+/* 普通、小号、大号保持层级；链接不扩高，避免挤占表格操作列 */
+.el-button:not(.is-link) {
+  height: var(--bk-button-height);
+  padding: 0 16px;
+}
+
+.el-button--small {
+  --bk-button-height: 28px;
+  --bk-button-radius: 8px;
+}
+
+.el-button--small:not(.is-link) { padding-inline: 10px; }
+.el-button--large { --bk-button-height: 40px; }
+.el-button--large:not(.is-link) { padding-inline: 20px; }
+.el-button.is-round { border-radius: var(--bk-radius-pill); }
+
+.el-button.is-circle {
+  width: var(--bk-button-height);
+  height: var(--bk-button-height);
+  padding: 0;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* 文字/链接按钮保持轻量，不继承实底；悬停仅染一层浅色 */
+.el-button:is(.is-text, .is-link) {
+  color: var(--bk-button-tone);
+  background: transparent;
+  border-color: transparent;
+  box-shadow: none;
+}
+
+.el-button.is-text:not(.is-circle) { padding-inline: 10px; }
+.el-button.is-link { border-radius: 6px; }
+
+.el-button:is(.is-text, .is-link):not(.is-disabled):not(.is-loading):hover {
+  color: var(--bk-button-tone);
+  background: color-mix(in srgb, var(--bk-button-tone) 8%, var(--bk-surface));
+  border-color: transparent;
+}
+
+.el-button:is(.is-text, .is-link):not(.is-disabled):not(.is-loading):active {
+  color: var(--bk-button-tone);
+  background: color-mix(in srgb, var(--bk-button-tone) 14%, var(--bk-surface));
+  border-color: transparent;
+}
+
+/* 键盘导航提供清晰焦点，鼠标按下不产生跳动 */
+.el-button:not(.is-disabled):not(.is-loading):focus-visible {
+  outline: 2px solid var(--bk-button-tone);
+  outline-offset: 3px;
+}
+
+/* 禁用与加载不沿用悬停态，避免出现不可操作却仍高亮的按钮 */
+.el-button:is(.is-disabled, :disabled) {
+  --el-button-disabled-bg-color: var(--bk-surface-2);
+  --el-button-disabled-text-color: var(--el-text-color-disabled);
+  --el-button-disabled-border-color: var(--bk-border-light);
+  box-shadow: none;
+}
+
+.el-button.is-plain:is(.is-disabled, :disabled),
+.el-button.is-plain:is(.is-disabled, :disabled):is(:hover, :active, :focus) {
+  color: var(--el-button-disabled-text-color);
+  background: var(--el-button-disabled-bg-color);
+  border-color: var(--el-button-disabled-border-color);
+}
+
+.el-button:is(.is-text, .is-link):is(.is-disabled, :disabled),
+.el-button:is(.is-text, .is-link):is(.is-disabled, :disabled):is(:hover, :active, :focus) {
+  color: var(--el-text-color-disabled);
+  background: transparent;
+  border-color: transparent;
+}
+
+.el-button.is-loading {
+  pointer-events: none;
+  opacity: 0.65;
+  box-shadow: none;
+}
+
+/* 父/子分类、收支、时间粒度等切换按钮统一为轻量分段控件 */
+.el-radio-group:has(> .el-radio-button) {
+  gap: 3px;
+  padding: 3px;
+  background: var(--bk-surface-2);
+  border-radius: var(--bk-button-radius);
+}
+
+.el-radio-group .el-radio-button .el-radio-button__inner {
+  border: 1px solid transparent;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--bk-text-regular);
+  box-shadow: none;
+  transition: color 0.18s ease, background-color 0.18s ease;
+}
+
+.el-radio-group .el-radio-button:not(.is-disabled):hover .el-radio-button__inner {
+  color: var(--bk-button-primary);
+  background: color-mix(in srgb, var(--bk-button-primary) 6%, var(--bk-surface));
+}
+
+.el-radio-group .el-radio-button:not(.is-disabled) .el-radio-button__original-radio:checked + .el-radio-button__inner {
+  color: var(--bk-button-primary);
+  border-color: color-mix(in srgb, var(--bk-button-primary) 16%, var(--bk-surface));
+  background: color-mix(in srgb, var(--bk-button-primary) 10%, var(--bk-surface));
+  box-shadow: none;
+}
+
+.el-radio-group .el-radio-button.is-disabled .el-radio-button__inner {
+  color: var(--el-text-color-disabled);
+  background: transparent;
+}
+
+.el-radio-group .el-radio-button .el-radio-button__original-radio:focus-visible + .el-radio-button__inner {
+  outline: 2px solid var(--bk-button-primary);
+  outline-offset: 1px;
+}
+
+/* 图标工具栏已有 gap，清除组件默认相邻 margin，避免按钮忽远忽近 */
+.header-actions > .el-button + .el-button {
+  margin-left: 0;
+}
+
+/* 表格：去 admin 边框，透明表头，暖色行 hover */
+.el-table {
+  --el-table-border-color: var(--bk-border-light);
+  --el-table-header-bg-color: transparent;
+  --el-table-row-hover-bg-color: var(--bk-surface-2);
+  --el-table-bg-color: transparent;
+  --el-table-tr-bg-color: transparent;
+  font-size: 14px;
+}
+
+.el-table th.el-table__cell {
+  background: transparent;
+  color: var(--bk-text-secondary);
+  font-weight: 600;
+}
+
+.el-table td.el-table__cell,
+.el-table th.el-table__cell.is-leaf {
+  border-bottom: 1px solid var(--bk-border-light);
+}
+
+.el-table--border,
+.el-table--group {
+  border: none;
+}
+
+/* 输入类控件：填充态、柔和圆角 */
+.el-input__wrapper,
+.el-textarea__inner {
+  border-radius: var(--bk-radius-md);
+}
+
+.el-select__wrapper {
+  border-radius: var(--bk-radius-md);
+}
+
+/* 对话框 / 抽屉 / 消息：大圆角 + 柔和阴影 */
+.el-dialog {
+  --el-dialog-border-radius: var(--bk-radius-xl);
+  box-shadow: var(--bk-shadow-lg);
+}
+
+.el-message-box {
+  --el-messagebox-border-radius: var(--bk-radius-lg);
+  border-radius: var(--bk-radius-lg);
+}
+
+.el-popper.is-light,
+.el-popper.is-dark {
+  border-radius: var(--bk-radius-md);
+}
+
+/* 标签：柔和圆角 */
+.el-tag {
+  --el-tag-border-radius: var(--bk-radius-sm);
+  border-radius: var(--bk-radius-sm);
+  font-weight: 500;
+}
+
+/* 分页：与页面按钮采用相同的柔和填充和键盘焦点 */
+.el-pagination {
+  --el-pagination-button-bg-color: var(--bk-surface-2);
+  --el-pagination-hover-color: var(--bk-button-primary);
+}
+
+.el-pagination.is-background .el-pager li,
+.el-pagination.is-background .btn-prev,
+.el-pagination.is-background .btn-next {
+  border-radius: var(--bk-radius-sm);
+  transition: color 0.18s ease, background-color 0.18s ease;
+}
+
+.el-pagination.is-background .el-pager li.is-active {
+  color: var(--bk-button-primary);
+  background: color-mix(in srgb, var(--bk-button-primary) 12%, var(--bk-surface));
+}
+
+.el-pagination :is(button, .el-pager li):focus-visible {
+  outline: 2px solid var(--bk-button-primary);
+  outline-offset: 2px;
+}
+
+/* 进度条圆角 */
+.el-progress-bar__outer,
+.el-progress-bar__inner {
+  border-radius: var(--bk-radius-pill);
+}
+
+/* =============================================================
+ * 通用面板 / 排版工具类
+ * ============================================================= */
+
+/* 面板：替代 el-card 视觉的轻量容器（去边框、大圆角、柔和阴影） */
+.panel {
+  background: var(--bk-surface);
+  border-radius: var(--bk-radius-lg);
+  box-shadow: var(--bk-shadow-sm);
+  padding: 20px;
+  transition: box-shadow 0.24s ease;
+}
+
+.panel--hover:hover {
+  box-shadow: var(--bk-shadow-md);
+}
+
+/* 区块标题 */
+.section-title {
+  font-size: var(--bk-font-h2);
+  font-weight: 600;
+  color: var(--bk-text);
+}
+
+.section-sub {
+  font-size: 13px;
+  color: var(--bk-text-secondary);
+}
+
+/* =============================================================
+ * 页面级共享排版（由个性化页提炼）：页头叙事 / 小节标题 /
+ * 无边框 surface 分隔行 / 说明-控件行 / 卡片标题 / 工具条 / 分段控件
+ * ============================================================= */
+
+/* 业务页沿用个性化页的阅读宽度与纵向节奏，图表仍按各页布局伸缩。 */
+.page--comfortable {
+  width: 100%;
+  max-width: 1320px;
+  min-width: 0;
+  margin-inline: auto;
+  padding: 6px 8px 32px;
+  box-sizing: border-box;
+  gap: 28px;
+}
+
+.page--comfortable .el-card:not(.is-focused),
+.page--comfortable .panel {
+  box-shadow: none;
+}
+
+.page--comfortable .el-card.is-hover-shadow:hover {
+  box-shadow: var(--bk-shadow-sm);
+  transform: none;
+}
+
+.page--comfortable .el-card__header {
+  padding: 22px 24px 10px;
+}
+
+.page--comfortable .el-card__body {
+  padding: 18px 24px 22px;
+}
+
+.page-section {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  gap: 10px;
+}
+
+.page-section__head {
+  justify-content: space-between;
+  padding-inline: 4px;
+}
+
+/* 页面页头：大标题 + 一句副标题，取代生硬的卡片标题栏 */
+.page-head {
+  min-width: 0;
+}
+
+.page-head--actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px 24px;
+}
+
+.page-head__actions {
+  margin-left: auto;
+  justify-content: flex-end;
+}
+
+.page-head__title {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 650;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+  color: var(--bk-text);
+}
+
+.page-head__sub {
+  margin: 6px 0 0;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--bk-text-secondary);
+}
+
+/* 卡片外的小节标题：页内分组的弱标题 */
+.section-heading {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--bk-text-secondary);
+}
+
+/* 无边框 surface：靠底色与圆角成块，内部用细分隔线分行 */
+.surface {
+  padding: 0 24px;
+  background: var(--bk-surface);
+  border-radius: var(--bk-radius-lg);
+}
+
+.surface > * + * {
+  border-top: 1px solid var(--bk-border-light);
+}
+
+.surface-block {
+  padding-block: 20px;
+}
+
+/* 说明左 / 控件右的行布局 */
+.split-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 22px 0;
+}
+
+.row-copy {
+  min-width: 0;
+}
+
+.row-copy__title {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 550;
+  color: var(--bk-text);
+}
+
+.row-copy__desc {
+  margin: 5px 0 0;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--bk-text-secondary);
+}
+
+/* 卡片标题：el-card #header 内统一的标题 + 操作布局 */
+.card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.card-head__title {
+  min-width: 0;
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.6;
+  letter-spacing: 0;
+}
+
+.card-head__copy {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  gap: 4px;
+}
+
+.card-head__ctrls {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+/* 标题旁的弱化提示与汇总小字 */
+.card-hint {
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--bk-text-secondary);
+}
+
+.card-metric {
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--bk-text-secondary);
+}
+
+.card-metric b {
+  font-variant-numeric: tabular-nums;
+}
+
+/* 共享工具条：筛选 / 操作控件行 */
+.toolbar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.toolbar__spacer {
+  flex: 1;
+}
+
+.toolbar__group,
+.filter-field {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  min-width: 0;
+  gap: 8px;
+}
+
+.filter-label {
+  font-size: 13px;
+  color: var(--bk-text-secondary);
+}
+
+.toolbar > .el-button + .el-button,
+.toolbar__group > .el-button + .el-button,
+.card-head__ctrls > .el-button + .el-button {
+  margin-left: 0;
+}
+
+.toolbar .el-date-editor--daterange {
+  flex: 0 1 300px;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+/* 与个性化页相同的柔和输入底色；聚焦和禁用状态仍清晰可辨。 */
+.quiet-controls :is(.el-select__wrapper, .el-input__wrapper) {
+  background: var(--bk-surface-2);
+  border-radius: 9px;
+  box-shadow: none;
+}
+
+.quiet-controls :is(.el-select__wrapper.is-focused, .el-input__wrapper.is-focus),
+.quiet-controls .el-cascader .el-input__wrapper.is-focus,
+.quiet-controls .el-range-editor.is-active {
+  box-shadow: 0 0 0 2px var(--bk-button-primary);
+}
+
+.quiet-controls :is(.el-select__wrapper.is-disabled, .el-input.is-disabled .el-input__wrapper) {
+  background: var(--el-disabled-bg-color);
+}
+
+.quiet-controls .el-input-group__prepend {
+  padding-inline: 12px;
+  background: var(--bk-surface-2);
+  box-shadow: none;
+}
+
+.quiet-controls .el-input-group--prepend .el-input__wrapper {
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+}
+
+/* 轻量分段控件：中性底座 + 选中白底微阴影（用于“状态选择”而非提交动作） */
+.segment {
+  display: inline-flex;
+  gap: 3px;
+  padding: 3px;
+  border-radius: 10px;
+  background: var(--bk-surface-2);
+}
+
+.segment__item {
+  padding: 6px 12px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--bk-text-secondary);
+  font-family: inherit;
+  font-size: 13px;
+  cursor: pointer;
+  transition: color 0.16s ease, background-color 0.16s ease;
+}
+
+.segment__item:hover {
+  color: var(--bk-text);
+}
+
+.segment__item.is-active {
+  background: var(--bk-surface);
+  color: var(--bk-text);
+  box-shadow: var(--bk-shadow-sm);
+}
+
+.segment__item:focus-visible {
+  outline: 2px solid var(--bk-button-primary);
+  outline-offset: 1px;
+}
+
+/* 复用 Element Plus 单选行为，只替换外观，不改变键盘与 change 事件。 */
+.segment.el-radio-group {
+  flex-wrap: wrap;
+  max-width: 100%;
+  border-radius: 10px;
+}
+
+.segment.el-radio-group .el-radio-button .el-radio-button__inner {
+  padding: 7px 12px;
+  font-size: 13px;
+  border-color: transparent;
+  color: var(--bk-text-secondary);
+}
+
+.segment.el-radio-group .el-radio-button.is-disabled .el-radio-button__inner {
+  color: var(--el-text-color-disabled);
+  background: transparent;
+  box-shadow: none;
+}
+
+.segment.el-radio-group .el-radio-button:not(.is-disabled):hover .el-radio-button__inner {
+  color: var(--bk-text);
+  background: transparent;
+}
+
+.segment.el-radio-group .el-radio-button:not(.is-disabled) .el-radio-button__original-radio:checked + .el-radio-button__inner {
+  color: var(--bk-text);
+  background: var(--bk-surface);
+  border-color: transparent;
+  box-shadow: var(--bk-shadow-sm);
+}
+
+@media (max-width: 720px) {
+  .page--comfortable {
+    padding-inline: 0;
+    gap: 24px;
+  }
+
+  .surface {
+    padding-inline: 18px;
+  }
+
+  .page--comfortable .el-card__header {
+    padding-inline: 18px;
+  }
+
+  .page--comfortable .el-card__body {
+    padding-inline: 18px;
+  }
+
+  .page-head__actions {
+    margin-left: 0;
+    justify-content: flex-start;
+  }
+
+  .split-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .card-head {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .segment__item {
+    transition: none;
+  }
+}
+
+/* 大数值（金额）：超大号 + 强字重 + tabular */
+.stat-value {
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1.15;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+}
+
+/* 卡片入场淡入（克制微交互，尊重减少动效偏好） */
+@keyframes bk-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.bk-enter {
+  animation: bk-fade-up 0.36s ease both;
+}
+
+/* 网格卡片错峰入场（账户 / 预算 / 总览统计瓦片） */
+@media (prefers-reduced-motion: no-preference) {
+  .account-grid > *,
+  .budget-grid > *,
+  .stat-grid > * {
+    animation: bk-fade-up 0.36s ease both;
+  }
+
+  .account-grid > *:nth-child(2),
+  .budget-grid > *:nth-child(2),
+  .stat-grid > *:nth-child(2) {
+    animation-delay: 0.05s;
+  }
+
+  .account-grid > *:nth-child(3),
+  .budget-grid > *:nth-child(3),
+  .stat-grid > *:nth-child(3) {
+    animation-delay: 0.1s;
+  }
+
+  .account-grid > *:nth-child(4),
+  .budget-grid > *:nth-child(4),
+  .stat-grid > *:nth-child(4) {
+    animation-delay: 0.15s;
+  }
+
+  .account-grid > *:nth-child(n + 5),
+  .budget-grid > *:nth-child(n + 5),
+  .stat-grid > *:nth-child(n + 5) {
+    animation-delay: 0.2s;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bk-enter,
+  .el-card,
+  .el-button,
+  .el-radio-group .el-radio-button .el-radio-button__inner,
+  .el-pagination.is-background .el-pager li,
+  .el-pagination.is-background .btn-prev,
+  .el-pagination.is-background .btn-next,
+  .account-grid > *,
+  .budget-grid > *,
+  .stat-grid > * {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+/* 打印（报表导出 PDF，RP-01）：隐藏侧边栏 / 顶栏等应用外壳，仅保留当前页面内容。
+   ECharts 以 canvas 渲染，打印时可正常输出；卡片不跨页断开。 */
+@media print {
+  :root,
+  html.dark {
+    color-scheme: light;
+    --bk-bg: #fff;
+    --bk-surface: #fff;
+    --bk-surface-2: #f4f4f4;
+    --bk-text: #222;
+    --bk-text-regular: #444;
+    --bk-text-secondary: #555;
+    --bk-border: #ddd;
+    --bk-border-light: #eee;
+    --bk-income-text: #177a55;
+    --bk-expense-text: #c53a35;
+  }
+
+  .main-layout__aside,
+  .main-layout__header {
+    display: none !important;
+  }
+
+  .main-layout,
+  .main-layout__body,
+  .main-layout__main {
+    display: block !important;
+    height: auto !important;
+    overflow: visible !important;
+    background: #fff !important;
+    padding: 0 !important;
+  }
+
+  /* 打印时强制浅色，避免深色主题背景浪费墨水 / 对比度不佳 */
+  body {
+    background: #fff !important;
+    color: #000 !important;
+  }
+
+  .el-card {
+    break-inside: avoid;
+    border-color: #dcdfe6 !important;
+  }
+
+  /* 打印不展示交互控件（筛选条按钮 / 导出按钮等） */
+  .filter-card .el-radio-group,
+  .filter-card .el-date-editor,
+  .filter-card .el-button,
+  .card-head .el-button,
+  .card-head .segment,
+  .page-head__actions,
+  .filter-card > .split-row {
+    display: none !important;
+  }
+}

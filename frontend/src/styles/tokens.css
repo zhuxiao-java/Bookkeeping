@@ -1,0 +1,215 @@
+/* =============================================================
+ * 设计 Token 体系 + Element Plus 皮肤覆盖
+ * 基调：温暖理财感（墨绿主色 + 暖橙强调 + 米白分层 + 大圆角柔和阴影）
+ * 引入顺序：必须在 element-plus/dist/index.css 与 dark/css-vars.css 之后，
+ *          在 styles/index.css 之前，才能覆盖 EP 默认变量。
+ * ============================================================= */
+
+:root {
+  /* —— 品牌色 —— */
+  --bk-primary: #1f7a5c;          /* 深松绿：品牌 / 导航 / 主 CTA */
+  --bk-primary-strong: #19624a;
+  --bk-primary-soft: #e9f2ef;     /* 激活胶囊底色 */
+  --bk-accent: #ee8b3c;           /* 暖橙：记一笔 / 高亮 / 情绪点 */
+  --bk-accent-strong: #d9772b;
+  --bk-accent-soft: #fdf1e5;
+
+  /* —— 语义色（保留记账惯例：收入绿 / 支出红 / 转账蓝绿） —— */
+  --bk-income: #2fb57c;
+  --bk-expense: #f0625d;
+  --bk-transfer: #3e8fa8;
+
+  /* —— 文字专用语义色：比图表/装饰色更深，保证白底小字号金额达 WCAG AA（≥4.5:1）。
+   * 图表仍用上方 --bk-income/--bk-expense 亮色，文字用下方深色，两者解耦。 —— */
+  --bk-income-text: #177a55;
+  --bk-expense-text: #c53a35;
+
+  /* —— 暖中性色阶（浅色） —— */
+  --bk-bg: #f6f4ef;               /* 应用底色（米白） */
+  --bk-surface: #ffffff;          /* 面板 */
+  --bk-surface-2: #f1eee7;        /* 次级填充 */
+  --bk-text: #2a2e2c;
+  --bk-text-regular: #4a514e;
+  --bk-text-secondary: #666d69;
+  --bk-text-placeholder: #a7ada9;
+  --bk-border: #e6e1d8;
+  --bk-border-light: #efebe3;
+
+  /* —— 圆角 —— */
+  --bk-radius-sm: 8px;
+  --bk-radius-md: 12px;
+  --bk-radius-lg: 16px;
+  --bk-radius-xl: 20px;
+  --bk-radius-pill: 999px;
+
+  /* —— 按钮专用色阶：柔和底色配深色文字，不改变图表和金额语义色 —— */
+  --bk-button-neutral: #535e58;
+  --bk-button-primary: #245f4a;
+  --bk-button-success: #286545;
+  --bk-button-warning: #775020;
+  --bk-button-danger: #9d3c38;
+  --bk-button-accent: #82491e;
+  --bk-button-height: 36px;
+  --bk-button-radius: 10px;
+
+  /* —— 柔和暖阴影 —— */
+  --bk-shadow-sm: 0 1px 2px rgba(42, 46, 44, 0.04), 0 2px 8px rgba(42, 46, 44, 0.05);
+  --bk-shadow-md: 0 4px 16px rgba(42, 46, 44, 0.08);
+  --bk-shadow-lg: 0 12px 32px rgba(42, 46, 44, 0.12);
+
+  /* —— 间距 —— */
+  --bk-gap: 20px;
+  --bk-gap-lg: 24px;
+
+  /* —— 字阶 —— */
+  --bk-font-display: 34px;
+  --bk-font-h1: 22px;
+  --bk-font-h2: 18px;
+
+  /* —— 半透明表面（侧栏 / 顶栏，兼容背景图透出） —— */
+  --bk-glass: rgba(255, 255, 255, 0.72);
+  --bk-glass-border: rgba(42, 46, 44, 0.06);
+
+  /* ============================================================
+   * Element Plus 变量覆盖
+   * ============================================================ */
+  --el-color-primary: var(--bk-primary);
+  --el-color-primary-light-3: #62a28d;
+  --el-color-primary-light-5: #8fbdae;
+  --el-color-primary-light-7: #bcd7ce;
+  --el-color-primary-light-8: #d2e4de;
+  --el-color-primary-light-9: var(--bk-primary-soft);
+  --el-color-primary-dark-2: var(--bk-primary-strong);
+
+  --el-color-success: var(--bk-income);
+  --el-color-success-light-9: #e8f7f0;
+  --el-color-warning: #e8a33d;
+  --el-color-warning-light-9: #fdf3e3;
+  --el-color-danger: var(--bk-expense);
+  --el-color-danger-light-9: #fdeceb;
+  --el-color-error: var(--bk-expense);
+  --el-color-error-light-9: #fdeceb;
+  --el-color-info: #8a918d;
+  --el-color-info-light-9: #f0f1ef;
+
+  --el-bg-color: var(--bk-surface);
+  --el-bg-color-page: var(--bk-bg);
+  --el-bg-color-overlay: var(--bk-surface);
+
+  --el-text-color-primary: var(--bk-text);
+  --el-text-color-regular: var(--bk-text-regular);
+  --el-text-color-secondary: var(--bk-text-secondary);
+  --el-text-color-placeholder: var(--bk-text-placeholder);
+  --el-text-color-disabled: #c2c7c3;
+
+  --el-border-color: var(--bk-border);
+  --el-border-color-light: var(--bk-border-light);
+  --el-border-color-lighter: var(--bk-border-light);
+  --el-border-color-extra-light: #f4f1ea;
+  --el-border-color-dark: #ded8cd;
+  --el-border-color-darker: #d3ccbe;
+
+  --el-fill-color: var(--bk-surface-2);
+  --el-fill-color-light: #f4f2ec;
+  --el-fill-color-lighter: #f8f6f1;
+  --el-fill-color-extra-light: #fbfaf7;
+  --el-fill-color-dark: #ebe7de;
+  --el-fill-color-darker: #e2ddd2;
+  --el-fill-color-blank: var(--bk-surface);
+
+  --el-border-radius-base: 10px;
+  --el-border-radius-small: 8px;
+  --el-border-radius-round: var(--bk-radius-pill);
+
+  --el-box-shadow: var(--bk-shadow-md);
+  --el-box-shadow-light: var(--bk-shadow-sm);
+  --el-box-shadow-lighter: var(--bk-shadow-sm);
+  --el-box-shadow-dark: var(--bk-shadow-lg);
+}
+
+/* —— 暖深色主题（非纯黑） —— */
+html.dark {
+  --bk-primary: #4bb48c;
+  --bk-primary-strong: #63c6a0;
+  --bk-primary-soft: #17312a;
+  --bk-accent: #f2a25c;
+  --bk-accent-strong: #f5b578;
+  --bk-accent-soft: #33241a;
+
+  --bk-income: #47c98f;
+  --bk-expense: #f4776f;
+  --bk-transfer: #5aa9c2;
+
+  /* 深色主题下亮色语义色对暗底已有足够对比，文字色沿用亮色即可 */
+  --bk-income-text: var(--bk-income);
+  --bk-expense-text: var(--bk-expense);
+
+  --bk-bg: #14181a;
+  --bk-surface: #1c2224;
+  --bk-surface-2: #232a2c;
+  --bk-text: #e8eae8;
+  --bk-text-regular: #c7ccc9;
+  --bk-text-secondary: #8f9795;
+  --bk-text-placeholder: #6b7270;
+  --bk-border: #2e3638;
+  --bk-border-light: #262d2f;
+
+  /* 深色按钮保持暗底，使用柔和亮字，避免整块高亮色刺眼 */
+  --bk-button-neutral: #b1bbb6;
+  --bk-button-primary: #8ac5ac;
+  --bk-button-success: #8ac8a5;
+  --bk-button-warning: #d9b270;
+  --bk-button-danger: #eaa09b;
+  --bk-button-accent: #e8ba91;
+
+  --bk-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.24), 0 2px 8px rgba(0, 0, 0, 0.28);
+  --bk-shadow-md: 0 4px 16px rgba(0, 0, 0, 0.34);
+  --bk-shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.44);
+
+  --bk-glass: rgba(28, 34, 36, 0.72);
+  --bk-glass-border: rgba(255, 255, 255, 0.06);
+
+  --el-color-primary: var(--bk-primary);
+  --el-color-primary-light-3: #3d9c78;
+  --el-color-primary-light-5: #2f7f61;
+  --el-color-primary-light-7: #235f49;
+  --el-color-primary-light-8: #1d4f3d;
+  --el-color-primary-light-9: var(--bk-primary-soft);
+  --el-color-primary-dark-2: var(--bk-primary-strong);
+
+  --el-color-success: var(--bk-income);
+  --el-color-warning: #e8a33d;
+  --el-color-danger: var(--bk-expense);
+  --el-color-error: var(--bk-expense);
+  --el-color-info: #8f9795;
+
+  --el-bg-color: var(--bk-surface);
+  --el-bg-color-page: var(--bk-bg);
+  --el-bg-color-overlay: #232a2c;
+
+  --el-text-color-primary: var(--bk-text);
+  --el-text-color-regular: var(--bk-text-regular);
+  --el-text-color-secondary: var(--bk-text-secondary);
+  --el-text-color-placeholder: var(--bk-text-placeholder);
+  --el-text-color-disabled: #5b6260;
+
+  --el-border-color: var(--bk-border);
+  --el-border-color-light: var(--bk-border-light);
+  --el-border-color-lighter: var(--bk-border-light);
+  --el-border-color-extra-light: #212829;
+  --el-border-color-dark: #384143;
+  --el-border-color-darker: #434d4f;
+
+  --el-fill-color: var(--bk-surface-2);
+  --el-fill-color-light: #20272a;
+  --el-fill-color-lighter: #1e2426;
+  --el-fill-color-extra-light: #1b2123;
+  --el-fill-color-dark: #2b3335;
+  --el-fill-color-darker: #333c3e;
+  --el-fill-color-blank: var(--bk-surface);
+
+  --el-box-shadow: var(--bk-shadow-md);
+  --el-box-shadow-light: var(--bk-shadow-sm);
+  --el-box-shadow-lighter: var(--bk-shadow-sm);
+  --el-box-shadow-dark: var(--bk-shadow-lg);
+}

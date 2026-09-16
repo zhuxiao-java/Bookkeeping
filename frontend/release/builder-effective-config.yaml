@@ -1,0 +1,28 @@
+directories:
+  output: release
+  buildResources: build
+appId: com.bookkeeping.app
+productName: 记账本
+files:
+  - filter:
+      - dist/**
+      - electron/**
+      - package.json
+extraResources:
+  - from: resources/java
+    to: java
+    filter:
+      - '**/*'
+mac:
+  category: public.app-category.finance
+  target:
+    - dmg
+    - zip
+win:
+  target:
+    - nsis
+linux:
+  target:
+    - AppImage
+  category: Finance
+electronVersion: 30.5.1

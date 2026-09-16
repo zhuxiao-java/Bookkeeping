@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice">
+  <!-- 内置背景预设 2「纸韵」：暖纸底 + 品牌蓝几何，浅色主题推荐 -->
+  <defs>
+    <linearGradient id="paperBg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#fbf9f6"/>
+      <stop offset="1" stop-color="#f2efe9"/>
+    </linearGradient>
+    <linearGradient id="paperBlue" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#2f7fe0" stop-opacity="0.18"/>
+      <stop offset="1" stop-color="#2f7fe0" stop-opacity="0.03"/>
+    </linearGradient>
+    <pattern id="paperGrid" width="80" height="80" patternUnits="userSpaceOnUse">
+      <path d="M80 0H0V80" fill="none" stroke="#2f7fe0" stroke-opacity="0.07" stroke-width="1"/>
+    </pattern>
+  </defs>
+
+  <rect width="1600" height="900" fill="url(#paperBg)"/>
+  <rect width="1600" height="900" fill="url(#paperGrid)"/>
+
+  <!-- 大圆 -->
+  <circle cx="1330" cy="170" r="230" fill="url(#paperBlue)"/>
+  <circle cx="1226" cy="768" r="150" fill="#e6a23c" opacity="0.1"/>
+
+  <!-- 斜置圆角矩形 -->
+  <rect x="-70" y="548" width="360" height="360" rx="64" fill="#2f7fe0" opacity="0.07" transform="rotate(-18 110 728)"/>
+
+  <!-- 三角 -->
+  <path d="M1040 900 L1286 616 L1524 900 Z" fill="#4fb3a9" opacity="0.1"/>
+
+  <!-- 线性装饰 -->
+  <g stroke="#2f7fe0" stroke-opacity="0.13" stroke-width="2" fill="none">
+    <circle cx="238" cy="196" r="62"/>
+    <circle cx="238" cy="196" r="104" stroke-opacity="0.07"/>
+    <path d="M108 330 L372 330"/>
+    <path d="M1408 372 L1552 372"/>
+  </g>
+</svg>

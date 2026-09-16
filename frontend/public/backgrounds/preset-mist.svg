@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice">
+  <!-- 内置背景预设 1「晨雾」：低对比晨雾山峦，浅色主题推荐 -->
+  <defs>
+    <linearGradient id="mistSky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fbfdff"/>
+      <stop offset="0.5" stop-color="#e8f0fa"/>
+      <stop offset="1" stop-color="#d5e3f3"/>
+    </linearGradient>
+    <filter id="mistBlur" x="-30%" y="-120%" width="160%" height="340%">
+      <feGaussianBlur stdDeviation="18"/>
+    </filter>
+  </defs>
+
+  <rect width="1600" height="900" fill="url(#mistSky)"/>
+
+  <!-- 朝阳 -->
+  <circle cx="1255" cy="185" r="112" fill="#ffffff" opacity="0.22"/>
+  <circle cx="1255" cy="185" r="72" fill="#ffffff" opacity="0.7"/>
+
+  <!-- 远山 -->
+  <path d="M0 612 L200 486 L392 604 L600 452 L838 606 L1052 500 L1296 616 L1600 512 L1600 900 L0 900 Z" fill="#c4d7ea" opacity="0.7"/>
+  <ellipse cx="520" cy="642" rx="620" ry="30" fill="#ffffff" opacity="0.55" filter="url(#mistBlur)"/>
+  <ellipse cx="1180" cy="672" rx="520" ry="26" fill="#ffffff" opacity="0.5" filter="url(#mistBlur)"/>
+
+  <!-- 中山 -->
+  <path d="M0 700 L250 566 L470 690 L712 548 L972 700 L1236 606 L1600 716 L1600 900 L0 900 Z" fill="#a8c1dc" opacity="0.78"/>
+  <ellipse cx="820" cy="728" rx="760" ry="28" fill="#ffffff" opacity="0.45" filter="url(#mistBlur)"/>
+
+  <!-- 近山 -->
+  <path d="M0 792 L296 664 L556 798 L856 674 L1140 812 L1418 706 L1600 796 L1600 900 L0 900 Z" fill="#8daccb" opacity="0.85"/>
+  <ellipse cx="400" cy="828" rx="560" ry="24" fill="#ffffff" opacity="0.35" filter="url(#mistBlur)"/>
+</svg>

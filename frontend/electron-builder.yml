@@ -1,0 +1,29 @@
+appId: com.bookkeeping.app
+productName: 记账本
+directories:
+  output: release
+  buildResources: build
+files:
+  - dist/**
+  - electron/**
+  - package.json
+extraResources:
+  # Java 后端（jpackage 产物）：
+  # 先在项目根目录执行打包（如 mvn package + jpackage），将产物目录复制/重命名为 resources/java
+  # 目录结构：resources/java/bin/bookkeeping-backend（macOS/Linux）、resources/java/bookkeeping-backend.exe（Windows）
+  - from: resources/java
+    to: java
+    filter:
+      - '**/*'
+mac:
+  category: public.app-category.finance
+  target:
+    - dmg
+    - zip
+win:
+  target:
+    - nsis
+linux:
+  target:
+    - AppImage
+  category: Finance

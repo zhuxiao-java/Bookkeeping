@@ -1,0 +1,161 @@
+<svg xmlns="http://www.w3.org/2000/svg">
+  <!--
+    等级 logo 唯一矢量源：20 个 symbol，id 为 lvl-1 .. lvl-20。
+    段位配色（每 4 级一档）：青铜 #B7794B / 白银 #98A6B3 / 黄金 #E6A23C / 铂金 #4FB3A9 / 钻石 #5B7CE6。
+    图形语义与等级名呼应：芽→币→星→尺→储→察→柱→罗→望→雪→衡→表→旗→箱→图→托→翼→舵→桂→冠。
+    由 LevelLogo.vue 以 ?raw 注入页面后通过 <use> 引用；预览见 .level-logo-design（验证后删除）。
+  -->
+
+  <!-- 1 理财小白 · 新芽 -->
+  <symbol id="lvl-1" viewBox="0 0 64 64">
+    <rect width="64" height="64" rx="15" fill="#B7794B"/>
+    <path d="M32 47V31" stroke="#fff" stroke-width="3.6" stroke-linecap="round"/>
+    <path d="M32 33c0-7.5-6-12-12.5-12 0 7.5 6 12 12.5 12z" fill="#fff"/>
+    <path d="M32 33c0-7.5 6-12 12.5-12 0 7.5-6 12-12.5 12z" fill="#fff"/>
+  </symbol>
+
+  <!-- 2 零钱管家 · 叠币 -->
+  <symbol id="lvl-2" viewBox="0 0 64 64">
+    <rect width="64" height="64" rx="15" fill="#B7794B"/>
+    <ellipse cx="32" cy="26" rx="12" ry="5" fill="none" stroke="#fff" stroke-width="3.4"/>
+    <path d="M20 26v12c0 2.8 5.4 5 12 5s12-2.2 12-5V26" fill="none" stroke="#fff" stroke-width="3.4" stroke-linecap="round"/>
+    <path d="M20 32c0 2.8 5.4 5 12 5s12-2.2 12-5" fill="none" stroke="#fff" stroke-width="3.4"/>
+  </symbol>
+
+  <!-- 3 记账新星 · 星 -->
+  <symbol id="lvl-3" viewBox="0 0 64 64">
+    <rect width="64" height="64" rx="15" fill="#B7794B"/>
+    <path d="M32 15l5 10.2 11.3 1.6-8.2 7.9 2 11.1L32 40.6l-10.1 5.2 2-11.1-8.2-7.9L27 25.2z" fill="#fff"/>
+  </symbol>
+
+  <!-- 4 预算学徒 · 刻度尺 -->
+  <symbol id="lvl-4" viewBox="0 0 64 64">
+    <rect width="64" height="64" rx="15" fill="#B7794B"/>
+    <rect x="16" y="26" width="32" height="13" rx="2.5" fill="none" stroke="#fff" stroke-width="3.4"/>
+    <path d="M23 26v5.5M30 26v5.5M37 26v5.5M44 26v5.5" stroke="#fff" stroke-width="3" stroke-linecap="round"/>
+  </symbol>
+
+  <!-- 5 省钱能手 · 存钱罐口 -->
+  <symbol id="lvl-5" viewBox="0 0 64 64">
+    <rect width="64" height="64" rx="15" fill="#98A6B3"/>
+    <circle cx="32" cy="37" r="11.5" fill="none" stroke="#fff" stroke-width="3.4"/>
+    <rect x="27" y="30" width="10" height="3.6" rx="1.8" fill="#fff"/>
+    <path d="M32 13v8m-3.4-3.4L32 21l3.4-3.4" fill="none" stroke="#fff" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/>
+  </symbol>
+
+  <!-- 6 精明消费者 · 放大镜审价 -->
+  <symbol id="lvl-6" viewBox="0 0 64 64">
+    <rect width="64" height="64" rx="15" fill="#98A6B3"/>
+    <circle cx="28.5" cy="28.5" r="10" fill="none" stroke="#fff" stroke-width="3.4"/>
+    <circle cx="28.5" cy="28.5" r="3.4" fill="#fff"/>
+    <path d="M36 36l10 10" stroke="#fff" stroke-width="4.2" stroke-linecap="round"/>
+  </symbol>
+
+  <!-- 7 储蓄达人 · 增长柱 -->
+  <symbol id="lvl-7" viewBox="0 0 64 64">
+    <rect width="64" height="64" rx="15" fill="#98A6B3"/>
+    <rect x="18" y="36" width="7" height="11" rx="1.8" fill="#fff"/>
+    <rect x="28.5" y="29" width="7" height="18" rx="1.8" fill="#fff"/>
+    <rect x="39" y="20" width="7" height="27" rx="1.8" fill="#fff"/>
+  </symbol>
+
+  <!-- 8 财务规划师 · 罗盘 -->
+  <symbol id="lvl-8" viewBox="0 0 64 64">
+    <rect width="64" height="64" rx="15" fill="#98A6B3"/>
+    <circle cx="32" cy="32" r="13.5" fill="none" stroke="#fff" stroke-width="3.4"/>
+    <path d="M39 25l-4.4 10.6L24 40l4.4-10.6z" fill="#fff"/>
+  </symbol>
+
+  <!-- 9 投资观察员 · 望远镜 -->
+  <symbol id="lvl-9" viewBox="0 0 64 64">
+    <rect width="64" height="64" rx="15" fill="#E6A23C"/>
+    <path d="M21 43L41 23" stroke="#fff" stroke-width="5" stroke-linecap="round"/>
+    <circle cx="44.5" cy="19.5" r="3.6" fill="#fff"/>
+    <path d="M29 35l-7 12M29 35l9 11" fill="none" stroke="#fff" stroke-width="3.2" stroke-linecap="round"/>
+  </symbol>
+
+  <!-- 10 财富积累者 · 雪球 -->
+  <symbol id="lvl-10" viewBox="0 0 64 64">
+    <rect width="64" height="64" rx="15" fill="#E6A23C"/>
+    <circle cx="36" cy="38" r="9.5" fill="none" stroke="#fff" stroke-width="3.4"/>
+    <circle cx="23" cy="25" r="5.5" fill="none" stroke="#fff" stroke-width="3.2"/>
+    <path d="M15 40c1.5-3 4-5 7-6M45 22c2.5 1.5 4.5 4 5.5 7" fill="none" stroke="#fff" stroke-width="2.8" stroke-linecap="round"/>
+  </symbol>
+
+  <!-- 11 理财高手 · 天平 -->
+  <symbol id="lvl-11" viewBox="0 0 64 64">
+    <rect width="64" height="64" rx="15" fill="#E6A23C"/>
+    <path d="M32 17v26M20 22h24M26 46h12" stroke="#fff" stroke-width="3.4" stroke-linecap="round"/>
+    <path d="M20 22l-5 10h10zM44 22l-5 10h10z" fill="none" stroke="#fff" stroke-width="3" stroke-linejoin="round"/>
+  </symbol>
+
+  <!-- 12 预算大师 · 仪表盘 -->
+  <symbol id="lvl-12" viewBox="0 0 64 64">
+    <rect width="64" height="64" rx="15" fill="#E6A23C"/>
+    <path d="M17 41a15 15 0 0130 0" fill="none" stroke="#fff" stroke-width="3.6" stroke-linecap="round"/>
+    <path d="M32 41l8.5-11" stroke="#fff" stroke-width="3.6" stroke-linecap="round"/>
+    <circle cx="32" cy="41" r="3" fill="#fff"/>
+  </symbol>
+
+  <!-- 13 财务自由预备役 · 冲刺旗 -->
+  <symbol id="lvl-13" viewBox="0 0 64 64">
+    <rect width="64" height="64" rx="15" fill="#4FB3A9"/>
+    <path d="M24 47V16" stroke="#fff" stroke-width="3.6" stroke-linecap="round"/>
+    <path d="M24 18h19l-4.5 5.5L43 29H24z" fill="#fff"/>
+  </symbol>
+
+  <!-- 14 资产管理者 · 公文包 -->
+  <symbol id="lvl-14" viewBox="0 0 64 64">
+    <rect width="64" height="64" rx="15" fill="#4FB3A9"/>
+    <rect x="17" y="25" width="30" height="19" rx="3.5" fill="none" stroke="#fff" stroke-width="3.4"/>
+    <path d="M27 25v-4.5h10V25M17 33h30" fill="none" stroke="#fff" stroke-width="3.2" stroke-linecap="round"/>
+  </symbol>
+
+  <!-- 15 财富规划专家 · 路线图 -->
+  <symbol id="lvl-15" viewBox="0 0 64 64">
+    <rect width="64" height="64" rx="15" fill="#4FB3A9"/>
+    <path d="M19 45c9 0 6-12 13-12s4-11 12-11" fill="none" stroke="#fff" stroke-width="3.4" stroke-linecap="round" stroke-dasharray="5 4"/>
+    <circle cx="19" cy="45" r="3.4" fill="#fff"/>
+    <circle cx="44" cy="21" r="4.4" fill="none" stroke="#fff" stroke-width="3.2"/>
+  </symbol>
+
+  <!-- 16 金钱掌控者 · 财富之钥 -->
+  <symbol id="lvl-16" viewBox="0 0 64 64">
+    <rect width="64" height="64" rx="15" fill="#4FB3A9"/>
+    <circle cx="25" cy="25" r="8" fill="none" stroke="#fff" stroke-width="3.4"/>
+    <path d="M31 31l15 15" stroke="#fff" stroke-width="4" stroke-linecap="round"/>
+    <path d="M39 39l4.5-4.5M44.5 44.5L49 40" stroke="#fff" stroke-width="3.4" stroke-linecap="round"/>
+  </symbol>
+
+  <!-- 17 财务自由人 · 展翼 -->
+  <symbol id="lvl-17" viewBox="0 0 64 64">
+    <rect width="64" height="64" rx="15" fill="#5B7CE6"/>
+    <path d="M14 36c6.5-9 12.5-9 18 0 5.5-9 11.5-9 18 0" fill="none" stroke="#fff" stroke-width="3.8" stroke-linecap="round"/>
+    <path d="M22 44c4-5 8-5 10 0 2-5 6-5 10 0" fill="none" stroke="#fff" stroke-width="3.2" stroke-linecap="round"/>
+  </symbol>
+
+  <!-- 18 财富领航员 · 船舵 -->
+  <symbol id="lvl-18" viewBox="0 0 64 64">
+    <rect width="64" height="64" rx="15" fill="#5B7CE6"/>
+    <circle cx="32" cy="32" r="11.5" fill="none" stroke="#fff" stroke-width="3.4"/>
+    <circle cx="32" cy="32" r="3.6" fill="#fff"/>
+    <path d="M32 13v7.5M32 43.5V51M13 32h7.5M43.5 32H51" stroke="#fff" stroke-width="3.6" stroke-linecap="round"/>
+    <path d="M20.5 20.5l5 5M43.5 20.5l-5 5M20.5 43.5l5-5M43.5 43.5l-5-5" stroke="#fff" stroke-width="3" stroke-linecap="round"/>
+  </symbol>
+
+  <!-- 19 理财传奇 · 桂冠奖章 -->
+  <symbol id="lvl-19" viewBox="0 0 64 64">
+    <rect width="64" height="64" rx="15" fill="#5B7CE6"/>
+    <circle cx="32" cy="26" r="9" fill="none" stroke="#fff" stroke-width="3.4"/>
+    <circle cx="32" cy="26" r="3" fill="#fff"/>
+    <path d="M28 35l-4 11M36 35l4 11" stroke="#fff" stroke-width="3.2" stroke-linecap="round"/>
+    <path d="M17 45c-1.5-5-.5-10 2.5-13M47 45c1.5-5 .5-10-2.5-13" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round"/>
+  </symbol>
+
+  <!-- 20 财务之神 · 王冠 -->
+  <symbol id="lvl-20" viewBox="0 0 64 64">
+    <rect width="64" height="64" rx="15" fill="#5B7CE6"/>
+    <path d="M18 41l-2.5-16 10.5 7L32 20l6 12 10.5-7L46 41z" fill="#fff"/>
+    <rect x="17" y="43" width="30" height="4.6" rx="2.3" fill="#fff"/>
+  </symbol>
+</svg>

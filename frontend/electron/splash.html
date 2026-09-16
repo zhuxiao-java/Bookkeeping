@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <!--
+      启动闪屏（EL-02）：无边框透明窗内渲染 Logo + 加载进度，覆盖冷启动「白等」空窗期。
+      纯静态页面，无外部依赖；主进程通过 executeJavaScript 调用 window.setSplashStatus 下发状态文案。
+      资源相对路径（assets/icon.png）随 electron/** 打包，file:// 环境可正确解析。
+    -->
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'none'; img-src file: data:; style-src 'unsafe-inline'; script-src 'unsafe-inline';"
+    />
+    <title>记账本 · 启动中</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        height: 100%;
+        background: transparent;
+        font-family: 'PingFang SC', 'Helvetica Neue', Helvetica, 'Microsoft YaHei', Arial, sans-serif;
+        -webkit-font-smoothing: antialiased;
+        user-select: none;
+        overflow: hidden;
+      }
+
+      body {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        /* 透明窗内留出内边距，容纳卡片的 CSS 阴影（原生 hasShadow 已关闭） */
+        padding: 22px;
+      }
+
+      .splash {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 14px;
+        padding: 24px;
+        border-radius: 20px;
+        background: linear-gradient(160deg, #ffffff 0%, #f2f7ff 100%);
+        border: 1px solid rgba(255, 255, 255, 0.7);
+        box-shadow: 0 16px 44px rgba(31, 68, 120, 0.22);
+        animation: fadeIn 0.35s ease-out both;
+      }
+
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(8px) scale(0.98);
+        }
+        to {
+          opacity: 1;
+          transform: none;
+        }
+      }
+
+      .logo {
+        width: 76px;
+        height: 76px;
+        border-radius: 18px;
+        box-shadow: 0 8px 20px rgba(47, 127, 224, 0.35);
+        animation: pop 0.5s cubic-bezier(0.22, 1.2, 0.36, 1) both;
+      }
+
+      @keyframes pop {
+        from {
+          opacity: 0;
+          transform: scale(0.6);
+        }
+        to {
+          opacity: 1;
+          transform: scale(1);
+        }
+      }
+
+      .title {
+        font-size: 20px;
+        font-weight: 600;
+        color: #1f2d3d;
+        letter-spacing: 1px;
+      }
+
+      .tagline {
+        font-size: 12px;
+        color: #8a97a8;
+        letter-spacing: 0.5px;
+      }
+
+      /* 不确定态进度条：滑块往复滑动，表达「加载中」进度指示 */
+      .progress {
+        position: relative;
+        width: 180px;
+        height: 4px;
+        margin-top: 4px;
+        border-radius: 2px;
+        background: rgba(47, 127, 224, 0.14);
+        overflow: hidden;
+      }
+
+      .progress span {
+        position: absolute;
+        top: 0;
+        left: 0;
+        height: 100%;
+        width: 45%;
+        border-radius: 2px;
+        background: linear-gradient(90deg, #2f7fe0, #63b3ff);
+        animation: slide 1.15s ease-in-out infinite;
+      }
+
+      @keyframes slide {
+        0% {
+          left: -45%;
+        }
+        100% {
+          left: 100%;
+        }
+      }
+
+      .status {
+        font-size: 12px;
+        color: #5b6b7f;
+        min-height: 16px;
+      }
+
+      /* 状态文案后跟随省略号动画，强化「进行中」观感 */
+      .status::after {
+        content: '';
+        animation: dots 1.5s steps(1, end) infinite;
+      }
+
+      @keyframes dots {
+        0% {
+          content: '';
+        }
+        25% {
+          content: '.';
+        }
+        50% {
+          content: '..';
+        }
+        75% {
+          content: '...';
+        }
+        100% {
+          content: '';
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="splash">
+      <img class="logo" src="assets/icon.png" alt="记账本" />
+      <div class="title">记账本</div>
+      <div class="tagline">让每一笔收支都清晰可查</div>
+      <div class="progress"><span></span></div>
+      <div class="status" id="status">正在启动</div>
+    </div>
+    <script>
+      // 供主进程 executeJavaScript 调用，动态更新启动状态文案
+      window.setSplashStatus = function (text) {
+        var el = document.getElementById('status');
+        if (el && text) el.textContent = text;
+      };
+    </script>
+  </body>
+</html>

@@ -1,0 +1,257 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Helvetica Neue", sans-serif;
+    background: #eef1f6; color: #303133; padding: 28px 32px 40px; width: 1160px;
+  }
+  .sheet__head { font-size: 20px; font-weight: 700; margin-bottom: 4px; }
+  .sheet__sub { font-size: 12px; color: #909399; margin-bottom: 22px; }
+  .cand { margin-bottom: 30px; }
+  .cand__label { display: flex; align-items: center; gap: 10px; font-size: 14px; font-weight: 600; margin-bottom: 10px; }
+  .cand__key {
+    width: 24px; height: 24px; border-radius: 7px; background: #2f7fe0; color: #fff;
+    display: inline-flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700;
+  }
+  .cand__desc { font-weight: 400; color: #909399; font-size: 12px; }
+  .card { background: #fff; border: 1px solid #ebeef5; border-radius: 10px; }
+
+  /* —— A：总览签到卡片 —— */
+  .cc { display: flex; align-items: center; gap: 18px; padding: 18px 22px; }
+  .cc__flame {
+    width: 52px; height: 52px; border-radius: 14px; flex: none;
+    background: linear-gradient(135deg, #ff9a4d, #f56c6c);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .cc__main { min-width: 0; }
+  .cc__title { font-size: 17px; font-weight: 700; }
+  .cc__title b { color: #f56c6c; font-size: 20px; margin: 0 2px; }
+  .cc__sub { font-size: 12px; color: #909399; margin-top: 5px; }
+  .cc__sub .plus { color: #67c23a; font-weight: 600; }
+  .cc__week { display: flex; gap: 10px; margin-left: auto; }
+  .cc__day { display: flex; flex-direction: column; align-items: center; gap: 5px; width: 34px; }
+  .cc__wd { font-size: 11px; color: #909399; }
+  .cc__dot {
+    width: 26px; height: 26px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    background: #f0f2f5; color: #c0c4cc; font-size: 11px;
+  }
+  .cc__dot.is-done { background: #2f7fe0; color: #fff; }
+  .cc__dot.is-miss { background: #fff; border: 1px dashed #dcdfe6; color: #c0c4cc; }
+  .cc__day.is-today .cc__dot { box-shadow: 0 0 0 3px rgba(47, 127, 224, .22); }
+  .cc__link {
+    flex: none; font-size: 13px; color: #2f7fe0; border-left: 1px solid #ebeef5; padding-left: 18px; line-height: 20px;
+  }
+
+  /* —— B：等级页签到专区 —— */
+  .ci { padding: 18px 22px 20px; }
+  .ci__head { display: flex; align-items: center; margin-bottom: 14px; }
+  .ci__title { font-size: 15px; font-weight: 700; }
+  .ci__nav { display: flex; align-items: center; gap: 10px; margin-left: 18px; color: #606266; font-size: 13px; }
+  .ci__nav span.arrow { color: #c0c4cc; cursor: default; }
+  .ci__stats { margin-left: auto; display: flex; gap: 26px; text-align: right; }
+  .ci__statv { font-size: 16px; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .ci__statv.fire { color: #f56c6c; }
+  .ci__statv.exp { color: #67c23a; }
+  .ci__statk { font-size: 11px; color: #909399; margin-top: 3px; }
+  .ci__body { display: flex; gap: 26px; }
+  .cal { flex: none; width: 372px; }
+  .cal__wd, .cal__grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
+  .cal__wd span { text-align: center; font-size: 11px; color: #909399; padding-bottom: 4px; }
+  .cal__cell {
+    height: 42px; border-radius: 9px; display: flex; flex-direction: column; align-items: center; justify-content: center;
+    font-size: 13px; color: #606266; background: #f7f8fa; gap: 2px;
+  }
+  .cal__cell .tick { font-size: 9px; line-height: 9px; color: #2f7fe0; }
+  .cal__cell.is-done { background: #e8f1fd; color: #2f7fe0; font-weight: 600; }
+  .cal__cell.is-other { background: transparent; color: #c0c4cc; }
+  .cal__cell.is-future { background: transparent; color: #dcdfe6; }
+  .cal__cell.is-today { background: #2f7fe0; color: #fff; font-weight: 700; box-shadow: 0 0 0 3px rgba(47, 127, 224, .22); }
+  .cal__cell.is-today .tick { color: #fff; }
+  .ci__list { flex: 1; min-width: 0; }
+  .ci__listhead { font-size: 12px; color: #909399; margin-bottom: 8px; }
+  .ci__row { display: flex; align-items: center; padding: 9px 2px; border-bottom: 1px solid #f2f3f5; font-size: 13px; }
+  .ci__row:last-child { border-bottom: none; }
+  .ci__date { width: 92px; color: #606266; font-variant-numeric: tabular-nums; }
+  .ci__streak { color: #909399; font-size: 12px; }
+  .ci__streak b { color: #f56c6c; }
+  .ci__exp { margin-left: auto; font-weight: 700; color: #67c23a; font-variant-numeric: tabular-nums; }
+  .ci__exp small { font-weight: 400; color: #909399; margin-left: 6px; }
+
+  /* —— C：侧边栏徽章 + 弹层 —— */
+  .mock--side { display: flex; gap: 0; align-items: flex-start; }
+  .side {
+    width: 216px; background: #fff; border: 1px solid #ebeef5; border-radius: 10px 0 0 10px; padding: 14px 10px; flex: none;
+  }
+  .side__brand { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 15px; padding: 2px 8px 12px; }
+  .side__logo { width: 26px; height: 26px; border-radius: 7px; background: #2f7fe0; color: #fff; font-size: 14px; display: flex; align-items: center; justify-content: center; }
+  .side__item { display: flex; align-items: center; gap: 9px; padding: 9px 10px; border-radius: 8px; font-size: 13px; color: #606266; margin-bottom: 2px; }
+  .side__item .ico { width: 15px; height: 15px; border-radius: 4px; background: #dcdfe6; flex: none; }
+  .side__item.is-active { background: #e8f1fd; color: #2f7fe0; font-weight: 600; }
+  .side__lv {
+    margin: 8px 4px 4px; padding: 10px; border-radius: 10px; background: #f7f8fa; border: 1px solid #ebeef5;
+    display: flex; align-items: center; gap: 9px; position: relative;
+  }
+  .side__lvlogo { width: 30px; height: 30px; border-radius: 8px; background: #e6a23c; color: #fff; font-size: 12px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex: none; }
+  .side__lvname { font-size: 12px; font-weight: 600; }
+  .side__lvsub { font-size: 10px; color: #909399; margin-top: 2px; }
+  .side__fire {
+    position: absolute; top: -9px; right: -7px; background: linear-gradient(135deg, #ff9a4d, #f56c6c); color: #fff;
+    font-size: 10px; font-weight: 700; border-radius: 9px; padding: 2px 7px 2px 5px; box-shadow: 0 2px 6px rgba(245, 108, 108, .4);
+    display: inline-flex; align-items: center; gap: 3px;
+  }
+  .pop {
+    width: 300px; margin: 26px 0 0 -1px; background: #fff; border: 1px solid #ebeef5; border-radius: 0 10px 10px 0;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, .08); padding: 16px 18px; position: relative;
+  }
+  .pop::before {
+    content: ""; position: absolute; left: -6px; top: 22px; width: 10px; height: 10px; background: #fff;
+    border-left: 1px solid #ebeef5; border-bottom: 1px solid #ebeef5; transform: rotate(45deg);
+  }
+  .pop__head { display: flex; align-items: baseline; gap: 8px; margin-bottom: 12px; }
+  .pop__title { font-size: 14px; font-weight: 700; }
+  .pop__exp { color: #67c23a; font-weight: 700; font-size: 15px; }
+  .pop__streak { margin-left: auto; font-size: 12px; color: #f56c6c; font-weight: 600; }
+  .pop .cal__cell { height: 30px; border-radius: 7px; font-size: 11px; }
+  .pop .cal__wd span { font-size: 10px; }
+  .pop__rule { margin-top: 12px; padding-top: 10px; border-top: 1px solid #f2f3f5; font-size: 11px; color: #909399; line-height: 19px; }
+</style>
+</head>
+<body>
+  <div class="sheet__head">签到经验体系 · 前端界面候选</div>
+  <div class="sheet__sub">模拟数据：今天 2026-09-04（周五）· 已连续签到 4 天 · 今日 +16 经验（基础 10 + 连续 6）· 数据源 /check_in/selectAll（checkDate / expReward / baseExp / bonusExp / streakDays）</div>
+
+  <!-- ============ A ============ -->
+  <div class="cand">
+    <div class="cand__label"><span class="cand__key">A</span>总览页签到卡片<span class="cand__desc">—— Dashboard 顶部插入一张卡片：连续天数 + 今日状态 + 近 7 日打点，点击进等级页</span></div>
+    <div class="card cc">
+      <div class="cc__flame">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none"><path d="M12 2c1 4-4 5.5-4 10a4.5 4.5 0 0 0 9 0c0-2-1-3.5-1-3.5S15 10 13.5 10C12 10 12.8 6 12 2z" fill="#fff"/><path d="M12 22a7 7 0 0 1-7-7c0-1.2.3-2.3.8-3.3" stroke="#fff" stroke-opacity=".55" stroke-width="1.6" stroke-linecap="round"/></svg>
+      </div>
+      <div class="cc__main">
+        <div class="cc__title">已连续签到 <b>4</b> 天</div>
+        <div class="cc__sub">今日已签到 <span class="plus">+16 经验</span>（基础 10 + 连续奖励 6）· 启动应用时自动完成</div>
+      </div>
+      <div class="cc__week">
+        <div class="cc__day"><span class="cc__wd">周六</span><span class="cc__dot is-miss">29</span></div>
+        <div class="cc__day"><span class="cc__wd">周日</span><span class="cc__dot is-miss">30</span></div>
+        <div class="cc__day"><span class="cc__wd">周一</span><span class="cc__dot is-miss">31</span></div>
+        <div class="cc__day"><span class="cc__wd">周二</span><span class="cc__dot is-done">1</span></div>
+        <div class="cc__day"><span class="cc__wd">周三</span><span class="cc__dot is-done">2</span></div>
+        <div class="cc__day"><span class="cc__wd">周四</span><span class="cc__dot is-done">3</span></div>
+        <div class="cc__day is-today"><span class="cc__wd">今天</span><span class="cc__dot is-done">4</span></div>
+      </div>
+      <div class="cc__link">查看签到日历<br/>与经验明细 →</div>
+    </div>
+  </div>
+
+  <!-- ============ B ============ -->
+  <div class="cand">
+    <div class="cand__label"><span class="cand__key">B</span>等级页签到专区<span class="cand__desc">—— LevelView 增加「签到日历」区块：月历热力 + 三项统计 + 最近签到明细，完整沉浸</span></div>
+    <div class="card ci">
+      <div class="ci__head">
+        <span class="ci__title">签到日历</span>
+        <span class="ci__nav"><span class="arrow">‹</span>2026 年 9 月<span class="arrow">›</span></span>
+        <div class="ci__stats">
+          <div><div class="ci__statv">13</div><div class="ci__statk">累计签到（天）</div></div>
+          <div><div class="ci__statv fire">4</div><div class="ci__statk">当前连续（天）</div></div>
+          <div><div class="ci__statv exp">148</div><div class="ci__statk">签到经验（累计）</div></div>
+        </div>
+      </div>
+      <div class="ci__body">
+        <div class="cal">
+          <div class="cal__wd"><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span><span>日</span></div>
+          <div class="cal__grid" style="margin-top:6px">
+            <div class="cal__cell is-other">31</div>
+            <div class="cal__cell is-done">1<span class="tick">✓</span></div>
+            <div class="cal__cell is-done">2<span class="tick">✓</span></div>
+            <div class="cal__cell is-done">3<span class="tick">✓</span></div>
+            <div class="cal__cell is-today">4<span class="tick">✓</span></div>
+            <div class="cal__cell is-future">5</div>
+            <div class="cal__cell is-future">6</div>
+            <div class="cal__cell is-future">7</div>
+            <div class="cal__cell is-future">8</div>
+            <div class="cal__cell is-future">9</div>
+            <div class="cal__cell is-future">10</div>
+            <div class="cal__cell is-future">11</div>
+            <div class="cal__cell is-future">12</div>
+            <div class="cal__cell is-future">13</div>
+            <div class="cal__cell is-future">14</div>
+            <div class="cal__cell is-future">15</div>
+            <div class="cal__cell is-future">16</div>
+            <div class="cal__cell is-future">17</div>
+            <div class="cal__cell is-future">18</div>
+            <div class="cal__cell is-future">19</div>
+            <div class="cal__cell is-future">20</div>
+            <div class="cal__cell is-future">21</div>
+            <div class="cal__cell is-future">22</div>
+            <div class="cal__cell is-future">23</div>
+            <div class="cal__cell is-future">24</div>
+            <div class="cal__cell is-future">25</div>
+            <div class="cal__cell is-future">26</div>
+            <div class="cal__cell is-future">27</div>
+            <div class="cal__cell is-future">28</div>
+            <div class="cal__cell is-future">29</div>
+            <div class="cal__cell is-future">30</div>
+          </div>
+        </div>
+        <div class="ci__list">
+          <div class="ci__listhead">最近签到</div>
+          <div class="ci__row"><span class="ci__date">09-04 今天</span><span class="ci__streak">连续 <b>4</b> 天</span><span class="ci__exp">+16<small>10 + 6</small></span></div>
+          <div class="ci__row"><span class="ci__date">09-03</span><span class="ci__streak">连续 <b>3</b> 天</span><span class="ci__exp">+14<small>10 + 4</small></span></div>
+          <div class="ci__row"><span class="ci__date">09-02</span><span class="ci__streak">连续 <b>2</b> 天</span><span class="ci__exp">+12<small>10 + 2</small></span></div>
+          <div class="ci__row"><span class="ci__date">09-01</span><span class="ci__streak">连续 <b>1</b> 天</span><span class="ci__exp">+10<small>10 + 0</small></span></div>
+          <div class="ci__row"><span class="ci__date">08-28</span><span class="ci__streak">连续 <b>4</b> 天</span><span class="ci__exp">+16<small>10 + 6</small></span></div>
+          <div class="ci__row"><span class="ci__date">08-27</span><span class="ci__streak">连续 <b>3</b> 天</span><span class="ci__exp">+14<small>10 + 4</small></span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ C ============ -->
+  <div class="cand">
+    <div class="cand__label"><span class="cand__key">C</span>侧边栏徽章 + 弹层<span class="cand__desc">—— 等级入口挂连续天数火焰徽章，悬停/点击弹出迷你月历与今日奖励，最小侵入</span></div>
+    <div class="mock--side">
+      <div class="side">
+        <div class="side__brand"><span class="side__logo">记</span>记账本</div>
+        <div class="side__item"><span class="ico"></span>总览</div>
+        <div class="side__item"><span class="ico"></span>账户</div>
+        <div class="side__item is-active"><span class="ico" style="background:#2f7fe0"></span>流水</div>
+        <div class="side__item"><span class="ico"></span>报表</div>
+        <div class="side__item"><span class="ico"></span>预算</div>
+        <div class="side__item"><span class="ico"></span>等级</div>
+        <div class="side__lv">
+          <span class="side__lvlogo">Lv5</span>
+          <span><span class="side__lvname">省钱能手</span><div class="side__lvsub">距「精明消费者」还差 260</div></span>
+          <span class="side__fire"><svg width="9" height="11" viewBox="0 0 24 24" fill="none"><path d="M12 2c1 4-4 5.5-4 10a4.5 4.5 0 0 0 9 0c0-2-1-3.5-1-3.5S15 10 13.5 10C12 10 12.8 6 12 2z" fill="#fff"/></svg>4 天</span>
+        </div>
+      </div>
+      <div class="pop">
+        <div class="pop__head"><span class="pop__title">今日已签到</span><span class="pop__exp">+16</span><span class="pop__streak">连续 4 天</span></div>
+        <div class="cal">
+          <div class="cal__wd" style="width:264px"><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span><span>日</span></div>
+          <div class="cal__grid" style="margin-top:5px;width:264px">
+            <div class="cal__cell is-other">31</div>
+            <div class="cal__cell is-done">1</div>
+            <div class="cal__cell is-done">2</div>
+            <div class="cal__cell is-done">3</div>
+            <div class="cal__cell is-today">4</div>
+            <div class="cal__cell is-future">5</div>
+            <div class="cal__cell is-future">6</div>
+            <div class="cal__cell is-future">7</div>
+            <div class="cal__cell is-future">8</div>
+            <div class="cal__cell is-future">9</div>
+            <div class="cal__cell is-future">10</div>
+            <div class="cal__cell is-future">11</div>
+            <div class="cal__cell is-future">12</div>
+            <div class="cal__cell is-future">13</div>
+          </div>
+        </div>
+        <div class="pop__rule">每日基础 +10 经验；连续签到每天额外 +2（上限 +50）。<br/>签到在应用启动时自动完成，无需手动操作。</div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

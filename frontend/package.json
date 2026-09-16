@@ -1,0 +1,39 @@
+{
+  "name": "bookkeeping-frontend",
+  "private": true,
+  "version": "1.0.0",
+  "description": "记账桌面应用前端（Electron + Vue 3 + Element Plus）",
+  "main": "electron/main.cjs",
+  "scripts": {
+    "dev": "vite",
+    "dev:electron": "concurrently -k \"vite\" \"wait-on tcp:5173 && electron .\"",
+    "type-check": "vue-tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "build": "vite build",
+    "preview": "vite preview",
+    "electron": "electron .",
+    "dist": "npm run build && electron-builder"
+  },
+  "dependencies": {
+    "@element-plus/icons-vue": "^2.3.1",
+    "axios": "^1.6.8",
+    "echarts": "^5.5.0",
+    "element-plus": "^2.7.0",
+    "pinia": "^2.1.7",
+    "vue": "^3.4.21",
+    "vue-router": "^4.3.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.12.0",
+    "@vitejs/plugin-vue": "^5.0.4",
+    "concurrently": "^8.2.2",
+    "electron": "^30.0.0",
+    "electron-builder": "^24.13.3",
+    "typescript": "~5.4.0",
+    "vite": "^5.2.0",
+    "vitest": "^1.6.1",
+    "vue-tsc": "^2.0.6",
+    "wait-on": "^7.2.0"
+  }
+}

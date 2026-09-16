@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice">
+  <!-- 内置背景预设 3「夜航」：夜空极光 + 星点 + 山影，深色主题推荐 -->
+  <defs>
+    <linearGradient id="nightSky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#0b1020"/>
+      <stop offset="0.6" stop-color="#141d33"/>
+      <stop offset="1" stop-color="#1c2740"/>
+    </linearGradient>
+    <radialGradient id="auroraBlue" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#5b7ce6" stop-opacity="0.34"/>
+      <stop offset="1" stop-color="#5b7ce6" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="auroraTeal" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#4fb3a9" stop-opacity="0.3"/>
+      <stop offset="1" stop-color="#4fb3a9" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="nightBlur" x="-30%" y="-60%" width="160%" height="220%">
+      <feGaussianBlur stdDeviation="38"/>
+    </filter>
+  </defs>
+
+  <rect width="1600" height="900" fill="url(#nightSky)"/>
+
+  <!-- 极光 -->
+  <ellipse cx="420" cy="250" rx="520" ry="170" fill="url(#auroraBlue)" filter="url(#nightBlur)"/>
+  <ellipse cx="1180" cy="352" rx="470" ry="150" fill="url(#auroraTeal)" filter="url(#nightBlur)"/>
+
+  <!-- 星点 -->
+  <g fill="#ffffff">
+    <circle cx="118" cy="92" r="2.2" opacity="0.85"/>
+    <circle cx="264" cy="164" r="1.6" opacity="0.6"/>
+    <circle cx="392" cy="72" r="1.8" opacity="0.7"/>
+    <circle cx="520" cy="196" r="1.4" opacity="0.5"/>
+    <circle cx="648" cy="108" r="2.4" opacity="0.9"/>
+    <circle cx="742" cy="238" r="1.5" opacity="0.55"/>
+    <circle cx="886" cy="86" r="1.9" opacity="0.75"/>
+    <circle cx="1004" cy="188" r="1.5" opacity="0.5"/>
+    <circle cx="1128" cy="96" r="2.2" opacity="0.8"/>
+    <circle cx="1262" cy="164" r="1.6" opacity="0.6"/>
+    <circle cx="1392" cy="78" r="2" opacity="0.75"/>
+    <circle cx="1498" cy="212" r="1.5" opacity="0.55"/>
+    <circle cx="184" cy="322" r="1.5" opacity="0.45"/>
+    <circle cx="700" cy="342" r="1.7" opacity="0.5"/>
+    <circle cx="1340" cy="318" r="1.6" opacity="0.45"/>
+    <circle cx="958" cy="428" r="1.4" opacity="0.38"/>
+    <circle cx="330" cy="440" r="1.5" opacity="0.35"/>
+  </g>
+
+  <!-- 山影 -->
+  <path d="M0 700 L260 560 L520 700 L780 540 L1060 706 L1320 600 L1600 712 L1600 900 L0 900 Z" fill="#101828" opacity="0.92"/>
+  <path d="M0 800 L300 690 L600 806 L900 700 L1200 812 L1600 720 L1600 900 L0 900 Z" fill="#0a1120"/>
+</svg>
