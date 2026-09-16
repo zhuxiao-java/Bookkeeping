@@ -1,0 +1,80 @@
+# /Users/zhuxiao/Desktop/fxXml/workSpace/Bookkeeping/.github/workflows/build-windows-exe.yml
+name: Build Windows EXE
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+          cache: maven
+
+      - name: Install vendored self-framework artifacts
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force "$HOME/.m2/repository" | Out-Null
+          Copy-Item -Recurse -Force "ci/m2-repo/*" "$HOME/.m2/repository/"
+          Get-ChildItem -Recurse "$HOME/.m2/repository/org/sf" -Filter "_remote.repositories" | Remove-Item -Force
+
+      - name: Build backend jar
+        run: mvn -B clean package -DskipTests
+
+      - name: Collect runtime dependencies
+        shell: pwsh
+        run: |
+          mvn -B dependency:copy-dependencies "-DoutputDirectory=target/dist/libs" "-DincludeScope=runtime"
+          Copy-Item target/bookkeeping-1.0-SNAPSHOT.jar target/dist/libs/
+
+      - name: jlink minimal runtime
+        run: >
+          jlink --add-modules java.se,jdk.unsupported,jdk.crypto.ec,jdk.zipfs,jdk.localedata
+          --strip-debug --no-man-pages --no-header-files --compress=2
+          --output target/dist/runtime
+
+      - name: jpackage app-image
+        run: >
+          jpackage --type app-image --name bookkeeping-backend --dest target/dist/app
+          --input target/dist/libs --main-jar bookkeeping-1.0-SNAPSHOT.jar
+          --main-class com.bookkeeping.BookkeepingApplication --java-options "-Xmx256m"
+          --runtime-image target/dist/runtime
+
+      - name: Layout resources/java (Windows)
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force frontend/resources/java | Out-Null
+          Copy-Item -Recurse -Force target/dist/app/bookkeeping-backend/* frontend/resources/java/
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Build renderer and NSIS installer
+        working-directory: frontend
+        run: |
+          npm run build
+          npx electron-builder --win --x64
+
+      - name: Upload installer
+        uses: actions/upload-artifact@v4
+        with:
+          name: bookkeeping-win-x64
+          path: frontend/release/*.exe
