@@ -2,6 +2,7 @@
 import { computed, ref } from 'vue'
 import { useCheckInStore, todayStr } from '@/stores/checkin'
 import CheckInCalendar from './CheckInCalendar.vue'
+import EmptyState from './EmptyState.vue'
 
 /** 等级页签到专区（候选 B）：月历热力 + 三项统计 + 最近签到明细 */
 const checkin = useCheckInStore()
@@ -46,9 +47,9 @@ function rowLabel(date: string): string {
     <div class="ci__head">
       <span class="ci__title">签到日历</span>
       <span class="ci__nav">
-        <el-button link :disabled="false" @click="prevMonth">‹</el-button>
+        <el-button link aria-label="上个月" @click="prevMonth">‹</el-button>
         <span class="ci__month">{{ year }} 年 {{ month }} 月</span>
-        <el-button link :disabled="atCurrentMonth" @click="nextMonth">›</el-button>
+        <el-button link aria-label="下个月" :disabled="atCurrentMonth" @click="nextMonth">›</el-button>
       </span>
       <div class="ci__stats">
         <div>
@@ -81,26 +82,28 @@ function rowLabel(date: string): string {
             </span>
           </div>
         </template>
-        <el-empty v-else description="暂无签到记录" :image-size="60" />
+        <EmptyState v-else description="暂无签到记录" :size="80" />
       </div>
     </div>
   </el-card>
 </template>
 
 <style scoped>
-.checkin-panel :deep(.el-card__body) {
-  padding: 18px 22px 20px;
+.checkin-panel {
+  container: checkin-panel / inline-size;
 }
 
 .ci__head {
   display: flex;
   align-items: center;
-  margin-bottom: 14px;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 24px;
 }
 
 .ci__title {
   font-size: 15px;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .ci__nav {
@@ -126,32 +129,32 @@ function rowLabel(date: string): string {
 
 .ci__statv {
   font-size: 16px;
-  font-weight: 700;
+  font-weight: 600;
   font-variant-numeric: tabular-nums;
 }
 
 .ci__statv.is-fire {
-  color: #f56c6c;
+  color: var(--bk-button-primary);
 }
 
 .ci__statv.is-exp {
-  color: var(--el-color-success);
+  color: var(--bk-income-text);
 }
 
 .ci__statk {
-  font-size: 11px;
+  font-size: 13px;
   color: var(--el-text-color-secondary);
   margin-top: 3px;
 }
 
 .ci__body {
-  display: flex;
-  gap: 26px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
+  gap: 28px;
 }
 
 .ci__cal {
-  flex: none;
-  width: 372px;
+  min-width: 0;
 }
 
 .ci__list {
@@ -168,7 +171,9 @@ function rowLabel(date: string): string {
 .ci__row {
   display: flex;
   align-items: center;
-  padding: 9px 2px;
+  padding: 12px 2px;
+  gap: 8px;
+  flex-wrap: wrap;
   border-bottom: 1px solid var(--el-border-color-lighter);
   font-size: 13px;
 }
@@ -189,13 +194,13 @@ function rowLabel(date: string): string {
 }
 
 .ci__streak b {
-  color: #f56c6c;
+  color: var(--bk-button-primary);
 }
 
 .ci__exp {
   margin-left: auto;
-  font-weight: 700;
-  color: var(--el-color-success);
+  font-weight: 600;
+  color: var(--bk-income-text);
   font-variant-numeric: tabular-nums;
 }
 
@@ -203,5 +208,10 @@ function rowLabel(date: string): string {
   font-weight: 400;
   color: var(--el-text-color-secondary);
   margin-left: 6px;
+}
+@container checkin-panel (max-width: 760px) {
+  .ci__body { grid-template-columns: 1fr; }
+  .ci__stats { width: 100%; margin-left: 0; text-align: left; flex-wrap: wrap; }
+  .ci__nav { margin-left: auto; }
 }
 </style>

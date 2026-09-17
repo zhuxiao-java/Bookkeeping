@@ -10,6 +10,7 @@ import { bus, CATEGORY_CHANGED } from '@/utils/bus'
 import { CATEGORY_ICON_GROUPS, COLOR_CHOICES } from '@/utils/constants'
 import { shadeColor } from '@/utils/chartTheme'
 import CategoryDot from '@/components/CategoryDot.vue'
+import EmptyState from '@/components/EmptyState.vue'
 
 /** 设置 → 分类管理（需求文档 4.5）：树形列表 + 图标/颜色 + 排序 + 归档 */
 const dict = useDictStore()
@@ -314,17 +315,23 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="cat-manage">
-    <div class="cat-manage__toolbar">
-      <el-radio-group v-model="activeTab">
-        <el-radio-button value="expense">支出</el-radio-button>
-        <el-radio-button value="income">收入</el-radio-button>
-      </el-radio-group>
-      <div class="cat-manage__spacer" />
-      <el-button type="primary" @click="openCreate()">+ 新增分类</el-button>
-    </div>
-
-    <el-card shadow="never">
+  <div class="page page--comfortable page--settings cat-manage">
+    <header class="page-head page-head--actions">
+      <div class="row-copy">
+        <h1 class="page-head__title">分类管理</h1>
+        <p class="page-head__sub">把收支分门别类，让每一笔钱都有迹可循。</p>
+      </div>
+      <el-button type="primary" class="page-head__actions" @click="openCreate()">+ 新增分类</el-button>
+    </header>
+    <section class="page-section" aria-labelledby="category-list-heading">
+      <div class="toolbar page-section__head">
+        <h2 id="category-list-heading" class="section-heading">收支分类</h2>
+        <el-radio-group v-model="activeTab" class="segment" aria-label="分类收支类型">
+          <el-radio-button value="expense">支出</el-radio-button>
+          <el-radio-button value="income">收入</el-radio-button>
+        </el-radio-group>
+      </div>
+      <div class="surface">
       <div v-if="visibleNodes.length" class="cat-tree">
         <div
           v-for="node in visibleNodes"
@@ -332,12 +339,15 @@ onBeforeUnmount(() => {
           class="cat-row"
           :class="{ 'is-archived': node.category.archived === 1 }"
         >
-          <div class="cat-row__main" :style="{ paddingLeft: `${4 + node.depth * 24}px` }">
+          <div class="cat-row__main">
+            <div class="cat-row__identity" :style="{ paddingLeft: `${node.depth * 20}px` }">
             <el-button
               v-if="childrenOf(node.category.id).length && node.depth < maxDepth - 1"
               text
               circle
               size="small"
+              :aria-label="`${expandedIds.has(node.category.id) ? '收起' : '展开'}${node.category.name}`"
+              :aria-expanded="expandedIds.has(node.category.id)"
               @click="toggleExpand(node.category.id)"
             >
               <el-icon :class="{ 'is-expanded': expandedIds.has(node.category.id) }"><ArrowDown /></el-icon>
@@ -354,10 +364,11 @@ onBeforeUnmount(() => {
             <span v-if="childrenOf(node.category.id).length" class="cat-row__count">
               {{ childrenOf(node.category.id).length }} 个子分类
             </span>
-            <div class="cat-row__spacer" />
+            </div>
+            <div class="cat-row__actions">
             <template v-if="node.depth === 0">
-              <el-button text size="small" @click="move(node.category, -1)"><el-icon><ArrowUp /></el-icon></el-button>
-              <el-button text size="small" @click="move(node.category, 1)"><el-icon><ArrowDown /></el-icon></el-button>
+              <el-button text size="small" :aria-label="`上移${node.category.name}`" :disabled="rootCategories[0]?.id === node.category.id" @click="move(node.category, -1)"><el-icon><ArrowUp /></el-icon></el-button>
+              <el-button text size="small" :aria-label="`下移${node.category.name}`" :disabled="rootCategories[rootCategories.length - 1]?.id === node.category.id" @click="move(node.category, 1)"><el-icon><ArrowDown /></el-icon></el-button>
             </template>
             <el-button
               v-if="node.depth < maxDepth - 1"
@@ -374,20 +385,23 @@ onBeforeUnmount(() => {
               {{ node.category.archived === 0 ? '归档' : '恢复' }}
             </el-button>
             <el-button link type="danger" size="small" @click="remove(node.category)">删除</el-button>
+            </div>
           </div>
         </div>
       </div>
 
-      <el-empty v-else description="暂无分类，点击右上角新增">
+      <EmptyState v-else description="给收支建个分类，从第一笔记录开始" :size="104">
         <el-button type="primary" @click="openCreate()">新增第一个分类</el-button>
-      </el-empty>
-    </el-card>
+      </EmptyState>
+      </div>
+    </section>
 
     <!-- 新增/编辑对话框 -->
     <el-dialog
       v-model="dialogVisible"
       :title="dialogTitle"
-      width="480px"
+      width="520px"
+      class="bk-dialog quiet-controls"
       :close-on-click-modal="false"
       append-to-body
     >
@@ -407,28 +421,35 @@ onBeforeUnmount(() => {
             <div v-for="g in iconGroups" :key="g.group" class="icon-group">
               <div class="icon-group__title">{{ g.group }}</div>
               <div class="icon-grid">
-                <span
+                <button
                   v-for="item in g.icons"
+                  type="button"
                   :key="item.name"
                   class="icon-grid__item"
                   :class="{ 'is-active': form.icon === item.name }"
+                  :aria-label="`图标：${item.name}`"
+                  :aria-pressed="form.icon === item.name"
                   @click="form.icon = item.name"
                 >
                   {{ item.emoji }}
-                </span>
+                </button>
               </div>
             </div>
           </div>
         </el-form-item>
         <el-form-item label="颜色">
           <div class="color-grid">
-            <span
+            <button
               v-for="color in COLOR_CHOICES"
+              type="button"
               :key="color"
               class="color-grid__item"
               :class="{ 'is-active': form.color === color, 'is-disabled': isColorDisabled(color) }"
               :style="{ background: color }"
-              :title="isColorDisabled(color) ? '该颜色已被其他分类使用' : ''"
+              :title="isColorDisabled(color) ? '该颜色已被其他分类使用' : color"
+              :aria-label="`颜色 ${color}`"
+              :aria-pressed="form.color === color"
+              :disabled="isColorDisabled(color)"
               @click="!isColorDisabled(color) && (form.color = color)"
             />
           </div>
@@ -441,23 +462,22 @@ onBeforeUnmount(() => {
         </el-form-item>
       </el-form>
       <template #footer>
-        <el-button @click="dialogVisible = false">取消</el-button>
-        <el-button type="primary" :loading="saving" @click="save">保存</el-button>
+        <div class="dialog-footer">
+          <el-button @click="dialogVisible = false">取消</el-button>
+          <el-button type="primary" :loading="saving" @click="save">保存</el-button>
+        </div>
       </template>
     </el-dialog>
   </div>
 </template>
 
 <style scoped>
-.cat-manage__toolbar {
-  display: flex;
-  align-items: center;
-  margin-bottom: 12px;
-}
-
-.cat-manage__spacer {
-  flex: 1;
-}
+.cat-tree { padding-block: 4px; }
+.cat-row:last-child .cat-row__main { border-bottom: 0; }
+.cat-row__identity { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; min-width: 0; }
+.cat-row__identity :deep(.category-dot) { flex-shrink: 0; }
+.cat-row__actions { display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: 8px; }
+.cat-row__actions > .el-button + .el-button { margin-left: 0; }
 
 .cat-tip {
   margin-top: 4px;
@@ -470,11 +490,12 @@ onBeforeUnmount(() => {
 }
 
 .cat-row__main {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
-  gap: 10px;
-  padding: 10px 4px;
-  border-bottom: 1px solid var(--el-border-color-lighter);
+  gap: 12px;
+  padding: 18px 0;
+  border-bottom: 1px solid var(--bk-border-light);
 }
 
 .cat-row__toggle-spacer {
@@ -483,7 +504,9 @@ onBeforeUnmount(() => {
 }
 
 .cat-row__name {
-  font-weight: 600;
+  font-size: 14px;
+  font-weight: 550;
+  overflow-wrap: anywhere;
 }
 
 .cat-row__count {
@@ -491,12 +514,12 @@ onBeforeUnmount(() => {
   font-size: 12px;
 }
 
-.cat-row__spacer {
-  flex: 1;
-}
+.cat-row__identity .el-icon { transform: rotate(-90deg); transition: transform 0.16s; }
+.cat-row__identity .el-icon.is-expanded { transform: rotate(0deg); }
 
-.is-expanded {
-  transform: rotate(0deg);
+@container settings-body (max-width: 760px) {
+  .cat-row__main { grid-template-columns: minmax(0, 1fr); gap: 8px; }
+  .cat-row__actions { justify-content: flex-start; padding-left: 32px; }
 }
 
 /* 图标选择器：分组 + 限高滚动，容纳 100+ 图标不撑爆对话框 */
@@ -520,7 +543,7 @@ onBeforeUnmount(() => {
 
 .icon-grid {
   display: grid;
-  grid-template-columns: repeat(8, 1fr);
+  grid-template-columns: repeat(auto-fill, minmax(36px, 1fr));
   gap: 6px;
   width: 100%;
 }
@@ -529,13 +552,15 @@ onBeforeUnmount(() => {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 36px;
-  height: 36px;
-  border: 1px solid var(--el-border-color);
+  width: 100%;
+  height: 38px;
+  padding: 0;
+  background: var(--bk-surface-2);
+  border: 1px solid transparent;
   border-radius: var(--bk-radius-md);
   cursor: pointer;
   font-size: 20px;
-  transition: all 0.15s;
+  transition: border-color 0.15s, background-color 0.15s;
 }
 
 .icon-grid__item:hover {
@@ -554,17 +579,18 @@ onBeforeUnmount(() => {
 }
 
 .color-grid__item {
-  width: 26px;
-  height: 26px;
+  width: 28px;
+  height: 28px;
+  padding: 0;
   border-radius: 50%;
   cursor: pointer;
   border: 2px solid transparent;
-  transition: all 0.15s;
+  transition: border-color 0.15s, background-color 0.15s;
 }
 
 .color-grid__item.is-active {
   border-color: var(--el-text-color-primary);
-  transform: scale(1.12);
+  box-shadow: 0 0 0 2px var(--bk-surface);
 }
 
 /* 已被其他分类占用的颜色：置灰禁选 */

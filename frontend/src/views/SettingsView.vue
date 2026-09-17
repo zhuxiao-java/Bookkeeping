@@ -292,17 +292,19 @@ function onCsvImported(res: CsvImportResult) {
     <!-- 二级菜单 -->
     <aside class="settings__menu" data-guide="st-menu">
       <div class="settings__menu-title">设置</div>
-      <div
+      <button
         v-for="m in menus"
+        type="button"
         :key="m.key"
         class="settings__menu-item"
         :class="{ 'is-active': activeMenu === m.key }"
+        :aria-current="activeMenu === m.key ? 'page' : undefined"
         :data-guide="'st-menu-' + m.key"
         @click="activeMenu = m.key"
       >
         <el-icon><component :is="m.icon" /></el-icon>
         <span>{{ m.label }}</span>
-      </div>
+      </button>
     </aside>
 
     <!-- 内容区 -->
@@ -310,10 +312,10 @@ function onCsvImported(res: CsvImportResult) {
       <CategoryManage v-show="activeMenu === 'category'" />
       <TagManage v-show="activeMenu === 'tag'" />
 
-      <div v-show="activeMenu === 'preference'" class="settings__panel preferences">
-        <header class="preferences__intro">
-          <h1>个性化</h1>
-          <p>选一个喜欢的外观，按自己的习惯记账。</p>
+      <div v-show="activeMenu === 'preference'" class="page page--comfortable page--settings quiet-controls preferences">
+        <header class="page-head">
+          <h1 class="page-head__title">个性化</h1>
+          <p class="page-head__sub">选一个喜欢的外观，按自己的习惯记账。</p>
         </header>
 
         <section class="preference-section" aria-labelledby="appearance-heading">
@@ -515,65 +517,94 @@ function onCsvImported(res: CsvImportResult) {
         </section>
       </div>
 
-      <div v-show="activeMenu === 'data'" class="settings__panel">
-        <el-card shadow="never">
-          <template #header>数据管理</template>
-
-          <div class="data-section">
-            <div class="data-section__title">完整备份 / 恢复</div>
-            <p class="form-tip">
-              备份为本机 SQLite 数据库的一致性快照（.db），含全部账户、流水、分类、预算等，可用于换机迁移或损坏恢复。
-            </p>
-            <div class="data-actions">
+      <div v-show="activeMenu === 'data'" class="page page--comfortable page--settings">
+        <header class="page-head">
+          <h1 class="page-head__title">数据管理</h1>
+          <p class="page-head__sub">给账本留一份备份，让每一笔记录都安心。</p>
+        </header>
+        <section class="page-section" aria-labelledby="data-backup-heading">
+          <h2 id="data-backup-heading" class="section-heading">备份与恢复</h2>
+          <div class="surface">
+            <div class="split-row data-row">
+              <div class="row-copy">
+                <h3 class="row-copy__title">完整备份</h3>
+                <p class="row-copy__desc">将全部账户、流水、分类和预算保存为 SQLite 快照（.db），用于换机迁移或数据恢复。</p>
+              </div>
               <el-button :loading="backuping" @click="onExportDb">导出完整备份</el-button>
-              <el-button :loading="restoring" @click="dbFileInput?.click()">从备份恢复…</el-button>
-              <input ref="dbFileInput" type="file" accept=".db" class="bg-picker__file" @change="onPickDb" />
             </div>
-            <el-alert
-              class="data-alert"
-              type="warning"
-              :closable="false"
-              show-icon
-              title="恢复会用备份文件覆盖当前全部数据，且需重启后端加载。操作前建议先导出一份当前备份。"
-            />
-          </div>
-
-          <el-divider />
-
-          <div class="data-section">
-            <div class="data-section__title">CSV 导入 / 导出</div>
-            <p class="form-tip">
-              导出为带 BOM 的 CSV（Excel 可直接打开）。导入仅支持流水：按账户名 / 分类名匹配到已有账户与分类，仅新增、不覆盖，无法解析的行会被跳过。
-            </p>
-            <div class="data-actions">
-              <el-button :loading="exportingTx" @click="onExportTx">导出流水 CSV</el-button>
-              <el-button :loading="exportingAcc" @click="onExportAcc">导出账户 CSV</el-button>
-              <el-button @click="csvDialogVisible = true">导入流水 CSV…</el-button>
+            <div class="surface-block">
+              <div class="data-row">
+                <div class="row-copy">
+                  <h3 class="row-copy__title">从备份恢复</h3>
+                  <p class="row-copy__desc">选择已有的 .db 备份，恢复到当时的账本。</p>
+                </div>
+                <el-button :loading="restoring" @click="dbFileInput?.click()">选择备份文件</el-button>
+                <input ref="dbFileInput" type="file" accept=".db" class="bg-picker__file" @change="onPickDb" />
+              </div>
+              <el-alert
+                class="data-alert"
+                type="warning"
+                :closable="false"
+                show-icon
+                title="恢复会用备份文件覆盖当前全部数据，且需重启后端加载。操作前建议先导出一份当前备份。"
+              />
             </div>
-            <CsvImportDialog v-model="csvDialogVisible" @imported="onCsvImported" />
           </div>
-        </el-card>
+        </section>
+        <section class="page-section" aria-labelledby="data-csv-heading">
+          <h2 id="data-csv-heading" class="section-heading">CSV 导入与导出</h2>
+          <div class="surface">
+            <div class="split-row data-row">
+              <div class="row-copy">
+                <h3 class="row-copy__title">导出为表格</h3>
+                <p class="row-copy__desc">带 BOM 的 CSV 格式，可直接使用 Excel 打开。</p>
+              </div>
+              <div class="toolbar">
+                <el-button :loading="exportingTx" @click="onExportTx">导出流水</el-button>
+                <el-button :loading="exportingAcc" @click="onExportAcc">导出账户</el-button>
+              </div>
+            </div>
+            <div class="split-row data-row">
+              <div class="row-copy">
+                <h3 class="row-copy__title">导入流水</h3>
+                <p class="row-copy__desc">按账户名与分类名匹配已有数据，仅新增、不覆盖；导入前可预览校验结果。</p>
+              </div>
+              <el-button type="primary" @click="csvDialogVisible = true">导入流水 CSV</el-button>
+            </div>
+          </div>
+          <CsvImportDialog v-model="csvDialogVisible" @imported="onCsvImported" />
+        </section>
       </div>
 
       <!-- 使用说明：与顶栏「?」抽屉共用同一面板组件 -->
-      <div v-show="activeMenu === 'help'" class="settings__panel">
-        <el-card shadow="never">
-          <template #header>使用说明</template>
-          <HelpPanel />
-        </el-card>
+      <div v-show="activeMenu === 'help'" class="page page--comfortable page--settings">
+        <header class="page-head">
+          <h1 class="page-head__title">使用说明</h1>
+          <p class="page-head__sub">从第一笔记账开始，慢慢熟悉你的账本。</p>
+        </header>
+        <HelpPanel />
       </div>
 
-      <div v-show="activeMenu === 'about'" class="settings__panel">
-        <el-card shadow="never">
-          <template #header>关于</template>
-          <el-descriptions :column="1">
-            <el-descriptions-item label="应用名称">记账本</el-descriptions-item>
-            <el-descriptions-item label="版本">1.0.0</el-descriptions-item>
-            <el-descriptions-item label="前端技术">Electron + Vue 3 + Element Plus + ECharts</el-descriptions-item>
-            <el-descriptions-item label="后端技术">Java 17 + Spring Boot + SQLite</el-descriptions-item>
-            <el-descriptions-item label="数据存储">本地 SQLite（离线可用）</el-descriptions-item>
-          </el-descriptions>
-        </el-card>
+      <div v-show="activeMenu === 'about'" class="page page--comfortable page--settings">
+        <header class="page-head">
+          <h1 class="page-head__title">关于</h1>
+          <p class="page-head__sub">温暖理财，从一笔开始。</p>
+        </header>
+        <section class="page-section" aria-labelledby="about-app-heading">
+          <h2 id="about-app-heading" class="section-heading">你的本地账本</h2>
+          <dl class="surface about-info">
+            <div class="split-row"><dt>应用名称</dt><dd>记账本</dd></div>
+            <div class="split-row"><dt>版本</dt><dd>1.0.0</dd></div>
+            <div class="split-row"><dt>数据存储</dt><dd>本地 SQLite（离线可用）</dd></div>
+          </dl>
+        </section>
+        <section class="page-section" aria-labelledby="about-tech-heading">
+          <h2 id="about-tech-heading" class="section-heading">技术信息</h2>
+          <dl class="surface about-info">
+            <div class="split-row"><dt>前端技术</dt><dd>Electron + Vue 3 + Element Plus + ECharts</dd></div>
+            <div class="split-row"><dt>后端技术</dt><dd>Java 17 + Spring Boot + SQLite</dd></div>
+          </dl>
+        </section>
       </div>
     </div>
   </div>
@@ -582,18 +613,17 @@ function onCsvImported(res: CsvImportResult) {
 <style scoped>
 .settings {
   display: flex;
-  gap: var(--bk-gap);
+  gap: 24px;
   height: 100%;
   min-height: 0;
 }
 
 .settings__menu {
-  width: 180px;
+  width: 156px;
   flex-shrink: 0;
-  background: var(--bk-surface);
+  background: transparent;
   border-radius: var(--bk-radius-lg);
-  box-shadow: var(--bk-shadow-sm);
-  padding: 12px 8px;
+  padding: 6px 0;
   align-self: flex-start;
 }
 
@@ -605,6 +635,10 @@ function onCsvImported(res: CsvImportResult) {
 
 .settings__menu-item {
   display: flex;
+  width: 100%;
+  border: 0;
+  background: transparent;
+  text-align: left;
   align-items: center;
   gap: 10px;
   padding: 10px 12px;
@@ -632,35 +666,20 @@ function onCsvImported(res: CsvImportResult) {
   container: settings-body / inline-size;
 }
 
-.settings__panel {
-  display: flex;
-  flex-direction: column;
-  gap: var(--bk-gap);
-}
+.settings__body > .page { padding-right: 8px; }
 
-.form-tip {
-  color: var(--bk-text-secondary);
-  font-size: 12px;
-  margin-top: 4px;
-}
+.data-row { display: flex; align-items: center; flex-wrap: wrap; gap: 16px 24px; }
+.data-row > .row-copy { flex: 1 1 260px; }
+.data-row > .el-button { flex-shrink: 0; }
+.about-info { margin: 0; }
+.about-info dt { font-weight: 550; color: var(--bk-text); }
+.about-info dd { margin: 0; color: var(--bk-text-secondary); overflow-wrap: anywhere; }
 
 /* 个性化以设置列表呈现，独立于其他管理页的表单样式。 */
 .preferences {
-  max-width: 960px;
-  margin-inline: auto;
-  padding: 6px 16px 32px 8px;
-  box-sizing: border-box;
-  gap: 28px;
+  gap: var(--bk-page-gap);
 }
 
-.preferences__intro h1 {
-  margin: 0 0 8px;
-  font-size: 24px;
-  font-weight: 650;
-  letter-spacing: -0.02em;
-}
-
-.preferences__intro p,
 .preference-hint,
 .preference-copy p {
   margin: 5px 0 0;
@@ -869,16 +888,7 @@ function onCsvImported(res: CsvImportResult) {
 .amount-example { font-size: 12px; color: var(--bk-text-secondary); font-variant-numeric: tabular-nums; }
 .preference-select { width: 156px; flex-shrink: 0; }
 .preferences :deep(.preference-birthday) { width: 190px; flex-shrink: 0; }
-.preferences :deep(.el-select__wrapper),
-.preferences :deep(.el-input__wrapper) {
-  background: var(--bk-surface-2);
-  box-shadow: none;
-  border-radius: 9px;
-}
-.preferences :deep(.el-select__wrapper.is-focused),
-.preferences :deep(.el-input__wrapper.is-focus) {
-  box-shadow: 0 0 0 2px var(--bk-button-primary);
-}
+.preferences :deep(.el-input__wrapper) { min-width: 0; }
 
 /* 背景图选择器 */
 .bg-picker {
@@ -977,20 +987,9 @@ function onCsvImported(res: CsvImportResult) {
 .bg-mask { flex: 1; min-width: 0; }
 
 /* 数据管理：备份/恢复 + CSV 导入导出 */
-.data-section__title {
-  font-weight: 600;
-  margin-bottom: 2px;
-}
-
-.data-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-  margin: 12px 0;
-}
-
 .data-alert {
-  max-width: 560px;
+  margin-top: 18px;
+  line-height: 1.7;
 }
 
 /* 快捷键自定义（EL-06） */
@@ -1017,6 +1016,14 @@ function onCsvImported(res: CsvImportResult) {
 }
 .shortcut-plus { font-size: 11px; color: var(--bk-text-secondary); }
 .shortcut-display.is-capturing { font-size: 13px; color: var(--bk-button-primary); }
+
+@container content (max-width: 860px) {
+  .settings { flex-direction: column; height: auto; gap: 22px; }
+  .settings__menu { display: flex; flex-wrap: wrap; gap: 4px; width: 100%; padding: 0; }
+  .settings__menu-title { display: none; }
+  .settings__menu-item { width: auto; padding: 9px 12px; font-size: 13px; }
+  .settings__body { overflow: visible; flex: none; }
+}
 
 @container settings-body (max-width: 640px) {
   .preferences { padding: 4px 8px 24px; gap: 24px; }

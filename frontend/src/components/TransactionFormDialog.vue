@@ -222,14 +222,16 @@ async function save() {
     v-model="visible"
     :title="title"
     width="560px"
+    class="bk-dialog quiet-controls"
     :close-on-click-modal="false"
     append-to-body
   >
-    <div class="tf-tabs" role="tablist">
-      <div
+    <div class="record-tabs" role="tablist" aria-label="交易类型">
+      <button
+        type="button"
         v-for="t in typeTabs"
         :key="t.value"
-        class="tf-tab"
+        class="record-tab"
         :class="[`tf-tab--${t.value}`, { 'is-active': form.type === t.value }]"
         role="tab"
         tabindex="0"
@@ -238,11 +240,11 @@ async function save() {
         @keydown="onTabKey($event, t.value)"
       >
         {{ t.label }}
-      </div>
+      </button>
     </div>
 
-    <el-form ref="formRef" label-width="90px" @submit.prevent>
-      <el-form-item label="金额" required :error="fieldErrors.amount">
+    <el-form ref="formRef" label-position="top" @submit.prevent>
+      <el-form-item label="金额" required :error="fieldErrors.amount" class="record-amount">
         <el-input v-model="form.amount" placeholder="0.00" @input="form.amount = sanitizeAmountInput(form.amount); fieldErrors.amount = ''">
           <template #prepend>¥</template>
         </el-input>
@@ -302,6 +304,7 @@ async function save() {
         </div>
       </el-form-item>
 
+      <h3 class="dialog-section__title">附加信息</h3>
       <el-form-item label="日期" required :error="fieldErrors.transactionDate">
         <el-date-picker
           v-model="form.transactionDate"
@@ -325,50 +328,20 @@ async function save() {
     </el-form>
 
     <template #footer>
-      <el-button @click="visible = false">取消</el-button>
-      <el-button type="primary" :loading="saving" @click="save">保存</el-button>
+      <div class="dialog-footer">
+        <el-button @click="visible = false">取消</el-button>
+        <el-button type="primary" :loading="saving" @click="save">保存</el-button>
+      </div>
     </template>
   </el-dialog>
 </template>
 
 <style scoped>
-.tf-tabs {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 18px;
-}
-
-.tf-tab {
-  flex: 1;
-  text-align: center;
-  padding: 8px 0;
-  border-radius: 8px;
-  background: var(--el-fill-color);
-  color: var(--el-text-color-regular);
-  cursor: pointer;
-  font-size: 14px;
-  user-select: none;
-  transition: all 0.15s;
-}
-
-.tf-tab--expense.is-active {
-  background: var(--el-color-danger);
-  color: #fff;
-}
-
-.tf-tab--income.is-active {
-  background: var(--el-color-success);
-  color: #fff;
-}
-
-.tf-tab--transfer.is-active {
-  background: var(--el-color-primary);
-  color: #fff;
-}
-
-.tf-tab:focus-visible {
-  outline: 2px solid var(--el-color-primary);
-  outline-offset: 2px;
+.record-amount :deep(.el-input__inner) {
+  height: 48px;
+  font-size: 26px;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
 }
 
 .tf-cat-option {

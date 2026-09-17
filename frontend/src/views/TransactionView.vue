@@ -476,7 +476,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="page page--comfortable">
+  <div class="page page--comfortable quiet-controls">
     <!-- 页头叙事 -->
     <header class="page-head page-head--actions">
       <div class="row-copy">
@@ -618,6 +618,10 @@ onBeforeUnmount(() => {
 
     <!-- 流水列表（消费级流水行，替代列状表格；保留 data-guide="tx-table"） -->
     <div class="panel tx-panel">
+      <div class="card-head tx-panel__head">
+        <h2 class="card-head__title">交易记录</h2>
+        <span class="card-hint">{{ loading ? '正在加载…' : `共 ${total} 笔记录` }}</span>
+      </div>
       <!-- 批量管理操作条（NEW-06） -->
       <div v-if="batchMode" class="batch-bar">
         <el-checkbox
@@ -630,7 +634,7 @@ onBeforeUnmount(() => {
         <el-button size="small" :disabled="!selectedIds.length" @click="openBatchCategory">批量改分类</el-button>
         <el-button size="small" type="danger" :disabled="!selectedIds.length" :loading="batchLoading" @click="batchRemove">批量删除</el-button>
       </div>
-      <div v-loading="loading && list.length > 0" class="tx-list" data-guide="tx-table">
+      <div v-loading="loading && list.length > 0" class="tx-list" :class="{ 'is-batch': batchMode }" data-guide="tx-table">
         <!-- 首屏骨架（前端细化 #1）：首次加载且无数据时用骨架行占位，避免白屏 + spinner 的廉价感 -->
         <el-skeleton v-if="loading && !list.length" class="tx-skeleton" animated>
           <template #template>
@@ -653,6 +657,7 @@ onBeforeUnmount(() => {
           <el-checkbox
             v-if="batchMode"
             class="tx-row__check"
+            :aria-label="`选择流水 ${row.note || row.id}`"
             :model-value="selectedIds.includes(row.id)"
             @change="toggleSelect(row.id)"
           />
@@ -674,7 +679,7 @@ onBeforeUnmount(() => {
                 v-for="tag in rowTags(row)"
                 :key="tag.id"
                 class="tag-chip"
-                :style="{ background: tag.color + '22', color: tag.color, borderColor: tag.color + '55' }"
+                :style="{ '--tag-color': tag.color || 'var(--bk-text-secondary)' }"
               >{{ tag.name }}</span>
             </div>
             <div class="tx-row__sub">
@@ -698,9 +703,9 @@ onBeforeUnmount(() => {
           </div>
 
           <div class="tx-row__actions">
-            <el-button link type="primary" title="编辑" @click="openEdit(row)"><el-icon><Edit /></el-icon></el-button>
-            <el-button link type="primary" title="复制" @click="openCopy(row)"><el-icon><DocumentCopy /></el-icon></el-button>
-            <el-button link type="danger" title="删除" @click="remove(row)"><el-icon><Delete /></el-icon></el-button>
+            <el-button link type="primary" title="编辑" aria-label="编辑流水" @click="openEdit(row)"><el-icon><Edit /></el-icon></el-button>
+            <el-button link type="primary" title="复制" aria-label="复制流水" @click="openCopy(row)"><el-icon><DocumentCopy /></el-icon></el-button>
+            <el-button link type="danger" title="删除" aria-label="删除流水" @click="remove(row)"><el-icon><Delete /></el-icon></el-button>
           </div>
         </div>
 
@@ -733,8 +738,9 @@ onBeforeUnmount(() => {
     <TransactionFormDialog v-model="formDialog.visible" :mode="formDialog.mode" :initial="formDialog.initial" @saved="load" />
 
     <!-- 批量修改分类对话框（NEW-06） -->
-    <el-dialog v-model="batchCategoryDialog.visible" title="批量修改分类" width="420px" append-to-body>
-      <el-form label-width="80px" @submit.prevent>
+    <el-dialog v-model="batchCategoryDialog.visible" title="批量修改分类" width="440px" class="bk-dialog quiet-controls" append-to-body>
+      <p class="dialog-intro">为已选择的 {{ selectedIds.length }} 笔记录设置同一分类。</p>
+      <el-form label-position="top" @submit.prevent>
         <el-form-item label="目标分类">
           <el-cascader
             v-model="batchCategoryDialog.categoryId"
@@ -747,8 +753,10 @@ onBeforeUnmount(() => {
         </el-form-item>
       </el-form>
       <template #footer>
-        <el-button @click="batchCategoryDialog.visible = false">取消</el-button>
-        <el-button type="primary" :loading="batchLoading" @click="confirmBatchCategory">确定</el-button>
+        <div class="dialog-footer">
+          <el-button @click="batchCategoryDialog.visible = false">取消</el-button>
+          <el-button type="primary" :loading="batchLoading" @click="confirmBatchCategory">确定</el-button>
+        </div>
       </template>
     </el-dialog>
   </div>
@@ -759,13 +767,20 @@ onBeforeUnmount(() => {
 .tx-filter-row {
   display: grid;
   grid-template-columns: 100px minmax(0, 1fr);
-  gap: 16px;
+  align-items: start;
+  gap: 18px;
+}
+
+.tx-filter-row > h2 { padding-top: 6px; }
+.tx-filter-row .toolbar > :deep(.el-input) { max-width: 100%; }
+.tx-dimensions { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
 .tx-dimensions > :deep(.el-select),
 .tx-dimensions > :deep(.el-cascader) {
-  flex: 1 1 130px;
-  max-width: 200px;
+  width: 100% !important;
+  min-width: 0;
+  max-width: none;
 }
 
 .tx-date {
@@ -783,7 +798,7 @@ onBeforeUnmount(() => {
   min-width: 0;
 }
 
-@media (max-width: 720px) {
+@container content (max-width: 820px) {
   .tx-filter-row {
     grid-template-columns: minmax(0, 1fr);
     gap: 12px;
@@ -799,12 +814,17 @@ onBeforeUnmount(() => {
   display: inline-flex;
   align-items: center;
   padding: 1px 8px;
-  border: 1px solid;
+  gap: 5px;
+  background: color-mix(in srgb, var(--tag-color) 10%, var(--bk-surface));
+  color: var(--bk-text-regular);
+  border: 0;
   border-radius: var(--bk-radius-pill);
   font-size: 12px;
   line-height: 18px;
   flex-shrink: 0;
 }
+
+.tag-chip::before { content: ''; width: 5px; height: 5px; border-radius: 50%; background: var(--tag-color); }
 
 /* 标签下拉选项：色点 + 名称 */
 .tag-opt {
@@ -822,8 +842,10 @@ onBeforeUnmount(() => {
 
 /* —— 消费级流水行 —— */
 .tx-panel {
-  padding: 8px 10px 16px;
+  padding: 20px var(--bk-panel-padding);
 }
+.tx-panel__head { padding-bottom: 14px; }
+.tx-list.is-batch .tx-row { grid-template-columns: 22px 40px minmax(0, 1fr) auto auto; }
 
 .tx-list {
   display: flex;
@@ -860,13 +882,17 @@ onBeforeUnmount(() => {
 }
 
 .tx-row {
-  display: flex;
+  display: grid;
+  grid-template-columns: 40px minmax(0, 1fr) auto auto;
   align-items: center;
   gap: 14px;
-  padding: 12px 14px;
+  padding: 18px 8px;
+  border-bottom: 1px solid var(--bk-border-light);
   border-radius: var(--bk-radius-md);
   transition: background-color 0.16s ease;
 }
+
+.tx-row:last-child { border-bottom: 0; }
 
 .tx-row:hover {
   background: var(--bk-surface-2);
@@ -897,16 +923,15 @@ onBeforeUnmount(() => {
   display: flex;
   align-items: center;
   gap: 6px;
+  flex-wrap: wrap;
   min-width: 0;
 }
 
 .tx-row__note {
-  font-size: 15px;
-  font-weight: 600;
+  font-size: 14px;
+  font-weight: 550;
   color: var(--bk-text);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
 }
 
 .tx-row__sub {
@@ -930,7 +955,9 @@ onBeforeUnmount(() => {
 
 .tx-row__amount {
   flex-shrink: 0;
-  min-width: 116px;
+  min-width: 100px;
+  max-width: 240px;
+  overflow-wrap: anywhere;
   display: flex;
   flex-direction: column;
   align-items: flex-end;
@@ -940,7 +967,7 @@ onBeforeUnmount(() => {
 
 .tx-row__amount .amount-strong {
   font-size: 17px;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .tx-row__actions {
@@ -969,7 +996,8 @@ onBeforeUnmount(() => {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 8px 12px;
+  padding: 12px 14px;
+  flex-wrap: wrap;
   margin-bottom: 8px;
   border-radius: var(--bk-radius-md);
   background: var(--el-color-primary-light-9);
@@ -996,18 +1024,31 @@ onBeforeUnmount(() => {
 .pagination-row {
   display: flex;
   justify-content: flex-end;
-  margin-top: 14px;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--bk-border-light);
 }
+.pagination-row :deep(.el-pagination) { flex-wrap: wrap; gap: 8px; }
+.batch-bar > .el-button + .el-button { margin-left: 0; }
 
 /* 站内信跳转定位提示条 */
 .focus-tip {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 8px 12px;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding: 14px 18px;
   border-radius: var(--bk-radius-md);
   font-size: 13px;
   color: var(--el-color-primary);
   background: var(--el-color-primary-light-9);
+}
+@container content (max-width: 620px) {
+  .tx-dimensions { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .tx-row { grid-template-columns: 40px minmax(0, 1fr) auto; gap: 10px; }
+  .tx-list.is-batch .tx-row { grid-template-columns: 22px 40px minmax(0, 1fr) auto; }
+  .tx-row__actions { grid-column: 2 / -1; justify-content: flex-end; opacity: 1; }
+  .tx-list.is-batch .tx-row__actions { grid-column: 3 / -1; }
+  .tx-row__amount { min-width: 0; max-width: 160px; }
 }
 </style>

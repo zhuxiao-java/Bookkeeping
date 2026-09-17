@@ -2,6 +2,7 @@
 import { computed, ref, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { UploadFilled } from '@element-plus/icons-vue'
+import EmptyState from './EmptyState.vue'
 import { backupApi, ApiError } from '@/api'
 import type { CsvImportResult, CsvPreviewResult, CsvRowStatus } from '@/api'
 
@@ -137,7 +138,7 @@ const importableCount = computed(() => {
     width="760px"
     :close-on-click-modal="false"
     append-to-body
-    class="csv-dialog"
+    class="bk-dialog quiet-controls csv-dialog"
   >
     <el-steps :active="step" align-center finish-status="success" class="csv-steps">
       <el-step title="选择文件" />
@@ -147,14 +148,14 @@ const importableCount = computed(() => {
 
     <!-- 步骤 1：选择文件 -->
     <div v-if="step === 0" class="csv-body">
-      <div class="csv-drop" :class="{ 'is-busy': previewing }" @click="pickFile">
+      <button type="button" class="csv-drop" :class="{ 'is-busy': previewing }" :disabled="previewing" @click="pickFile">
         <el-icon class="csv-drop__icon"><UploadFilled /></el-icon>
         <div class="csv-drop__title">点击选择 CSV 文件</div>
         <div class="csv-drop__tip">
           仅支持导出的流水 CSV 格式：日期, 类型, 金额, 手续费, 账户, 转入账户, 分类, 备注, 标签
         </div>
         <div v-if="previewing" class="csv-drop__loading">正在解析…</div>
-      </div>
+      </button>
       <input
         ref="fileInput"
         type="file"
@@ -182,7 +183,7 @@ const importableCount = computed(() => {
       </div>
 
       <div class="csv-toolbar">
-        <el-radio-group v-model="statusFilter" size="small">
+        <el-radio-group v-model="statusFilter" class="segment" aria-label="校验结果筛选" size="small">
           <el-radio-button value="all">全部</el-radio-button>
           <el-radio-button value="valid">可导入</el-radio-button>
           <el-radio-button value="duplicate">重复</el-radio-button>
@@ -206,11 +207,11 @@ const importableCount = computed(() => {
           </template>
         </el-table-column>
         <el-table-column prop="reason" label="说明" min-width="140" show-overflow-tooltip />
+        <template #empty><EmptyState description="该筛选下暂无数据" :size="64" /></template>
       </el-table>
       <div v-if="preview.rows.length < preview.total" class="csv-note">
         仅展示前 {{ preview.rows.length }} 行明细，统计数字已覆盖全部 {{ preview.total }} 行。
       </div>
-      <el-empty v-if="filteredRows.length === 0" description="该筛选下暂无数据" :image-size="60" />
     </div>
 
     <!-- 步骤 3：结果 -->
@@ -234,7 +235,7 @@ const importableCount = computed(() => {
     </div>
 
     <template #footer>
-      <div class="csv-footer">
+      <div class="dialog-footer csv-footer">
         <template v-if="step === 0">
           <el-button @click="close">取消</el-button>
         </template>
@@ -268,7 +269,10 @@ const importableCount = computed(() => {
 }
 
 .csv-drop {
-  border: 2px dashed var(--el-border-color);
+  width: 100%;
+  background: var(--bk-surface-2);
+  color: var(--bk-text);
+  border: 1px dashed var(--bk-border);
   border-radius: var(--bk-radius-lg, 12px);
   padding: 32px 16px;
   text-align: center;
@@ -298,7 +302,7 @@ const importableCount = computed(() => {
 }
 
 .csv-drop__tip {
-  font-size: 12px;
+  font-size: 13px;
   color: var(--bk-text-secondary, #909399);
   margin-top: 6px;
 }
@@ -328,14 +332,13 @@ const importableCount = computed(() => {
 .csv-summary__file {
   font-weight: 600;
   margin-right: 4px;
-  max-width: 220px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  width: 100%;
+  overflow-wrap: anywhere;
 }
 
 .csv-toolbar {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
@@ -348,7 +351,7 @@ const importableCount = computed(() => {
 
 .csv-note {
   margin-top: 8px;
-  font-size: 12px;
+  font-size: 13px;
   color: var(--bk-text-secondary, #909399);
 }
 
@@ -371,7 +374,7 @@ const importableCount = computed(() => {
 .csv-failures__list li {
   display: flex;
   gap: 10px;
-  font-size: 12px;
+  font-size: 13px;
   padding: 3px 0;
   border-bottom: 1px solid var(--el-border-color-lighter);
 }
@@ -383,7 +386,8 @@ const importableCount = computed(() => {
 }
 
 .csv-failures__reason {
-  color: var(--el-color-danger);
+  color: var(--bk-expense-text);
+  overflow-wrap: anywhere;
 }
 
 .csv-footer {

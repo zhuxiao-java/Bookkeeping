@@ -5,6 +5,7 @@
  */
 
 import { DISTINCT_COLORS } from './constants'
+import type { EChartsOption } from './echarts'
 
 export interface ChartPalette {
   income: string
@@ -52,6 +53,43 @@ export function valueAxisStyle(p: ChartPalette = chartPalette()) {
   return {
     axisLabel: { color: p.axisText },
     splitLine: { lineStyle: { color: p.splitLine } }
+  }
+}
+
+/** 仅补充呈现默认值，保留调用方的格式化、交互和系列配置。 */
+export function withChartTheme(option: EChartsOption): EChartsOption {
+  const palette = chartPalette()
+  const fontFamily = cssVar('--bk-font-family', 'system-ui, sans-serif')
+  const text = { color: palette.axisText, fontFamily, fontSize: 12 }
+  const record = (value: unknown): Record<string, unknown> =>
+    value !== null && typeof value === 'object' && !Array.isArray(value) ? value as Record<string, unknown> : {}
+  const tooltip = (value: unknown) => {
+    const item = record(value)
+    return {
+      backgroundColor: cssVar('--bk-surface', '#ffffff'),
+      borderColor: palette.axisLine,
+      borderWidth: 1,
+      padding: [10, 14],
+      confine: true,
+      ...item,
+      textStyle: { ...text, color: cssVar('--bk-text', '#25332d'), ...record(item.textStyle) }
+    }
+  }
+  const legend = (value: unknown) => {
+    const item = record(value)
+    return {
+      itemWidth: 12,
+      itemHeight: 8,
+      itemGap: 18,
+      ...item,
+      textStyle: { ...text, ...record(item.textStyle) }
+    }
+  }
+  return {
+    ...option,
+    textStyle: { ...text, ...option.textStyle },
+    ...(option.tooltip ? { tooltip: Array.isArray(option.tooltip) ? option.tooltip.map(tooltip) : tooltip(option.tooltip) } : {}),
+    ...(option.legend ? { legend: Array.isArray(option.legend) ? option.legend.map(legend) : legend(option.legend) } : {})
   }
 }
 

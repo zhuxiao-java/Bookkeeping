@@ -412,11 +412,15 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="page page--comfortable dash" v-loading="loading && transactions.length > 0">
+  <div class="page page--comfortable quiet-controls dash" v-loading="loading && transactions.length > 0">
+    <header class="page-head">
+      <h1 class="page-head__title">总览</h1>
+      <p class="page-head__sub">从今天的小记录，看见生活与收支的变化。</p>
+    </header>
     <!-- Hero：本月结余大数字 + 环比 + 等级 chip（叙事化首屏，弱化后台看板感） -->
     <section class="hero bk-enter">
       <div class="hero__main">
-        <h1 class="hero__label">{{ monthLabel }} · 本月结余</h1>
+        <h2 class="hero__label">{{ monthLabel }} · 本月结余</h2>
         <div class="hero__balance" :class="heroBalance >= 0 ? 'amount-income' : 'amount-expense'">
           {{ heroBalance >= 0 ? '' : '-' }}¥{{ formatAmount(Math.abs(heroBalanceAnim), decimals) }}
         </div>
@@ -435,7 +439,7 @@ onBeforeUnmount(() => {
       </div>
 
       <!-- 等级 chip（后端等级接口可用时展示），点击进等级页 -->
-      <div v-if="level.info" class="hero__level" role="link" tabindex="0" title="查看我的等级" @click="router.push('/level')" @keydown.enter="router.push('/level')">
+      <router-link v-if="level.info" to="/level" class="hero__level" title="查看我的等级">
         <LevelLogo :level="level.info.level" :size="42" />
         <div class="hero__level-meta">
           <div class="hero__level-title">Lv.{{ level.info.level }} {{ level.info.leveName }}</div>
@@ -448,7 +452,7 @@ onBeforeUnmount(() => {
           <span class="hero__level-expv">{{ expDisplay }}</span>
           <span class="hero__level-expl">经验</span>
         </div>
-      </div>
+      </router-link>
     </section>
 
     <!-- 签到卡片（后端签到接口可用时展示） -->
@@ -493,6 +497,8 @@ onBeforeUnmount(() => {
     </section>
 
     <!-- 图表区 -->
+    <section class="page-section" aria-labelledby="dashboard-analysis-heading">
+      <h2 id="dashboard-analysis-heading" class="section-heading">收支分析</h2>
     <div class="chart-row">
       <el-card shadow="never" class="chart-card" data-guide="trend">
         <template #header>
@@ -504,7 +510,7 @@ onBeforeUnmount(() => {
         <div class="chart-slot">
           <div ref="trendEl" class="chart-box" title="点击查看当天流水" />
           <el-skeleton v-if="loading && !monthTransactions.length" class="chart-skel" animated :rows="5" />
-          <el-empty v-else-if="!monthTransactions.length" description="本月暂无记录" class="chart-empty" />
+          <EmptyState v-else-if="!monthTransactions.length" description="本月暂无记录" :size="80" class="chart-empty" />
         </div>
       </el-card>
 
@@ -521,7 +527,7 @@ onBeforeUnmount(() => {
         <div class="chart-slot">
           <div ref="pieEl" class="chart-box" title="点击查看该分类流水" />
           <el-skeleton v-if="loading && !expenseAgg.length" class="chart-skel" animated :rows="5" />
-          <el-empty v-else-if="!expenseAgg.length" description="本月暂无支出" class="chart-empty" />
+          <EmptyState v-else-if="!expenseAgg.length" description="本月暂无支出" :size="80" class="chart-empty" />
           <div v-else class="pie-center">
             <div class="pie-center__value">¥{{ formatAmount(expenseTotal, decimals) }}</div>
             <div class="pie-center__label">本月支出</div>
@@ -551,11 +557,15 @@ onBeforeUnmount(() => {
       <div class="chart-slot">
         <div ref="plEl" class="pl-box" title="点击查看该月流水" />
         <el-skeleton v-if="loading && !transactions.length" class="chart-skel" animated :rows="4" />
-        <el-empty v-else-if="!transactions.length" description="还没有记录" class="chart-empty" />
+        <EmptyState v-else-if="!transactions.length" description="还没有记录" :size="72" class="chart-empty" />
       </div>
     </el-card>
 
+    </section>
+
     <!-- 最近流水 + 预算概况 -->
+    <section class="page-section" aria-labelledby="dashboard-record-heading">
+      <h2 id="dashboard-record-heading" class="section-heading">账本动态</h2>
     <div class="bottom-row" data-guide="recent">
       <el-card shadow="never" class="bottom-card">
         <template #header>
@@ -628,6 +638,7 @@ onBeforeUnmount(() => {
         </EmptyState>
       </el-card>
     </div>
+    </section>
   </div>
 </template>
 
@@ -642,11 +653,10 @@ onBeforeUnmount(() => {
   align-items: center;
   justify-content: space-between;
   gap: 24px;
-  padding: 26px 28px;
-  border-radius: var(--bk-radius-xl);
-  background:
-    radial-gradient(120% 140% at 0% 0%, rgba(47, 181, 124, 0.14) 0%, transparent 55%),
-    linear-gradient(135deg, var(--bk-surface) 0%, var(--bk-surface) 100%);
+  flex-wrap: wrap;
+  padding: var(--bk-panel-padding);
+  border-radius: var(--bk-radius-lg);
+  background: var(--bk-surface);
   border: 0;
 }
 
@@ -662,7 +672,8 @@ onBeforeUnmount(() => {
 }
 
 .hero__balance {
-  font-size: var(--bk-font-display);
+  font-size: clamp(28px, 3.2vw, 38px);
+  overflow-wrap: anywhere;
   font-weight: 650;
   line-height: 1.1;
   margin: 8px 0 14px;
@@ -731,11 +742,15 @@ onBeforeUnmount(() => {
   border-radius: var(--bk-radius-lg);
   background: var(--bk-surface-2);
   cursor: pointer;
-  transition: box-shadow 0.2s, transform 0.2s;
+  max-width: 100%;
+  box-sizing: border-box;
+  color: var(--bk-text);
+  text-decoration: none;
+  transition: background-color 0.18s;
 }
 
 .hero__level:hover {
-  box-shadow: var(--bk-shadow-sm);
+  background: var(--bk-primary-soft);
 }
 
 .hero__level:focus-visible {
@@ -744,7 +759,8 @@ onBeforeUnmount(() => {
 }
 
 .hero__level-meta {
-  min-width: 168px;
+  min-width: 0;
+  flex: 1;
 }
 
 .hero__level-title {
@@ -754,7 +770,7 @@ onBeforeUnmount(() => {
 
 .hero__level-hint {
   color: var(--bk-text-secondary);
-  font-size: 11px;
+  font-size: 12px;
   margin: 2px 0 6px;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -771,26 +787,26 @@ onBeforeUnmount(() => {
 
 .hero__level-expv {
   font-size: 20px;
-  font-weight: 800;
+  font-weight: 650;
   color: var(--bk-primary);
   font-variant-numeric: tabular-nums;
 }
 
 .hero__level-expl {
   color: var(--bk-text-secondary);
-  font-size: 11px;
+  font-size: 12px;
   margin-top: 2px;
 }
 
 /* —— 统计 tile —— */
 .stat-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: var(--bk-gap);
 }
 
 .tile {
-  padding: 22px 24px;
+  padding: 22px var(--bk-panel-padding);
   min-width: 0;
   border-radius: var(--bk-radius-lg);
   background: var(--bk-surface);
@@ -803,7 +819,8 @@ onBeforeUnmount(() => {
 
 .tile__value {
   font-size: 26px;
-  font-weight: 700;
+  font-weight: 650;
+  overflow-wrap: anywhere;
   margin-top: 8px;
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.01em;
@@ -824,7 +841,7 @@ onBeforeUnmount(() => {
 
 .chart-row {
   display: grid;
-  grid-template-columns: 3fr 2fr;
+  grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
   gap: var(--bk-gap);
 }
 
@@ -891,7 +908,7 @@ onBeforeUnmount(() => {
 
 .bottom-row {
   display: grid;
-  grid-template-columns: 3fr 2fr;
+  grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
   gap: var(--bk-gap);
 }
 
@@ -926,9 +943,7 @@ onBeforeUnmount(() => {
 
 .recent-row__note {
   font-size: 14px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
 }
 
 .recent-row__sub {
@@ -942,6 +957,7 @@ onBeforeUnmount(() => {
 }
 
 .recent-row__amount {
+  flex-shrink: 0;
   font-size: 15px;
 }
 
@@ -949,7 +965,9 @@ onBeforeUnmount(() => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 10px;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 14px;
 }
 
 .budget-line__label {
@@ -962,25 +980,9 @@ onBeforeUnmount(() => {
 }
 
 /* 窄窗口自适应（桌面端窗口可自由缩放）：统计卡 4→2→1，图表/底部双栏→单栏 */
-@media (max-width: 1180px) {
+@container content (max-width: 1040px) {
   .hero {
     flex-wrap: wrap;
-  }
-
-  .dash :deep(.cc__row) {
-    flex-wrap: wrap;
-  }
-
-  .dash :deep(.cc__main) {
-    flex: 1 1 240px;
-  }
-
-  .dash :deep(.cc__week) {
-    margin-left: 70px;
-  }
-
-  .dash :deep(.cc__link) {
-    margin-left: auto;
   }
 
   .stat-grid {
@@ -993,11 +995,7 @@ onBeforeUnmount(() => {
   }
 }
 
-@media (max-width: 720px) {
-  .dash :deep(.cc__week) {
-    margin-left: 0;
-  }
-
+@container content (max-width: 520px) {
   .stat-grid {
     grid-template-columns: 1fr;
   }

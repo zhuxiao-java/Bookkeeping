@@ -16,7 +16,7 @@ withDefaults(
 </script>
 
 <template>
-  <div class="empty-state">
+  <div class="empty-state" :class="{ 'empty-state--compact': size <= 96 }">
     <svg
       class="empty-state__art"
       :width="size"
@@ -81,17 +81,21 @@ withDefaults(
   text-align: center;
 }
 
+.empty-state--compact { padding: 18px 12px; }
+
 .empty-state__art {
   display: block;
+  max-width: 100%;
+  flex-shrink: 0;
   margin-bottom: 4px;
 }
 
 .empty-state__stroke {
-  stroke: var(--bk-primary-light-5, #8fbdae);
+  stroke: color-mix(in srgb, var(--bk-button-primary) 55%, var(--bk-surface));
 }
 
 .empty-state__dot {
-  fill: var(--bk-primary-light-5, #8fbdae);
+  fill: color-mix(in srgb, var(--bk-button-primary) 55%, var(--bk-surface));
 }
 
 .empty-state__ground {
@@ -102,10 +106,14 @@ withDefaults(
   margin: 0;
   color: var(--bk-text-secondary);
   font-size: 14px;
+  line-height: 1.7;
+  overflow-wrap: anywhere;
 }
 
 .empty-state__actions {
+  max-width: 100%;
   margin-top: 10px;
+  line-height: 1.7;
 }
 
 /* 克制微交互：硬币轻轻上下浮动，尊重减少动效偏好 */

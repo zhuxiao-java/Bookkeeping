@@ -23,12 +23,12 @@ watch(
 <template>
   <div class="help-entry">
     <el-tooltip content="使用说明" placement="bottom">
-      <el-button circle data-guide="help" @click="visible = true">
+      <el-button circle data-guide="help" aria-label="打开使用说明" @click="visible = true">
         <el-icon><QuestionFilled /></el-icon>
       </el-button>
     </el-tooltip>
 
-    <el-drawer v-model="visible" size="560px">
+    <el-drawer v-model="visible" size="560px" class="bk-drawer quiet-controls" title="使用说明">
       <template #header>
         <span class="help-entry__title">使用说明</span>
       </template>
@@ -45,7 +45,7 @@ watch(
 }
 
 .help-entry__title {
-  font-size: 16px;
+  font-size: 20px;
   font-weight: 600;
 }
 </style>

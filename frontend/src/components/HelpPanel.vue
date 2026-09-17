@@ -3,6 +3,7 @@ import { computed, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { Right, Search } from '@element-plus/icons-vue'
+import EmptyState from './EmptyState.vue'
 import {
   HELP_SECTIONS,
   blockSearchText,
@@ -78,11 +79,12 @@ function run(link: HelpLink) {
 </script>
 
 <template>
-  <div class="help">
+  <div class="help quiet-controls">
     <div class="help__bar">
       <el-input
         v-model="keyword"
         placeholder="搜索说明，如「预算」「快捷键」「背景」"
+        aria-label="搜索使用说明"
         clearable
         :prefix-icon="Search"
       />
@@ -122,17 +124,22 @@ function run(link: HelpLink) {
       </el-collapse-item>
     </el-collapse>
 
-    <el-empty v-else description="没有匹配的说明内容" :image-size="80" />
+    <EmptyState v-else description="没有匹配的说明内容" :size="96" />
   </div>
 </template>
 
 <style scoped>
+.help {
+  container: help / inline-size;
+  min-width: 0;
+}
+
 .help__bar {
   position: sticky;
   top: 0;
   z-index: 1;
   padding-bottom: 10px;
-  background: var(--el-bg-color);
+  background: var(--bk-bg);
 }
 
 .help__title {
@@ -186,7 +193,7 @@ function run(link: HelpLink) {
 
 .help-table__row {
   display: grid;
-  grid-template-columns: 210px repeat(var(--help-cols, 1), 1fr);
+  grid-template-columns: minmax(100px, 0.8fr) repeat(var(--help-cols, 1), minmax(0, 1fr));
 }
 
 .help-table__row + .help-table__row {
@@ -194,8 +201,10 @@ function run(link: HelpLink) {
 }
 
 .help-table__row > span {
-  padding: 8px 12px;
-  line-height: 1.6;
+  padding: 10px 12px;
+  line-height: 1.7;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .help-table__head {
@@ -206,5 +215,13 @@ function run(link: HelpLink) {
 
 .help-table .is-key {
   color: var(--el-color-primary);
+}
+.help__collapse :deep(.el-collapse-item__header),
+.help__collapse :deep(.el-collapse-item__wrap) { background: transparent; }
+.help__collapse :deep(.el-collapse-item__header) { min-height: 56px; height: auto; }
+.help-block__links :deep(.el-button) { margin-left: 0; white-space: normal; height: auto; min-height: 30px; text-align: left; }
+@container help (max-width: 420px) {
+  .help-table__row { grid-template-columns: minmax(80px, 0.65fr) repeat(var(--help-cols, 1), minmax(0, 1fr)); }
+  .help-table__row > span { padding: 8px; }
 }
 </style>

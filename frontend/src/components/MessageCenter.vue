@@ -7,6 +7,7 @@ import { formatDateTime } from '@/utils/format'
 import { parseWeather, weatherSummary } from '@/utils/weather'
 import { messageIcon } from '@/components/messageIcons'
 import MessageDetailDialog from '@/components/MessageDetailDialog.vue'
+import EmptyState from '@/components/EmptyState.vue'
 import type { Message, MessageType } from '@/types/model'
 
 /**
@@ -69,13 +70,13 @@ onUnmounted(() => {
         :max="99"
         :hidden="!message.unreadCount"
       >
-        <el-button circle @click="open">
+        <el-button circle aria-label="打开消息中心" @click="open">
           <el-icon><Bell /></el-icon>
         </el-button>
       </el-badge>
     </el-tooltip>
 
-    <el-drawer v-model="visible" size="420px">
+    <el-drawer v-model="visible" size="460px" class="bk-drawer quiet-controls">
       <template #header>
         <div class="msg-head">
           <span class="msg-head__title">消息中心</span>
@@ -99,12 +100,13 @@ onUnmounted(() => {
             size="small"
             clearable
             placeholder="全部类型"
+            aria-label="消息类型"
           >
             <el-option v-for="o in MESSAGE_TYPE_OPTIONS" :key="o.value" :label="o.label" :value="o.value" />
           </el-select>
           <div class="msg-toolbar__ops">
             <el-tooltip content="刷新" placement="bottom">
-              <el-button link size="small" :icon="Refresh" @click="message.load(true)" />
+              <el-button link size="small" :icon="Refresh" aria-label="刷新消息" @click="message.load(true)" />
             </el-tooltip>
             <el-button
               link
@@ -128,29 +130,30 @@ onUnmounted(() => {
         </div>
 
         <el-scrollbar v-loading="message.loading" class="msg-list">
-          <el-empty v-if="!filtered.length" description="暂无消息" :image-size="80" />
+          <EmptyState v-if="!message.loading && !filtered.length" description="暂无消息" :size="96" />
 
           <div
             v-for="item in filtered"
             :key="item.id"
             class="msg-item"
             :class="{ 'is-unread': item.status === 0 }"
-            @click="onItemClick(item)"
           >
-            <span class="msg-item__icon" :style="{ background: messageTypeColor(item.type) }">
+            <button type="button" class="msg-item__open" :aria-label="`查看消息：${item.title}`" @click="onItemClick(item)">
+            <span class="msg-item__icon" :style="{ '--message-color': messageTypeColor(item.type) }">
               <el-icon><component :is="messageIcon(item.type, weatherOf(item))" /></el-icon>
             </span>
 
             <div class="msg-item__body">
               <div class="msg-item__head">
                 <span class="msg-item__title">{{ item.title }}</span>
-                <span class="msg-item__type" :style="{ color: messageTypeColor(item.type) }">
+                <span class="msg-item__type">
                   {{ messageTypeLabel(item.type) }}
                 </span>
               </div>
               <div class="msg-item__content">{{ previewOf(item) }}</div>
               <div class="msg-item__time">{{ formatDateTime(item.createTime) }}</div>
             </div>
+            </button>
 
             <el-popconfirm title="删除这条消息？" width="200" @confirm="message.remove(item.id)">
               <template #reference>
@@ -160,6 +163,7 @@ onUnmounted(() => {
                   type="danger"
                   size="small"
                   :icon="Delete"
+                  :aria-label="`删除消息：${item.title}`"
                   @click.stop
                 />
               </template>
@@ -222,6 +226,7 @@ onUnmounted(() => {
 
 .msg-toolbar {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 10px;
   padding-bottom: 12px;
@@ -230,10 +235,14 @@ onUnmounted(() => {
 }
 
 .msg-toolbar__type {
-  width: 104px;
+  width: 150px;
+  margin-left: auto;
 }
 
 .msg-toolbar__ops {
+  width: 100%;
+  justify-content: flex-end;
+  flex-wrap: wrap;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -261,8 +270,23 @@ onUnmounted(() => {
   transition: background-color 0.2s;
 }
 
-.msg-item:hover {
-  background: var(--el-fill-color-light);
+.msg-item:hover,
+.msg-item:focus-within {
+  background: var(--bk-surface);
+}
+
+.msg-item__open {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
 }
 
 .msg-item__icon {
@@ -273,7 +297,8 @@ onUnmounted(() => {
   width: 30px;
   height: 30px;
   border-radius: 9px;
-  color: #fff;
+  background: color-mix(in srgb, var(--message-color) 14%, var(--bk-surface));
+  color: var(--message-color);
   font-size: 15px;
 }
 
@@ -284,6 +309,7 @@ onUnmounted(() => {
 
 .msg-item__head {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 8px;
 }
@@ -291,9 +317,7 @@ onUnmounted(() => {
 .msg-item__title {
   font-size: 14px;
   font-weight: 500;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
 }
 
 /* 未读标题加重，配合左侧圆点区分状态 */
@@ -314,7 +338,7 @@ onUnmounted(() => {
 
 .msg-item__type {
   flex: none;
-  font-size: 11px;
+  font-size: 12px;
 }
 
 .msg-item__content {
@@ -332,7 +356,7 @@ onUnmounted(() => {
 
 .msg-item__time {
   margin-top: 5px;
-  font-size: 11px;
+  font-size: 12px;
   color: var(--el-text-color-secondary);
   font-variant-numeric: tabular-nums;
 }
@@ -343,7 +367,8 @@ onUnmounted(() => {
   transition: opacity 0.2s;
 }
 
-.msg-item:hover .msg-item__del {
+.msg-item:hover .msg-item__del,
+.msg-item:focus-within .msg-item__del {
   opacity: 1;
 }
 </style>

@@ -196,7 +196,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="page page--comfortable" v-loading="loading">
+  <div class="page page--comfortable quiet-controls" v-loading="loading">
     <!-- 页头叙事（总资产）+ 共享工具条 -->
     <header class="page-head page-head--actions">
       <div class="row-copy">
@@ -260,7 +260,7 @@ onBeforeUnmount(() => {
               </div>
             </div>
             <el-dropdown trigger="click" @command="(cmd: string) => cmd === 'edit' ? openEdit(account) : cmd === 'archive' ? toggleArchive(account) : remove(account)">
-              <el-button text circle>
+              <el-button text circle :aria-label="`${account.name}的更多操作`">
                 <el-icon><MoreFilled /></el-icon>
               </el-button>
               <template #dropdown>
@@ -293,7 +293,8 @@ onBeforeUnmount(() => {
     <el-dialog
       v-model="dialogVisible"
       :title="editing ? '编辑账户' : '新增账户'"
-      width="440px"
+      width="460px"
+      class="bk-dialog quiet-controls"
       :close-on-click-modal="false"
       append-to-body
     >
@@ -303,17 +304,19 @@ onBeforeUnmount(() => {
         </el-form-item>
         <el-form-item label="账户类型" required>
           <!-- 不用 el-radio-button：图标+文字较宽时换行后边框互相压叠，改用自适应宫格 -->
-          <div class="type-grid">
-            <div
+          <div class="choice-grid" role="group" aria-label="账户类型">
+            <button
+              type="button"
               v-for="t in ACCOUNT_TYPE_OPTIONS"
               :key="t.value"
-              class="type-tile"
+              class="choice-tile"
               :class="{ 'is-active': form.type === t.value }"
+              :aria-pressed="form.type === t.value"
               @click="form.type = t.value"
             >
               <AccountTypeIcon :type="t.value" :size="20" />
               <span>{{ t.label }}</span>
-            </div>
+            </button>
           </div>
         </el-form-item>
         <el-form-item label="初始余额" required>
@@ -331,8 +334,10 @@ onBeforeUnmount(() => {
         </el-form-item>
       </el-form>
       <template #footer>
-        <el-button @click="dialogVisible = false">取消</el-button>
-        <el-button type="primary" :loading="saving" @click="save">保存</el-button>
+        <div class="dialog-footer">
+          <el-button @click="dialogVisible = false">取消</el-button>
+          <el-button type="primary" :loading="saving" @click="save">保存</el-button>
+        </div>
       </template>
     </el-dialog>
   </div>
@@ -376,15 +381,17 @@ onBeforeUnmount(() => {
 .account-card::before {
   content: '';
   position: absolute;
-  left: 0;
+  left: 24px;
   top: 0;
-  bottom: 0;
-  width: 4px;
+  height: 3px;
+  width: 32px;
+  border-radius: 0 0 3px 3px;
+  opacity: 0.65;
   background: var(--acc, var(--bk-primary));
 }
 
 .account-card.is-archived {
-  opacity: 0.6;
+  background: color-mix(in srgb, var(--bk-surface) 65%, var(--bk-surface-2));
 }
 
 .account-card__header {
@@ -399,8 +406,11 @@ onBeforeUnmount(() => {
 }
 
 .account-card__name {
+  font-size: 15px;
   font-weight: 600;
+  overflow-wrap: anywhere;
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 8px;
 }
@@ -408,21 +418,25 @@ onBeforeUnmount(() => {
 .account-card__sub {
   color: var(--bk-text-secondary);
   font-size: 12px;
-  margin-top: 2px;
+  margin-top: 5px;
+  overflow-wrap: anywhere;
 }
 
 .account-card__balance {
-  margin-top: 16px;
+  margin-top: 22px;
   font-size: 14px;
   color: var(--bk-text-secondary);
   display: flex;
   align-items: baseline;
-  gap: 2px;
+  flex-wrap: wrap;
+  gap: 4px;
 }
 
 .account-card__balance .amount-strong {
   font-size: 26px;
-  font-weight: 700;
+  font-weight: 650;
+  overflow-wrap: anywhere;
+  min-width: 0;
   color: var(--bk-text);
   font-variant-numeric: tabular-nums;
 }
@@ -436,34 +450,5 @@ onBeforeUnmount(() => {
 }
 
 /* 账户类型选择宫格：2 列自适应，避免段状单选换行压叠 */
-.type-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 8px;
-  width: 100%;
-}
-
-.type-tile {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 10px;
-  border: 1px solid var(--bk-border);
-  border-radius: var(--bk-radius-md);
-  cursor: pointer;
-  font-size: 13px;
-  color: var(--bk-text);
-  transition: all 0.15s;
-}
-
-.type-tile:hover {
-  border-color: var(--el-color-primary-light-5);
-}
-
-.type-tile.is-active {
-  border-color: var(--el-color-primary);
-  background: var(--el-color-primary-light-9);
-  color: var(--el-color-primary);
-  font-weight: 600;
-}
+.choice-grid .choice-tile { min-height: 46px; }
 </style>

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, h, onMounted, onUnmounted, ref, watch } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { useRoute } from 'vue-router'
 import { ElButton, ElNotification } from 'element-plus'
 import {
   DataAnalysis,
@@ -32,7 +32,6 @@ import { useGuideStore } from '@/stores/guide'
 import { useBudgetAlert } from '@/composables/useBudgetAlert'
 
 const route = useRoute()
-const router = useRouter()
 const settings = useSettingsStore()
 const dict = useDictStore()
 const level = useLevelStore()
@@ -208,13 +207,14 @@ onUnmounted(() => {
       </div>
 
       <!-- 等级入口（后端等级接口可用时展示），点击进等级页 -->
-      <div
+      <router-link
         v-if="level.info"
+        to="/level"
         class="level-entry"
         data-guide="level-entry"
         :class="{ 'level-entry--collapsed': collapsed }"
         :title="collapsed ? level.info.leveName : '查看我的等级'"
-        @click="router.push('/level')"
+        aria-label="查看我的等级"
       >
         <LevelLogo :level="level.info.level" :size="collapsed ? 30 : 34" />
         <template v-if="!collapsed">
@@ -232,7 +232,7 @@ onUnmounted(() => {
             color="var(--bk-primary)"
           />
         </template>
-      </div>
+      </router-link>
 
       <el-menu
         :default-active="activeMenu"
@@ -247,10 +247,10 @@ onUnmounted(() => {
         </el-menu-item>
       </el-menu>
 
-      <div class="aside-footer" @click="collapsed = !collapsed">
+      <button type="button" class="aside-footer" :aria-label="collapsed ? '展开导航' : '收起导航'" :aria-expanded="!collapsed" @click="collapsed = !collapsed">
         <el-icon><component :is="collapsed ? Expand : Fold" /></el-icon>
         <span v-show="!collapsed">收起导航</span>
-      </div>
+      </button>
     </el-aside>
 
     <el-container class="main-layout__body">
@@ -267,7 +267,7 @@ onUnmounted(() => {
           <!-- 站内信：后端消息接口可用时展示铃铛与未读角标 -->
           <MessageCenter />
           <el-tooltip :content="settings.isDark ? '切换浅色主题' : '切换深色主题'">
-            <el-button circle data-guide="theme" @click="settings.toggleTheme()">
+            <el-button circle data-guide="theme" :aria-label="settings.isDark ? '切换浅色主题' : '切换深色主题'" @click="settings.toggleTheme()">
               <el-icon><component :is="settings.isDark ? Sunny : Moon" /></el-icon>
             </el-button>
           </el-tooltip>
@@ -333,11 +333,11 @@ onUnmounted(() => {
   width: 38px;
   height: 38px;
   border-radius: var(--bk-radius-md);
-  background: linear-gradient(135deg, var(--bk-primary) 0%, #2fa37a 100%);
-  color: #fff;
+  background: var(--bk-primary-soft);
+  color: var(--bk-button-primary);
   font-size: 19px;
   font-weight: 700;
-  box-shadow: 0 4px 12px rgba(31, 122, 92, 0.28);
+  box-shadow: none;
 }
 
 .brand__text {
@@ -370,14 +370,15 @@ onUnmounted(() => {
   border-radius: var(--bk-radius-md);
   border: none;
   background: var(--bk-surface-2);
-  box-shadow: var(--bk-shadow-sm);
+  box-shadow: none;
+  color: var(--bk-text);
+  text-decoration: none;
   cursor: pointer;
-  transition: box-shadow 0.2s, transform 0.2s;
+  transition: background-color 0.18s;
 }
 
 .level-entry:hover {
-  box-shadow: var(--bk-shadow-md);
-  transform: translateY(-1px);
+  background: var(--bk-primary-soft);
 }
 
 .level-entry--collapsed {
@@ -413,6 +414,8 @@ onUnmounted(() => {
 
 .main-layout__menu {
   flex: 1;
+  min-height: 0;
+  overflow-y: auto;
   border-right: none;
   padding: 6px 10px;
   --el-menu-bg-color: transparent;
@@ -456,6 +459,9 @@ onUnmounted(() => {
   gap: 8px;
   margin: 8px 10px 12px;
   padding: 10px 12px;
+  border: 0;
+  background: transparent;
+  text-align: left;
   border-radius: var(--bk-radius-md);
   color: var(--bk-text-secondary);
   cursor: pointer;
@@ -471,6 +477,7 @@ onUnmounted(() => {
 
 .main-layout__body {
   min-width: 0;
+  min-height: 0;
 }
 
 .main-layout__header {
@@ -495,9 +502,9 @@ onUnmounted(() => {
 }
 
 .header-title__text {
-  font-size: 20px;
-  font-weight: 700;
-  color: var(--bk-text);
+  font-size: 14px;
+  font-weight: 550;
+  color: var(--bk-text-regular);
   letter-spacing: -0.01em;
 }
 
@@ -512,8 +519,28 @@ onUnmounted(() => {
 }
 
 .main-layout__main {
+  min-width: 0;
+  min-height: 0;
   background: transparent;
-  padding: 8px 24px 24px;
+  padding: 12px 24px 24px;
   overflow-y: auto;
+  container: content / inline-size;
+}
+
+@media (max-width: 1100px) {
+  .main-layout__header { padding-inline: 20px; }
+  .main-layout__main { padding-inline: 20px; }
+  .header-actions { gap: 8px; }
+}
+
+@media (max-width: 720px) {
+  .header-title__greet { display: none; }
+  .main-layout__header { gap: 12px; padding-inline: 16px; }
+  .main-layout__main { padding-inline: 16px; }
+  .header-actions { flex-wrap: wrap; gap: 6px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .main-layout__aside, .level-entry, .aside-footer { transition: none; }
 }
 </style>

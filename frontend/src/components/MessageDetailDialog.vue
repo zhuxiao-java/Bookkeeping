@@ -2,6 +2,7 @@
 import { computed, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { Right } from '@element-plus/icons-vue'
+import EmptyState from './EmptyState.vue'
 import { messageApi } from '@/api'
 import { messageTypeColor, messageTypeLabel } from '@/utils/constants'
 import { formatDateTime } from '@/utils/format'
@@ -110,10 +111,10 @@ function jump() {
 </script>
 
 <template>
-  <el-dialog v-model="visible" width="520px" append-to-body>
+  <el-dialog v-model="visible" width="560px" class="bk-dialog quiet-controls" :title="current?.title || '消息详情'" append-to-body>
     <template #header>
       <div v-if="current" class="msg-detail__head">
-        <span class="msg-detail__icon" :style="{ background: themeColor }">
+        <span class="msg-detail__icon" :style="{ '--message-color': themeColor }">
           <el-icon><component :is="messageIcon(current.type, weather)" /></el-icon>
         </span>
         <div class="msg-detail__heading">
@@ -177,10 +178,10 @@ function jump() {
     <!-- 普通消息：纯文本，保留换行与空格排版 -->
     <div v-else-if="current" class="msg-detail__content">{{ current.content }}</div>
 
-    <el-empty v-else description="消息不存在或已被删除" :image-size="70" />
+    <EmptyState v-else description="消息不存在或已被删除" :size="88" />
 
     <template #footer>
-      <div class="msg-detail__footer">
+      <div class="dialog-footer">
         <el-button @click="visible = false">关闭</el-button>
         <el-button v-if="jumpTarget" type="primary" @click="jump">
           查看{{ jumpTarget.label }}
@@ -197,7 +198,7 @@ function jump() {
   align-items: flex-start;
   gap: 10px;
   /* 抵消 el-dialog 头部右侧关闭按钮的占位，标题不被挤压 */
-  padding-right: 24px;
+  padding-right: 0;
 }
 
 .msg-detail__icon {
@@ -208,7 +209,8 @@ function jump() {
   width: 34px;
   height: 34px;
   border-radius: 10px;
-  color: #fff;
+  color: var(--message-color);
+  background: color-mix(in srgb, var(--message-color) 14%, var(--bk-surface));
   font-size: 17px;
 }
 
@@ -222,11 +224,7 @@ function jump() {
   font-weight: 600;
   line-height: 22px;
   /* 长标题最多两行 */
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
+  overflow-wrap: anywhere;
 }
 
 .msg-detail__meta {
@@ -248,15 +246,15 @@ function jump() {
 .msg-detail__content,
 .greeting,
 .weather {
-  max-height: 60vh;
-  overflow-y: auto;
+  margin-bottom: 16px;
+  overflow-wrap: anywhere;
 }
 
 /* 贺卡版式：底色与文字色均写死，深色主题下同样可读 */
 .greeting {
   padding: 22px 20px;
   border-radius: 14px;
-  background: linear-gradient(135deg, #fbc2eb 0%, #a6c1ee 100%);
+  background: color-mix(in srgb, var(--bk-primary-soft) 45%, var(--bk-surface-2));
   text-align: center;
 }
 
@@ -272,7 +270,7 @@ function jump() {
 .greeting__text {
   font-size: 16px;
   line-height: 30px;
-  color: #4a3b57;
+  color: var(--bk-text);
   white-space: pre-wrap;
   word-break: break-word;
 }
@@ -281,8 +279,8 @@ function jump() {
 .weather {
   padding: 18px;
   border-radius: 14px;
-  background: linear-gradient(135deg, #2f9fd6 0%, #6fd3c7 100%);
-  color: #fff;
+  background: var(--bk-primary-soft);
+  color: var(--bk-text);
 }
 
 .weather__head {
@@ -327,7 +325,7 @@ function jump() {
 .weather__grid {
   margin-top: 16px;
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   gap: 10px;
 }
 
@@ -338,7 +336,8 @@ function jump() {
   gap: 8px;
   padding: 8px 10px;
   border-radius: 10px;
-  background: rgba(255, 255, 255, 0.18);
+  background: var(--bk-surface);
+  flex-wrap: wrap;
 }
 
 .weather__label {
@@ -352,9 +351,7 @@ function jump() {
   font-variant-numeric: tabular-nums;
 }
 
-.msg-detail__footer {
-  display: flex;
-  justify-content: flex-end;
-  gap: 8px;
-}
+.weather__head { flex-wrap: wrap; }
+.weather__label { color: var(--bk-text-secondary); }
+.msg-detail__meta { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; }
 </style>

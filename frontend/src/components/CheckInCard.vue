@@ -1,11 +1,9 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { useRouter } from 'vue-router'
 import { useCheckInStore, toDateStr } from '@/stores/checkin'
 
 /** 总览页签到卡片（候选 A）：连续天数 + 今日状态 + 近 7 日打点，点击进等级页 */
 const checkin = useCheckInStore()
-const router = useRouter()
 
 const today = computed(() => checkin.todayRecord)
 
@@ -35,12 +33,12 @@ const lit = computed(() => !!today.value || checkin.currentStreak > 0)
 </script>
 
 <template>
-  <el-card v-if="checkin.available" shadow="hover" class="checkin-card" @click="router.push('/level')">
+  <router-link v-if="checkin.available" to="/level" class="surface checkin-card" aria-label="查看签到日历与经验明细">
     <div class="cc__row">
       <div class="cc__flame" :class="{ 'is-idle': !lit }">
         <svg width="26" height="26" viewBox="0 0 24 24" fill="none">
-          <path d="M12 2c1 4-4 5.5-4 10a4.5 4.5 0 0 0 9 0c0-2-1-3.5-1-3.5S15 10 13.5 10C12 10 12.8 6 12 2z" fill="#fff" />
-          <path d="M12 22a7 7 0 0 1-7-7c0-1.2.3-2.3.8-3.3" stroke="#fff" stroke-opacity=".55" stroke-width="1.6" stroke-linecap="round" />
+          <path d="M12 2c1 4-4 5.5-4 10a4.5 4.5 0 0 0 9 0c0-2-1-3.5-1-3.5S15 10 13.5 10C12 10 12.8 6 12 2z" fill="currentColor" />
+          <path d="M12 22a7 7 0 0 1-7-7c0-1.2.3-2.3.8-3.3" stroke="currentColor" stroke-opacity=".55" stroke-width="1.6" stroke-linecap="round" />
         </svg>
       </div>
       <div class="cc__main">
@@ -64,17 +62,20 @@ const lit = computed(() => !!today.value || checkin.currentStreak > 0)
       </div>
       <div class="cc__link">查看签到日历<br />与经验明细 →</div>
     </div>
-  </el-card>
+  </router-link>
 </template>
 
 <style scoped>
 .checkin-card {
-  cursor: pointer;
+  display: block;
+  color: var(--bk-text);
+  text-decoration: none;
+  padding: var(--bk-panel-padding);
+  container: checkin-card / inline-size;
 }
 
-.checkin-card :deep(.el-card__body) {
-  padding: 16px 22px;
-}
+.checkin-card:hover { background: color-mix(in srgb, var(--bk-primary-soft) 35%, var(--bk-surface)); }
+.checkin-card:focus-visible { outline: 2px solid var(--bk-button-primary); outline-offset: 3px; }
 
 .cc__row {
   display: flex;
@@ -87,7 +88,8 @@ const lit = computed(() => !!today.value || checkin.currentStreak > 0)
   height: 52px;
   border-radius: 14px;
   flex: none;
-  background: linear-gradient(135deg, #ff9a4d, #f56c6c);
+  background: var(--bk-primary-soft);
+  color: var(--bk-button-primary);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -102,12 +104,12 @@ const lit = computed(() => !!today.value || checkin.currentStreak > 0)
 }
 
 .cc__title {
-  font-size: 17px;
-  font-weight: 700;
+  font-size: 15px;
+  font-weight: 600;
 }
 
 .cc__title b {
-  color: #f56c6c;
+  color: var(--bk-button-primary);
   font-size: 20px;
   margin: 0 2px;
 }
@@ -119,7 +121,7 @@ const lit = computed(() => !!today.value || checkin.currentStreak > 0)
 }
 
 .cc__plus {
-  color: var(--el-color-success);
+  color: var(--bk-income-text);
   font-weight: 600;
 }
 
@@ -138,7 +140,7 @@ const lit = computed(() => !!today.value || checkin.currentStreak > 0)
 }
 
 .cc__wd {
-  font-size: 11px;
+  font-size: 12px;
   color: var(--el-text-color-secondary);
 }
 
@@ -151,13 +153,13 @@ const lit = computed(() => !!today.value || checkin.currentStreak > 0)
   justify-content: center;
   background: var(--el-fill-color-light);
   color: var(--el-text-color-placeholder);
-  font-size: 11px;
+  font-size: 12px;
   font-variant-numeric: tabular-nums;
 }
 
 .cc__dot.is-done {
-  background: var(--el-color-primary);
-  color: #fff;
+  background: var(--bk-primary-soft);
+  color: var(--bk-button-primary);
 }
 
 .cc__dot.is-miss {
@@ -176,5 +178,16 @@ const lit = computed(() => !!today.value || checkin.currentStreak > 0)
   border-left: 1px solid var(--el-border-color-lighter);
   padding-left: 18px;
   line-height: 20px;
+}
+@container checkin-card (max-width: 1000px) {
+  .cc__row { flex-wrap: wrap; }
+  .cc__main { flex: 1 1 300px; }
+  .cc__week { margin-left: 0; }
+  .cc__link { margin-left: auto; }
+}
+@container checkin-card (max-width: 440px) {
+  .cc__main { flex-basis: calc(100% - 70px); }
+  .cc__week { width: 100%; justify-content: space-between; gap: 4px; }
+  .cc__link { margin-left: 0; border-left: 0; padding-left: 0; }
 }
 </style>

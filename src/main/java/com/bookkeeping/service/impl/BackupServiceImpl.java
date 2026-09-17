@@ -34,6 +34,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -189,7 +190,7 @@ public class BackupServiceImpl implements BackupService {
             byte[] snapshot = createSnapshot();
             Path dir = Path.of(bookkeepingDir, "backups");
             Files.createDirectories(dir);
-            Path file = dir.resolve("auto-" + BACKUP_STAMP.format(LocalDateTime.now()) + ".db");
+            Path file = dir.resolve("auto-" + BACKUP_STAMP.format(LocalDateTime.now(ZoneId.systemDefault())) + ".db");
             Files.write(file, snapshot);
             pruneAutoBackups(dir);
         } catch (Exception e) {

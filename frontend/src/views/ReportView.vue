@@ -29,6 +29,7 @@ import { useChart } from '@/composables/useChart'
 import { chartPalette, resolveDistinctColors } from '@/utils/chartTheme'
 import { bus, TRANSACTION_CHANGED, CATEGORY_CHANGED, ACCOUNT_CHANGED } from '@/utils/bus'
 import CategoryDot from '@/components/CategoryDot.vue'
+import EmptyState from '@/components/EmptyState.vue'
 
 /**
  * 统计报表页（需求文档 4.3）：
@@ -596,7 +597,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="page page--comfortable" v-loading="loading && allTransactions.length > 0">
+  <div class="page page--comfortable quiet-controls" v-loading="loading && allTransactions.length > 0">
     <!-- 页头叙事 -->
     <header class="page-head page-head--actions">
       <div class="row-copy">
@@ -649,11 +650,14 @@ onBeforeUnmount(() => {
         </el-radio-group>
       </div>
 
-      <div class="toolbar surface-block report-summary">
-        <span class="card-metric">范围内收入 <b class="amount-income">¥{{ formatAmount(summary.income) }}</b></span>
-        <span class="card-metric">支出 <b class="amount-expense">¥{{ formatAmount(summary.expense) }}</b></span>
-      </div>
     </div>
+
+    <section class="page-section" aria-labelledby="report-summary-heading">
+      <h2 id="report-summary-heading" class="section-heading">区间汇总</h2>
+      <div class="surface report-summary">
+        <div><span>范围内收入</span><strong class="amount-income">¥{{ formatAmount(summary.income) }}</strong></div>
+        <div><span>范围内支出</span><strong class="amount-expense">¥{{ formatAmount(summary.expense) }}</strong></div>
+      </div>
 
     <!-- 区间对比（RP-02）：本期 vs 环比上期 / 同比去年 -->
     <el-card v-if="compareData" shadow="never" class="compare-card">
@@ -685,7 +689,11 @@ onBeforeUnmount(() => {
       </el-table>
     </el-card>
 
+    </section>
+
     <!-- 图表区 -->
+    <section class="page-section" aria-labelledby="report-analysis-heading">
+      <h2 id="report-analysis-heading" class="section-heading">图表分析</h2>
     <div class="chart-row">
       <el-card shadow="never" class="chart-card chart-card--wide" data-guide="rp-trend">
         <template #header>
@@ -700,7 +708,7 @@ onBeforeUnmount(() => {
         <div class="chart-slot">
           <div ref="trendEl" class="chart-box" />
           <el-skeleton v-if="loading && !rangeCount" class="chart-skel" animated :rows="6" />
-          <el-empty v-else-if="!rangeCount" description="范围内暂无数据" class="chart-empty" />
+          <EmptyState v-else-if="!rangeCount" :size="88" description="范围内暂无数据" class="chart-empty" />
         </div>
       </el-card>
 
@@ -723,7 +731,7 @@ onBeforeUnmount(() => {
         <div class="chart-slot">
           <div ref="pieEl" class="chart-box chart-box--drill" title="点击查看该分类流水" />
           <el-skeleton v-if="loading && !categoryAgg.length" class="chart-skel" animated :rows="6" />
-          <el-empty v-else-if="!categoryAgg.length" description="范围内暂无数据" class="chart-empty" />
+          <EmptyState v-else-if="!categoryAgg.length" :size="88" description="范围内暂无数据" class="chart-empty" />
           <div v-else class="pie-center">
             <div class="pie-center__value">¥{{ formatAmount(pieTotal) }}</div>
             <div class="pie-center__label">总{{ incomeExpense === 'expense' ? '支出' : '收入' }}</div>
@@ -750,7 +758,7 @@ onBeforeUnmount(() => {
       <div class="chart-slot">
         <div ref="balanceEl" class="chart-box chart-box--drill" title="点击查看该月流水" />
         <el-skeleton v-if="loading && !rangeCount" class="chart-skel" animated :rows="6" />
-        <el-empty v-else-if="!rangeCount" description="范围内暂无数据" class="chart-empty" />
+        <EmptyState v-else-if="!rangeCount" :size="88" description="范围内暂无数据" class="chart-empty" />
       </div>
     </el-card>
 
@@ -765,10 +773,14 @@ onBeforeUnmount(() => {
       <div class="chart-slot">
         <div ref="balanceTrendEl" class="chart-box" />
         <el-skeleton v-if="loading && !accountBalance.series.length" class="chart-skel" animated :rows="6" />
-        <el-empty v-else-if="!accountBalance.series.length" description="范围内暂无账户变动" class="chart-empty" />
+        <EmptyState v-else-if="!accountBalance.series.length" :size="88" description="范围内暂无账户变动" class="chart-empty" />
       </div>
     </el-card>
 
+    </section>
+
+    <section class="page-section" aria-labelledby="report-detail-heading">
+      <h2 id="report-detail-heading" class="section-heading">收支明细</h2>
     <!-- 月度盈亏明细 -->
     <el-card shadow="never">
       <template #header>
@@ -810,7 +822,7 @@ onBeforeUnmount(() => {
           </template>
         </el-table-column>
         <template #empty>
-          <el-empty description="范围内暂无数据" />
+          <EmptyState :size="88" description="范围内暂无数据" />
         </template>
       </el-table>
     </el-card>
@@ -846,10 +858,11 @@ onBeforeUnmount(() => {
           </template>
         </el-table-column>
         <template #empty>
-          <el-empty description="范围内暂无数据" />
+          <EmptyState :size="88" description="范围内暂无数据" />
         </template>
       </el-table>
     </el-card>
+    </section>
   </div>
 </template>
 
@@ -859,7 +872,30 @@ onBeforeUnmount(() => {
 }
 
 .report-summary {
-  gap: 12px 28px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px 28px;
+  padding: var(--bk-panel-padding);
+}
+
+.report-summary > div { border-top: 0; }
+
+.report-summary span {
+  color: var(--bk-text-secondary);
+  font-size: 13px;
+}
+
+.report-summary strong {
+  display: block;
+  margin-top: 8px;
+  font-size: 26px;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+
+.page-section > .section-heading {
+  padding-inline: 4px;
 }
 
 .chart-row {
@@ -949,9 +985,14 @@ onBeforeUnmount(() => {
 }
 
 /* 窄窗口自适应：图表双栏→单栏（卡片标题换行依赖全局响应式） */
-@media (max-width: 1180px) {
+@container content (max-width: 1040px) {
   .chart-row {
     grid-template-columns: 1fr;
   }
+}
+@container content (max-width: 620px) {
+  .report-summary { grid-template-columns: 1fr; }
+  .filter-card .toolbar { width: 100%; }
+  .filter-card :deep(.el-date-editor) { width: 100%; min-width: 0; }
 }
 </style>

@@ -5,6 +5,7 @@ import { useCheckInStore } from '@/stores/checkin'
 import { useSettingsStore } from '@/stores/settings'
 import LevelLogo from '@/components/LevelLogo.vue'
 import CheckInPanel from '@/components/CheckInPanel.vue'
+import EmptyState from '@/components/EmptyState.vue'
 import { formatAmount } from '@/utils/format'
 import type { ExperienceLog } from '@/types/model'
 
@@ -59,12 +60,10 @@ function monthLabel(row: ExperienceLog): string {
 
     <!-- 后端等级接口不可用：给出契约提示与重试 -->
     <el-card v-if="!loading && !level.available" shadow="never">
-      <el-empty description="等级接口未就绪">
-        <div class="empty-tip">
-          需后端提供 /level/currentLevel、/level/configs、/level/logs 三个接口后自动展示。
-        </div>
-        <el-button type="primary" @click="load(true)">重试</el-button>
-      </el-empty>
+      <EmptyState description="暂时无法获取等级信息">
+        <p class="empty-tip">你的记账记录不受影响，稍后可以再试一次。</p>
+        <el-button type="primary" @click="load(true)">重新加载</el-button>
+      </EmptyState>
     </el-card>
 
     <template v-else-if="level.info">
@@ -96,12 +95,12 @@ function monthLabel(row: ExperienceLog): string {
             <span v-if="level.info.nextLevelName">
               距下一级 <b>Lv.{{ level.info.nextLevel }} {{ level.info.nextLevelName }}</b
               >（{{ Number(level.info.nextThreshold).toLocaleString('zh-CN') }}）还需
-              <b class="amount-expense">{{ level.remainExp }}</b> 经验
+              <b class="amount-strong">{{ level.remainExp }}</b> 经验
             </span>
             <span v-else>已达到最高等级，继续保持良好的记账习惯</span>
             <span class="lv-head__pct">{{ level.progress }}%</span>
           </div>
-          <el-progress :percentage="level.progress" :stroke-width="12" color="var(--bk-primary)" :show-text="false" />
+          <el-progress :percentage="level.progress" :stroke-width="10" color="var(--bk-primary)" :show-text="false" />
         </div>
       </el-card>
 
@@ -172,9 +171,9 @@ function monthLabel(row: ExperienceLog): string {
               </template>
             </el-table-column>
           </el-table>
-          <el-empty v-else description="暂无月度结算记录" class="empty-block">
+          <EmptyState v-else :size="96" description="暂无月度结算记录" class="empty-block">
             <div class="empty-tip">每月预算结算后：未超支加经验、超支扣经验，并在此留痕。</div>
-          </el-empty>
+          </EmptyState>
         </el-card>
       </div>
     </template>
@@ -200,26 +199,28 @@ function monthLabel(row: ExperienceLog): string {
 
 .lv-head__desc {
   color: var(--el-text-color-secondary);
-  font-size: 12px;
+  font-size: 13px;
   margin-top: 4px;
 }
 
 .lv-head__stats {
   margin-left: auto;
   display: flex;
-  gap: 28px;
+  flex-wrap: wrap;
+  gap: 20px 28px;
   text-align: right;
 }
 
 .lv-stat__v {
-  font-size: 17px;
-  font-weight: 600;
+  font-size: 22px;
+  font-weight: 650;
+  overflow-wrap: anywhere;
   font-variant-numeric: tabular-nums;
 }
 
 .lv-stat__k {
   color: var(--el-text-color-secondary);
-  font-size: 11px;
+  font-size: 13px;
   margin-top: 2px;
 }
 
@@ -235,7 +236,7 @@ function monthLabel(row: ExperienceLog): string {
   justify-content: space-between;
   gap: 12px;
   color: var(--el-text-color-secondary);
-  font-size: 12px;
+  font-size: 13px;
   margin-bottom: 8px;
 }
 
@@ -255,7 +256,7 @@ function monthLabel(row: ExperienceLog): string {
 
 .ladder {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 4px 12px;
   max-height: 430px;
   overflow: auto;
@@ -273,7 +274,7 @@ function monthLabel(row: ExperienceLog): string {
 }
 
 .ladder__cell.is-done {
-  opacity: 0.75;
+  color: var(--bk-text-regular);
 }
 
 .ladder__cell.is-now {
@@ -294,9 +295,7 @@ function monthLabel(row: ExperienceLog): string {
 .ladder__name {
   flex: 1;
   min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
 }
 
 .ladder__th {
@@ -306,16 +305,16 @@ function monthLabel(row: ExperienceLog): string {
 
 .empty-tip {
   color: var(--el-text-color-secondary);
-  font-size: 12px;
+  font-size: 13px;
   margin-bottom: 12px;
 }
-@media (max-width: 1180px) {
+@container content (max-width: 1040px) {
   .lv-cols {
     grid-template-columns: minmax(0, 1fr);
   }
 }
 
-@media (max-width: 900px) {
+@container content (max-width: 800px) {
   .lv-head__stats {
     width: 100%;
     justify-content: space-between;
@@ -323,5 +322,9 @@ function monthLabel(row: ExperienceLog): string {
     text-align: left;
     margin-left: 0;
   }
+}
+@container content (max-width: 520px) {
+  .ladder { grid-template-columns: 1fr; }
+  .lv-head__ptext { align-items: flex-start; }
 }
 </style>

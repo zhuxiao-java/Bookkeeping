@@ -1,4 +1,5 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
+import { withChartTheme } from '@/utils/chartTheme'
 import {
   inDateRange,
   inMonth,
@@ -163,6 +164,46 @@ describe('accountBalanceSeries', () => {
     )
     expect(chart.labels).toEqual(['2026-09-01', '2026-09-10'])
     expect(chart.series[0].data).toEqual([100, 70])
+  })
+})
+
+describe('聚合结果的图表主题', () => {
+  it('保留系列、坐标轴、格式化和图例交互，不修改输入', () => {
+    const formatter = (value: unknown) => String(value)
+    const option = {
+      series: [{ type: 'bar', data: [10, 20] }],
+      xAxis: { type: 'category', data: ['餐饮', '交通'] },
+      tooltip: { trigger: 'axis', formatter, textStyle: { fontSize: 15 } },
+      legend: { type: 'scroll', selected: { 餐饮: false } }
+    }
+    const themed = withChartTheme(option)
+    expect(themed.series).toBe(option.series)
+    expect(themed.xAxis).toBe(option.xAxis)
+    expect(themed.tooltip).toMatchObject({ trigger: 'axis', formatter, confine: true, textStyle: { fontSize: 15 } })
+    expect(themed.legend).toMatchObject({ type: 'scroll', selected: { 餐饮: false } })
+    expect(option.tooltip).not.toHaveProperty('backgroundColor')
+  })
+
+  it('支持多组图例和提示层，未配置时不新增组件', () => {
+    const themed = withChartTheme({ tooltip: [{ show: false }], legend: [{ bottom: 0 }, { top: 0 }] })
+    expect(themed.tooltip).toEqual([expect.objectContaining({ show: false })])
+    expect(themed.legend).toEqual([expect.objectContaining({ bottom: 0 }), expect.objectContaining({ top: 0 })])
+    expect(withChartTheme({})).not.toHaveProperty('legend')
+    expect(withChartTheme({})).not.toHaveProperty('tooltip')
+  })
+
+  it('每次渲染读取当前主题令牌', () => {
+    let surface = '#ffffff'
+    vi.stubGlobal('window', {})
+    vi.stubGlobal('document', { documentElement: {} })
+    vi.stubGlobal('getComputedStyle', () => ({ getPropertyValue: (key: string) => key === '--bk-surface' ? surface : '' }))
+    try {
+      expect(withChartTheme({ tooltip: {} }).tooltip).toMatchObject({ backgroundColor: '#ffffff' })
+      surface = '#1c2224'
+      expect(withChartTheme({ tooltip: {} }).tooltip).toMatchObject({ backgroundColor: '#1c2224' })
+    } finally {
+      vi.unstubAllGlobals()
+    }
   })
 })
 

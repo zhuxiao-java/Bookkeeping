@@ -60,10 +60,15 @@
   /* —— 间距 —— */
   --bk-gap: 20px;
   --bk-gap-lg: 24px;
+  --bk-page-gap: 28px;
+  --bk-panel-padding: 24px;
+  --bk-control-radius: 9px;
+  --bk-font-body: 14px;
+  --bk-font-caption: 13px;
 
   /* —— 字阶 —— */
   --bk-font-display: 34px;
-  --bk-font-h1: 22px;
+  --bk-font-h1: 24px;
   --bk-font-h2: 18px;
 
   /* —— 半透明表面（侧栏 / 顶栏，兼容背景图透出） —— */

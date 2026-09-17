@@ -1,6 +1,7 @@
 import { onBeforeUnmount, onMounted, ref, type Ref } from 'vue'
 import echarts from '@/utils/echarts'
 import type { EChartsOption } from '@/utils/echarts'
+import { withChartTheme } from '@/utils/chartTheme'
 
 /** 图表实例管理：渲染、自适应窗口、自动销毁、点击钻取 */
 export function useChart() {
@@ -27,7 +28,7 @@ export function useChart() {
   function render(next: EChartsOption) {
     const c = ensureChart()
     if (!c) return
-    c.setOption(next, true)
+    c.setOption(withChartTheme(next), true)
   }
 
   /** 注册图表点击回调（钻取用）；传 null 取消。回调在点击时读取最新数据 */

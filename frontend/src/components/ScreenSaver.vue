@@ -51,7 +51,7 @@ const dateText = computed(() =>
 <template>
   <Teleport to="body">
     <Transition name="ss-fade">
-      <div v-if="active" class="screensaver" @click="active = false">
+      <div v-if="active" class="screensaver" role="button" tabindex="0" aria-label="退出屏保" @click="active = false" @keydown="active = false">
         <div class="screensaver__bg" :style="{ backgroundImage: `url('${bgUrl}')` }" />
         <div class="screensaver__shade" />
         <div class="screensaver__clock">
@@ -87,7 +87,7 @@ const dateText = computed(() =>
 .screensaver__shade {
   position: absolute;
   inset: 0;
-  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.15), rgba(0, 0, 0, 0.55));
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.65));
 }
 
 .screensaver__clock {
@@ -102,7 +102,7 @@ const dateText = computed(() =>
 }
 
 .screensaver__time {
-  font-size: 96px;
+  font-size: clamp(56px, 8vw, 96px);
   font-weight: 200;
   line-height: 1;
   letter-spacing: 2px;
@@ -112,7 +112,7 @@ const dateText = computed(() =>
 
 .screensaver__date {
   margin-top: 14px;
-  font-size: 22px;
+  font-size: clamp(16px, 2vw, 22px);
   color: rgba(255, 255, 255, 0.88);
   text-shadow: 0 1px 12px rgba(0, 0, 0, 0.45);
 }
@@ -124,7 +124,7 @@ const dateText = computed(() =>
   bottom: 40px;
   text-align: center;
   font-size: 13px;
-  color: rgba(255, 255, 255, 0.6);
+  color: rgba(255, 255, 255, 0.85);
   pointer-events: none;
 }
 
@@ -137,5 +137,9 @@ const dateText = computed(() =>
 .ss-fade-enter-from,
 .ss-fade-leave-to {
   opacity: 0;
+}
+@media (prefers-reduced-motion: reduce) {
+  .ss-fade-enter-active,
+  .ss-fade-leave-active { transition: none; }
 }
 </style>

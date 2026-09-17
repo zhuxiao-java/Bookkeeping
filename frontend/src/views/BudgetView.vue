@@ -2,7 +2,7 @@
 import { computed, nextTick, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { ArrowLeft, ArrowRight } from '@element-plus/icons-vue'
+import { ArrowLeft, ArrowRight, MoreFilled } from '@element-plus/icons-vue'
 import { budgetApi, ApiError } from '@/api'
 import { useDictStore } from '@/stores/dict'
 import { useSettingsStore } from '@/stores/settings'
@@ -12,6 +12,7 @@ import { useChart } from '@/composables/useChart'
 import { chartPalette } from '@/utils/chartTheme'
 import { bus, TRANSACTION_CHANGED, BUDGET_CHANGED, CATEGORY_CHANGED } from '@/utils/bus'
 import CategoryDot from '@/components/CategoryDot.vue'
+import EmptyState from '@/components/EmptyState.vue'
 
 /**
  * 预算管理页（需求文档 4.4）：
@@ -443,7 +444,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="page page--comfortable" ref="pageRef" v-loading="loading">
+  <div class="page page--comfortable quiet-controls" ref="pageRef" v-loading="loading">
     <!-- 页头叙事 + 月份导航工具行 -->
     <header class="page-head page-head--actions">
       <div class="row-copy">
@@ -476,15 +477,14 @@ onBeforeUnmount(() => {
         <div class="total-card__row">
           <div class="total-card__info">
             <div class="total-card__label">月度总预算</div>
-            <div class="total-card__amount">
-              已用 <span class="amount-expense amount-strong">¥{{ formatAmount(spentOf(totalBudget), decimals) }}</span>
-              <span class="total-card__sep">/</span>
-              ¥{{ formatAmount(totalBudget.amount, decimals) }}
+            <div class="budget-metrics">
+              <div><span>已使用</span><strong class="amount-expense">¥{{ formatAmount(spentOf(totalBudget), decimals) }}</strong></div>
+              <div><span>预算额度</span><strong>¥{{ formatAmount(totalBudget.amount, decimals) }}</strong></div>
+              <div><span>剩余可用</span><strong>¥{{ formatAmount(Math.max(0, Number(totalBudget.amount) - spentOf(totalBudget)), decimals) }}</strong></div>
             </div>
-            <div class="total-card__sub">
-              剩余可用 ¥{{ formatAmount(Math.max(0, Number(totalBudget.amount) - spentOf(totalBudget)), decimals) }}
-              <template v-if="daysLeft !== null"> · 本月还剩 {{ daysLeft }} 天</template>
-              <template v-if="dailyAffordable !== null"> · 日均可花 ¥{{ formatAmount(dailyAffordable, decimals) }}</template>
+            <div v-if="daysLeft !== null || dailyAffordable !== null" class="total-card__sub">
+              <span v-if="daysLeft !== null">本月还剩 {{ daysLeft }} 天</span>
+              <span v-if="dailyAffordable !== null">日均可花 ¥{{ formatAmount(dailyAffordable, decimals) }}</span>
             </div>
             <div v-if="forecast" class="total-card__forecast">
               按当前日均 ¥{{ formatAmount(forecast.avgDaily, decimals) }}，预计月底支出
@@ -504,7 +504,7 @@ onBeforeUnmount(() => {
           class="total-card__progress"
           :percentage="pctOf(spentOf(totalBudget), Number(totalBudget.amount))"
           :status="progressStatus(pctOf(spentOf(totalBudget), Number(totalBudget.amount)))"
-          :stroke-width="16"
+          :stroke-width="10"
           :show-text="true"
         />
         <el-alert
@@ -518,9 +518,9 @@ onBeforeUnmount(() => {
       </el-card>
 
       <el-card v-else shadow="never">
-        <el-empty description="本月还未设置总预算">
+        <EmptyState description="本月还未设置总预算" :size="104">
           <el-button type="primary" @click="openCreate">设置月度总预算</el-button>
-        </el-empty>
+        </EmptyState>
       </el-card>
     </section>
 
@@ -552,7 +552,7 @@ onBeforeUnmount(() => {
               trigger="click"
               @command="(cmd: string) => cmd === 'edit' ? openEdit(budget) : remove(budget)"
             >
-              <el-button text circle>···</el-button>
+              <el-button text circle aria-label="分类预算的更多操作"><el-icon><MoreFilled /></el-icon></el-button>
               <template #dropdown>
                 <el-dropdown-menu>
                   <el-dropdown-item command="edit">编辑</el-dropdown-item>
@@ -566,7 +566,7 @@ onBeforeUnmount(() => {
             :status="progressStatus(pctOf(spentOf(budget), Number(budget.amount)))"
             :stroke-width="10"
           />
-          <el-tag v-if="spentOf(budget) > Number(budget.amount)" type="danger" size="small" effect="dark" class="budget-card__over">
+          <el-tag v-if="spentOf(budget) > Number(budget.amount)" type="danger" size="small" effect="light" class="budget-card__over">
             已超支 ¥{{ formatAmount(spentOf(budget) - Number(budget.amount), decimals) }}
           </el-tag>
           <el-button text type="primary" size="small" class="budget-card__link" @click="viewTransactions(budget)">
@@ -591,7 +591,8 @@ onBeforeUnmount(() => {
     <el-dialog
       v-model="dialogVisible"
       :title="editing ? '编辑预算' : '设置预算'"
-      width="440px"
+      width="460px"
+      class="bk-dialog quiet-controls"
       :close-on-click-modal="false"
       append-to-body
     >
@@ -607,9 +608,9 @@ onBeforeUnmount(() => {
           />
         </el-form-item>
         <el-form-item label="预算类型" required>
-          <el-radio-group v-model="form.budgetType" :disabled="!!editing">
-            <el-radio value="total">总预算</el-radio>
-            <el-radio value="category">分类预算</el-radio>
+          <el-radio-group v-model="form.budgetType" class="segment" aria-label="预算类型" :disabled="!!editing">
+            <el-radio-button value="total">总预算</el-radio-button>
+            <el-radio-button value="category">分类预算</el-radio-button>
           </el-radio-group>
         </el-form-item>
         <el-form-item v-if="form.budgetType === 'category'" label="分类" required>
@@ -624,8 +625,10 @@ onBeforeUnmount(() => {
         </el-form-item>
       </el-form>
       <template #footer>
-        <el-button @click="dialogVisible = false">取消</el-button>
-        <el-button type="primary" :loading="saving" @click="save">保存</el-button>
+        <div class="dialog-footer">
+          <el-button @click="dialogVisible = false">取消</el-button>
+          <el-button type="primary" :loading="saving" @click="save">保存</el-button>
+        </div>
       </template>
     </el-dialog>
   </div>
@@ -651,6 +654,7 @@ onBeforeUnmount(() => {
 
 .total-card__info {
   min-width: 0;
+  flex: 1 1 520px;
 }
 
 .total-card__row {
@@ -666,30 +670,27 @@ onBeforeUnmount(() => {
   font-size: 13px;
 }
 
-.total-card__amount {
-  font-size: 18px;
-  margin-top: 6px;
-}
-
-.total-card__amount .amount-strong {
-  font-size: 26px;
-}
-
-.total-card__sep {
-  color: var(--bk-text-secondary);
-  margin: 0 6px;
-}
+.budget-metrics { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; margin-top: 20px; }
+.budget-metrics > div { display: flex; flex-direction: column; min-width: 0; gap: 6px; }
+.budget-metrics span { font-size: 12px; color: var(--bk-text-secondary); }
+.budget-metrics strong { font-size: 24px; font-weight: 650; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
 
 .total-card__sub {
   color: var(--bk-text-secondary);
   font-size: 13px;
-  margin-top: 6px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 20px;
+  margin-top: 20px;
 }
 
 .total-card__forecast {
   color: var(--bk-text-secondary);
   font-size: 13px;
-  margin-top: 4px;
+  margin-top: 14px;
+  padding: 12px 14px;
+  border-radius: var(--bk-radius-sm);
+  background: var(--bk-surface-2);
 }
 
 .budget-card__link {
@@ -736,13 +737,16 @@ onBeforeUnmount(() => {
 }
 
 .budget-card__name {
+  font-size: 15px;
   font-weight: 600;
+  overflow-wrap: anywhere;
 }
 
 .budget-card__sub {
   color: var(--bk-text-secondary);
   font-size: 12px;
-  margin-top: 2px;
+  margin-top: 5px;
+  overflow-wrap: anywhere;
 }
 
 .budget-card__over {
@@ -762,5 +766,11 @@ onBeforeUnmount(() => {
 .history-card__chart {
   height: 300px;
   width: 100%;
+}
+.total-card__actions > .el-button + .el-button { margin-left: 0; }
+@container content (max-width: 540px) {
+  .budget-metrics { grid-template-columns: minmax(0, 1fr); gap: 14px; }
+  .budget-metrics > div { flex-direction: row; align-items: baseline; justify-content: space-between; gap: 12px; }
+  .budget-metrics strong { font-size: 22px; }
 }
 </style>

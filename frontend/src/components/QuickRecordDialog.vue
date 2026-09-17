@@ -9,6 +9,7 @@ import type { Category, TransactionType } from '@/types/model'
 import { isValidAmountInput, nowIso, sanitizeAmountInput } from '@/utils/format'
 import { bus, TRANSACTION_CHANGED } from '@/utils/bus'
 import AccountOption from '@/components/AccountOption.vue'
+import EmptyState from '@/components/EmptyState.vue'
 
 /**
  * 快速记账弹窗（需求文档 4.2.4）：
@@ -512,15 +513,17 @@ async function save(keepOpen: boolean) {
   <el-dialog
     v-model="visible"
     title="快速记账"
-    width="520px"
+    width="560px"
+    class="bk-dialog quiet-controls"
     :close-on-click-modal="false"
     append-to-body
   >
-    <div class="qr-tabs" role="tablist">
-      <div
+    <div class="record-tabs" role="tablist" aria-label="交易类型">
+      <button
+        type="button"
         v-for="t in typeTabs"
         :key="t.value"
-        class="qr-tab"
+        class="record-tab"
         :class="[`qr-tab--${t.value}`, { 'is-active': type === t.value }]"
         role="tab"
         tabindex="0"
@@ -529,7 +532,7 @@ async function save(keepOpen: boolean) {
         @keydown="onTabKey($event, t.value)"
       >
         {{ t.label }}
-      </div>
+      </button>
     </div>
 
     <!-- 常用模板（TR-03）：点击回填，× 删除；失效模板置灰并拦截套用（NEW-09） -->
@@ -541,10 +544,9 @@ async function save(keepOpen: boolean) {
         class="qr-tpl"
         :class="{ 'is-stale': !!templateIssue(t) }"
         :title="templateIssue(t) ? `${t.name}（${templateIssue(t)}）` : `一键填入「${t.name}」`"
-        @click="applyTemplate(t)"
       >
-        <span class="qr-tpl__name">{{ t.name }}</span>
-        <span class="qr-tpl__del" @click.stop="removeTemplate(t)">×</span>
+        <button type="button" class="qr-tpl__name" :disabled="!!templateIssue(t)" @click="applyTemplate(t)">{{ t.name }}</button>
+        <button type="button" class="qr-tpl__del" :aria-label="`删除模板${t.name}`" @click="removeTemplate(t)">×</button>
       </div>
     </div>
 
@@ -555,11 +557,14 @@ async function save(keepOpen: boolean) {
         v-model="amount"
         class="qr-amount__input"
         inputmode="decimal"
+        aria-label="记账金额"
+        :aria-invalid="!!fieldErrors.amount"
+        aria-describedby="quick-amount-error"
         placeholder="0.00"
         @input="amount = sanitizeAmountInput(amount); fieldErrors.amount = ''"
       />
     </div>
-    <div v-if="fieldErrors.amount" class="qr-amount__error">{{ fieldErrors.amount }}</div>
+    <div v-if="fieldErrors.amount" id="quick-amount-error" class="qr-amount__error" role="alert">{{ fieldErrors.amount }}</div>
 
     <el-form ref="formRef" label-position="top" class="qr-form" @submit.prevent>
       <el-form-item label="账户" :error="fieldErrors.accountId">
@@ -604,27 +609,30 @@ async function save(keepOpen: boolean) {
                 {{ dict.categoryById(pathIds[k - 1])?.name }} 的子分类
               </div>
               <div class="qr-cats">
-                <div
+                <button
+                  type="button"
                   v-for="c in levelAt(k)"
                   :key="c.id"
                   class="qr-cat"
                   :class="{ 'is-active': pathIds[k] === c.id, 'is-selected': categoryId === c.id }"
+                  :aria-pressed="categoryId === c.id"
                   @click="selectAt(k, c)"
                 >
                   <span class="qr-cat__dot" :style="{ background: c.color || '#909399' }">
                     {{ c.name.slice(0, 1) }}
                   </span>
                   <span class="qr-cat__name">{{ c.name }}</span>
-                </div>
+                </button>
               </div>
             </div>
           </template>
         </div>
-        <el-empty v-else :image-size="48" :description="`暂无${typeLabel}分类`">
+        <EmptyState v-else :size="64" :description="`暂无${typeLabel}分类`">
           <el-button type="primary" link @click="goCreateCategory">去创建{{ typeLabel }}分类</el-button>
-        </el-empty>
+        </EmptyState>
       </el-form-item>
 
+      <h3 class="dialog-section__title">附加信息</h3>
       <el-form-item label="标签（可选）">
         <el-select
           v-model="tagIds"
@@ -644,7 +652,7 @@ async function save(keepOpen: boolean) {
     </el-form>
 
     <template #footer>
-      <div class="qr-footer">
+      <div class="dialog-footer qr-footer">
         <el-button text type="primary" @click="saveTemplate">存为模板</el-button>
         <div class="qr-footer__spacer" />
         <el-button @click="visible = false">取消</el-button>
@@ -656,51 +664,18 @@ async function save(keepOpen: boolean) {
 </template>
 
 <style scoped>
-.qr-tabs {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 16px;
-}
-
-.qr-tab {
-  flex: 1;
-  text-align: center;
-  padding: 8px 0;
-  border-radius: 8px;
-  background: var(--el-fill-color);
-  color: var(--el-text-color-regular);
-  cursor: pointer;
-  font-size: 14px;
-  user-select: none;
-  transition: all 0.15s;
-}
-
-.qr-tab--expense.is-active {
-  background: var(--el-color-danger);
-  color: #fff;
-}
-
-.qr-tab--income.is-active {
-  background: var(--el-color-success);
-  color: #fff;
-}
-
-.qr-tab--transfer.is-active {
-  background: var(--el-color-primary);
-  color: #fff;
-}
-
-.qr-tab:focus-visible {
-  outline: 2px solid var(--el-color-primary);
-  outline-offset: 2px;
+.qr-amount:focus-within {
+  box-shadow: 0 0 0 2px var(--bk-primary-soft);
+  border-color: var(--bk-button-primary);
 }
 
 .qr-amount {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 8px 12px;
-  margin-bottom: 16px;
+  padding: 14px 16px;
+  margin-bottom: 22px;
+  background: var(--bk-surface-2);
   border: 1px solid var(--el-border-color);
   border-radius: 10px;
 }
@@ -713,7 +688,7 @@ async function save(keepOpen: boolean) {
   margin: -10px 0 16px;
   font-size: 12px;
   line-height: 1.4;
-  color: var(--el-color-danger);
+  color: var(--bk-expense-text);
 }
 
 .qr-amount__symbol {
@@ -748,12 +723,14 @@ async function save(keepOpen: boolean) {
 
 .qr-cats {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(88px, 1fr));
   gap: 8px;
   width: 100%;
 }
 
 .qr-cat {
+  background: var(--bk-surface);
+  min-width: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -793,13 +770,11 @@ async function save(keepOpen: boolean) {
   font-size: 12px;
   color: var(--el-text-color-regular);
   max-width: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
 }
 
 .qr-form :deep(.el-form-item) {
-  margin-bottom: 14px;
+  margin-bottom: 22px;
 }
 
 .qr-tpls {
@@ -835,7 +810,7 @@ async function save(keepOpen: boolean) {
 }
 
 .qr-tpl.is-stale {
-  opacity: 0.5;
+  color: var(--bk-text-secondary);
   border-style: dashed;
 }
 
@@ -844,14 +819,26 @@ async function save(keepOpen: boolean) {
   color: var(--el-color-warning);
 }
 
+.qr-tpl__name,
 .qr-tpl__del {
-  font-size: 14px;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  padding: 4px;
+  overflow-wrap: anywhere;
+}
+
+.qr-tpl__name:disabled { cursor: not-allowed; }
+
+.qr-tpl__del {
+  font-size: 16px;
   line-height: 1;
   color: var(--el-text-color-secondary);
 }
 
 .qr-tpl__del:hover {
-  color: var(--el-color-danger);
+  color: var(--bk-expense-text);
 }
 
 .qr-footer {

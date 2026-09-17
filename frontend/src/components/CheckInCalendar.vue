@@ -44,7 +44,7 @@ const cells = computed<Cell[]>(() => {
   <div class="cal" :class="{ 'is-compact': compact }">
     <div class="cal__wd"><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span><span>日</span></div>
     <div class="cal__grid">
-      <div v-for="c in cells" :key="c.key" class="cal__cell" :class="`is-${c.state}`">
+      <div v-for="c in cells" :key="c.key" class="cal__cell" :class="`is-${c.state}`" :aria-current="c.state.startsWith('today') ? 'date' : undefined" :aria-label="`${c.key}，${checked.has(c.key) ? '已签到' : '未签到'}`">
         {{ c.label }}
         <span v-if="c.state === 'done' || c.state === 'today'" class="tick">✓</span>
       </div>
@@ -56,13 +56,13 @@ const cells = computed<Cell[]>(() => {
 .cal__wd,
 .cal__grid {
   display: grid;
-  grid-template-columns: repeat(7, 1fr);
+  grid-template-columns: repeat(7, minmax(0, 1fr));
   gap: 6px;
 }
 
 .cal__wd span {
   text-align: center;
-  font-size: 11px;
+  font-size: 12px;
   color: var(--el-text-color-secondary);
   padding-bottom: 4px;
 }
@@ -92,8 +92,8 @@ const cells = computed<Cell[]>(() => {
 }
 
 .cal__cell.is-done {
-  background: var(--el-color-primary-light-9);
-  color: var(--el-color-primary);
+  background: var(--bk-primary-soft);
+  color: var(--bk-button-primary);
   font-weight: 600;
 }
 
@@ -104,18 +104,18 @@ const cells = computed<Cell[]>(() => {
 
 .cal__cell.is-future {
   background: transparent;
-  color: var(--el-border-color);
+  color: var(--bk-text-secondary);
 }
 
 .cal__cell.is-today {
-  background: var(--el-color-primary);
-  color: #fff;
+  background: var(--bk-button-primary);
+  color: var(--bk-surface);
   font-weight: 700;
   box-shadow: 0 0 0 3px var(--el-color-primary-light-7);
 }
 
 .cal__cell.is-today .tick {
-  color: #fff;
+  color: inherit;
 }
 
 .cal__cell.is-today-miss {
@@ -129,7 +129,7 @@ const cells = computed<Cell[]>(() => {
 .is-compact .cal__cell {
   height: 30px;
   border-radius: 7px;
-  font-size: 11px;
+  font-size: 12px;
 }
 
 .is-compact .cal__wd span {

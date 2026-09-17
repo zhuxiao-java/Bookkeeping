@@ -8,6 +8,7 @@ import type { Tag, Transaction } from '@/types/model'
 import { parseTagIds } from '@/types/model'
 import { bus, TAG_CHANGED, TRANSACTION_CHANGED } from '@/utils/bus'
 import { COLOR_CHOICES, DISTINCT_COLORS } from '@/utils/constants'
+import EmptyState from '@/components/EmptyState.vue'
 
 /** 设置 → 标签管理（需求文档 4.6）：列表 + 新增/编辑/删除 + 使用统计（前端聚合） */
 const dict = useDictStore()
@@ -127,53 +128,42 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="tag-manage">
-    <div class="tag-manage__toolbar">
-      <span class="tag-manage__hint">标签用于标记交易，可在记账时多选</span>
-      <div class="tag-manage__spacer" />
-      <el-button type="primary" @click="openCreate">+ 新增标签</el-button>
-    </div>
-
-    <el-card shadow="never">
-      <el-table :data="dict.tags" style="width: 100%">
-        <el-table-column label="标签" min-width="200">
-          <template #default="{ row }">
-            <span
-              class="tag-chip"
-              :style="{
-                background: (row.color || '#909399') + '22',
-                color: row.color || '#909399',
-                borderColor: (row.color || '#909399') + '55'
-              }"
-            >
-              {{ row.name }}
-            </span>
-          </template>
-        </el-table-column>
-        <el-table-column label="颜色" width="120">
-          <template #default="{ row }">
-            <span class="color-dot" :style="{ background: row.color || '#909399' }" />
-          </template>
-        </el-table-column>
-        <el-table-column label="使用次数" width="120">
-          <template #default="{ row }">{{ usageCount.get(row.id) ?? 0 }} 次</template>
-        </el-table-column>
-        <el-table-column label="操作" width="140">
-          <template #default="{ row }">
-            <el-button link type="primary" size="small" @click="openEdit(row)">编辑</el-button>
-            <el-button link type="danger" size="small" @click="remove(row)">删除</el-button>
-          </template>
-        </el-table-column>
-        <template #empty>
-          <el-empty description="暂无标签，点击右上角新增" />
-        </template>
-      </el-table>
-    </el-card>
+  <div class="page page--comfortable page--settings tag-manage">
+    <header class="page-head page-head--actions">
+      <div class="row-copy">
+        <h1 class="page-head__title">标签管理</h1>
+        <p class="page-head__sub">为交易加个标记，报销、旅行和日常都能轻松找到。</p>
+      </div>
+      <el-button type="primary" class="page-head__actions" @click="openCreate">+ 新增标签</el-button>
+    </header>
+    <section class="page-section" aria-labelledby="tag-list-heading">
+      <div class="toolbar page-section__head">
+        <h2 id="tag-list-heading" class="section-heading">我的标签</h2>
+        <span class="card-hint">记账时可同时选择多个标签</span>
+      </div>
+      <div class="surface">
+        <div v-for="tag in dict.tags" :key="tag.id" class="tag-row">
+          <span class="color-dot" :style="{ background: tag.color || 'var(--bk-text-secondary)' }" aria-hidden="true" />
+          <div class="tag-row__copy">
+            <span class="tag-row__name">{{ tag.name }}</span>
+            <span class="tag-row__usage">已用于 {{ usageCount.get(tag.id) ?? 0 }} 笔交易</span>
+          </div>
+          <div class="toolbar tag-row__actions">
+            <el-button text type="primary" size="small" :aria-label="`编辑标签${tag.name}`" @click="openEdit(tag)">编辑</el-button>
+            <el-button text type="danger" size="small" :aria-label="`删除标签${tag.name}`" @click="remove(tag)">删除</el-button>
+          </div>
+        </div>
+        <EmptyState v-if="!dict.tags.length" description="还没有标签，试着给交易加个标记" :size="104">
+          <el-button type="primary" @click="openCreate">新增第一个标签</el-button>
+        </EmptyState>
+      </div>
+    </section>
 
     <el-dialog
       v-model="dialogVisible"
       :title="editing ? '编辑标签' : '新增标签'"
-      width="400px"
+      width="440px"
+      class="bk-dialog quiet-controls"
       :close-on-click-modal="false"
       append-to-body
     >
@@ -183,11 +173,14 @@ onBeforeUnmount(() => {
         </el-form-item>
         <el-form-item label="颜色">
           <div class="color-grid">
-            <span
+            <button
               v-for="color in COLOR_CHOICES"
+              type="button"
               :key="color"
               class="color-grid__item"
               :class="{ 'is-active': form.color === color }"
+              :aria-label="`颜色 ${color}`"
+              :aria-pressed="form.color === color"
               :style="{ background: color }"
               @click="form.color = color"
             />
@@ -195,42 +188,27 @@ onBeforeUnmount(() => {
         </el-form-item>
       </el-form>
       <template #footer>
-        <el-button @click="dialogVisible = false">取消</el-button>
-        <el-button type="primary" :loading="saving" @click="save">保存</el-button>
+        <div class="dialog-footer">
+          <el-button @click="dialogVisible = false">取消</el-button>
+          <el-button type="primary" :loading="saving" @click="save">保存</el-button>
+        </div>
       </template>
     </el-dialog>
   </div>
 </template>
 
 <style scoped>
-.tag-manage__toolbar {
-  display: flex;
-  align-items: center;
-  margin-bottom: 12px;
-}
-
-.tag-manage__hint {
-  color: var(--bk-text-secondary);
-  font-size: 13px;
-}
-
-.tag-manage__spacer {
-  flex: 1;
-}
-
-.tag-chip {
-  display: inline-flex;
-  align-items: center;
-  padding: 2px 10px;
-  border: 1px solid;
-  border-radius: var(--bk-radius-pill);
-  font-size: 13px;
-}
+.tag-row { display: flex; align-items: center; gap: 16px; padding-block: 20px; }
+.tag-row__copy { display: flex; flex-direction: column; flex: 1; min-width: 0; gap: 3px; }
+.tag-row__name { font-size: 14px; font-weight: 550; overflow-wrap: anywhere; }
+.tag-row__usage { font-size: 13px; color: var(--bk-text-secondary); }
+.tag-row__actions { flex-shrink: 0; gap: 4px; }
 
 .color-dot {
   display: inline-block;
-  width: 18px;
-  height: 18px;
+  width: 12px;
+  height: 12px;
+  flex-shrink: 0;
   border-radius: 50%;
 }
 
@@ -241,16 +219,17 @@ onBeforeUnmount(() => {
 }
 
 .color-grid__item {
-  width: 26px;
-  height: 26px;
+  width: 28px;
+  height: 28px;
+  padding: 0;
   border-radius: 50%;
   cursor: pointer;
   border: 2px solid transparent;
-  transition: all 0.15s;
+  transition: border-color 0.15s;
 }
 
 .color-grid__item.is-active {
   border-color: var(--el-text-color-primary);
-  transform: scale(1.12);
+  box-shadow: 0 0 0 2px var(--bk-surface);
 }
 </style>
