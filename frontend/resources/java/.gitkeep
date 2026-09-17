@@ -1,0 +1,2 @@
+# 占位文件：electron-builder 要求 extraResources 源目录存在。
+# 打包时 jpackage 生成的后端原生产物会放入本目录（构建产物不入库，见根 .gitignore）。
