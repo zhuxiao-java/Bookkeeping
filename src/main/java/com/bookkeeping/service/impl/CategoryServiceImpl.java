@@ -61,16 +61,16 @@ public class CategoryServiceImpl extends IBaseCrudServiceImpl<CategoryDTO, Categ
     @Override
     public List<CategoryTree> getCategoryTreeListByIds(List<Integer> idList) {
         HashSet<Integer> idSet = new HashSet<>(idList);
-        List<CategoryTree> treeList = new ArrayList<>();
+        Map<Integer, CategoryTree> treeMap = new LinkedHashMap<>();
         for (Integer id : idSet) {
             List<CategoryEntity> entityList = baseMapper.getAllCategoryByCategoryId(id);
             CategoryEntity first = entityList.remove(0);
-            List<CategoryTree> childList = StreamUtil.map(entityList, entity -> new CategoryTree(entity.getId(), entity.getName(), entity.getColor(), entity.getIcon()));
-            treeList.add(
-                    new CategoryTree(first.getId(), first.getName(), first.getIcon(), first.getColor(), childList)
-            );
-
+            List<CategoryTree> childList = StreamUtil.map2(entityList, entity -> new CategoryTree(entity.getId(), entity.getName(), entity.getColor(), entity.getIcon()));
+            treeMap.merge(first.getId(), new CategoryTree(first.getId(), first.getName(), first.getIcon(), first.getColor(), childList), (oldTree, newTree) -> {
+                oldTree.children().addAll(newTree.children());
+                return oldTree;
+            });
         }
-        return treeList;
+        return new ArrayList<>(treeMap.values());
     }
 }

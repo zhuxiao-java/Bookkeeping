@@ -10,7 +10,7 @@
         f_account_id as accountId,
         f_to_account_id as toAccountId,
         f_category_id as categoryId,
-        f_date as date,
+        f_date as transactionDate,
         f_note as note,
         f_tags as tags
         from t_transaction
