@@ -628,7 +628,7 @@ async function save(keepOpen: boolean) {
           </template>
         </div>
         <EmptyState v-else :size="64" :description="`暂无${typeLabel}分类`">
-          <el-button type="primary" link @click="goCreateCategory">去创建{{ typeLabel }}分类</el-button>
+          <el-button type="primary" text @click="goCreateCategory">去创建{{ typeLabel }}分类</el-button>
         </EmptyState>
       </el-form-item>
 
@@ -674,7 +674,7 @@ async function save(keepOpen: boolean) {
   align-items: center;
   gap: 8px;
   padding: 14px 16px;
-  margin-bottom: 22px;
+  margin-bottom: var(--bk-row-padding);
   background: var(--bk-surface-2);
   border: 1px solid var(--el-border-color);
   border-radius: 10px;
@@ -774,7 +774,7 @@ async function save(keepOpen: boolean) {
 }
 
 .qr-form :deep(.el-form-item) {
-  margin-bottom: 22px;
+  margin-bottom: var(--bk-row-padding);
 }
 
 .qr-tpls {
@@ -841,11 +841,7 @@ async function save(keepOpen: boolean) {
   color: var(--bk-expense-text);
 }
 
-.qr-footer {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
+.qr-footer { gap: var(--bk-action-gap); }
 
 .qr-footer__spacer {
   flex: 1;

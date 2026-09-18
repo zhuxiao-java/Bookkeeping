@@ -218,6 +218,43 @@ const exportingAcc = ref(false)
 /** CSV 导入向导（NEW-11）：选择/预览/结果三步在弹窗内完成 */
 const csvDialogVisible = ref(false)
 
+/** 由后端解析数据目录，避免将开发目录或 Electron 配置目录误当作账本位置。 */
+const storagePath = ref('')
+const storagePathLoading = ref(false)
+const storagePathError = ref(false)
+const copyingStoragePath = ref(false)
+
+async function loadStoragePath() {
+  if (storagePathLoading.value) return
+  storagePathLoading.value = true
+  storagePathError.value = false
+  storagePath.value = ''
+  try {
+    storagePath.value = await backupApi.storagePath()
+  } catch {
+    storagePathError.value = true
+  } finally {
+    storagePathLoading.value = false
+  }
+}
+
+async function copyStoragePath() {
+  if (!storagePath.value || copyingStoragePath.value) return
+  copyingStoragePath.value = true
+  try {
+    await navigator.clipboard.writeText(storagePath.value)
+    ElMessage.success('存储路径已复制')
+  } catch {
+    ElMessage.warning('无法自动复制，请选中路径后手动复制')
+  } finally {
+    copyingStoragePath.value = false
+  }
+}
+
+watch(activeMenu, (menu) => {
+  if (menu === 'data') void loadStoragePath()
+}, { immediate: true })
+
 /** 导出类：走裸 axios blob 下载，失败不经过拦截器，需自行提示 */
 async function runExport(flag: typeof backuping, fn: () => Promise<void>, okText: string) {
   flag.value = true
@@ -320,7 +357,7 @@ function onCsvImported(res: CsvImportResult) {
 
         <section class="preference-section" aria-labelledby="appearance-heading">
           <h2 id="appearance-heading">外观与显示</h2>
-          <div class="preference-surface">
+          <div class="surface preference-surface">
             <fieldset class="theme-picker">
               <legend class="preference-label">界面主题</legend>
               <p id="theme-hint" class="preference-hint">喜欢明亮，或偏爱深色，也可以跟随系统。</p>
@@ -361,7 +398,7 @@ function onCsvImported(res: CsvImportResult) {
               </div>
             </fieldset>
 
-            <div class="preference-row">
+            <div class="split-row preference-row">
               <div class="preference-copy">
                 <h3 id="decimal-label">金额显示</h3>
                 <p>选择金额保留的小数位数</p>
@@ -430,7 +467,7 @@ function onCsvImported(res: CsvImportResult) {
               <p class="preference-hint">自定义图片会自动压缩，保存在本机。</p>
             </div>
 
-            <div v-if="settings.backgroundImage" class="preference-row">
+            <div v-if="settings.backgroundImage" class="split-row preference-row">
               <div class="preference-copy">
                 <h3 id="mask-label">背景淡化</h3>
                 <p>数值越高，内容越清晰</p>
@@ -453,8 +490,8 @@ function onCsvImported(res: CsvImportResult) {
 
         <section class="preference-section" aria-labelledby="interaction-heading">
           <h2 id="interaction-heading">操作习惯</h2>
-          <div class="preference-surface">
-            <div class="preference-row">
+          <div class="surface preference-surface">
+            <div class="split-row preference-row">
               <div class="preference-copy">
                 <h3 id="screensaver-label">自动屏保</h3>
                 <p>闲置时展示背景，点击或按键即可返回</p>
@@ -468,7 +505,7 @@ function onCsvImported(res: CsvImportResult) {
                 <el-option v-for="minutes in [0, 1, 3, 5, 10]" :key="minutes" :value="minutes" :label="minutes === 0 ? '关闭' : `${minutes} 分钟后`" />
               </el-select>
             </div>
-            <div class="preference-row preference-row--shortcut">
+            <div class="split-row preference-row preference-row--shortcut">
               <div class="preference-copy">
                 <h3>记账快捷键</h3>
                 <p>桌面端可随时唤起快速记账，即使应用在后台</p>
@@ -496,8 +533,8 @@ function onCsvImported(res: CsvImportResult) {
 
         <section class="preference-section" aria-labelledby="personal-heading">
           <h2 id="personal-heading">关于你</h2>
-          <div class="preference-surface">
-            <div class="preference-row">
+          <div class="surface preference-surface">
+            <div class="split-row preference-row">
               <div class="preference-copy">
                 <h3>生日</h3>
                 <p>留一个日期，每年送你一张生日贺卡</p>
@@ -522,6 +559,22 @@ function onCsvImported(res: CsvImportResult) {
           <h1 class="page-head__title">数据管理</h1>
           <p class="page-head__sub">给账本留一份备份，让每一笔记录都安心。</p>
         </header>
+        <section class="page-section" aria-labelledby="data-storage-heading">
+          <h2 id="data-storage-heading" class="section-heading">存储位置</h2>
+          <div class="surface">
+            <div class="split-row data-row" :aria-busy="storagePathLoading">
+              <div class="row-copy">
+                <h3 class="row-copy__title">数据存储路径</h3>
+                <p class="row-copy__desc">账本数据库、自动备份和上传图片的保存目录。</p>
+                <p v-if="storagePathLoading" class="row-copy__desc" role="status">正在读取存储路径…</p>
+                <p v-else-if="storagePathError" class="row-copy__desc" role="status">暂时无法读取存储路径，请确认后端服务已启动后重试。</p>
+                <code v-else-if="storagePath" class="storage-path">{{ storagePath }}</code>
+              </div>
+              <el-button v-if="storagePathError" @click="loadStoragePath">重新读取</el-button>
+              <el-button v-else :disabled="!storagePath || storagePathLoading" :loading="copyingStoragePath" @click="copyStoragePath">复制路径</el-button>
+            </div>
+          </div>
+        </section>
         <section class="page-section" aria-labelledby="data-backup-heading">
           <h2 id="data-backup-heading" class="section-heading">备份与恢复</h2>
           <div class="surface">
@@ -663,14 +716,28 @@ function onCsvImported(res: CsvImportResult) {
   flex: 1;
   min-width: 0;
   overflow-y: auto;
+  scrollbar-gutter: stable;
   container: settings-body / inline-size;
 }
-
-.settings__body > .page { padding-right: 8px; }
 
 .data-row { display: flex; align-items: center; flex-wrap: wrap; gap: 16px 24px; }
 .data-row > .row-copy { flex: 1 1 260px; }
 .data-row > .el-button { flex-shrink: 0; }
+.storage-path {
+  display: block;
+  margin-top: 12px;
+  padding: 12px 16px;
+  border-radius: var(--bk-control-radius);
+  background: var(--bk-surface-2);
+  color: var(--bk-text-regular);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 13px;
+  line-height: 1.7;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  user-select: text;
+  cursor: text;
+}
 .about-info { margin: 0; }
 .about-info dt { font-weight: 550; color: var(--bk-text); }
 .about-info dd { margin: 0; color: var(--bk-text-secondary); overflow-wrap: anywhere; }
@@ -689,28 +756,10 @@ function onCsvImported(res: CsvImportResult) {
 }
 
 .preference-section h2 {
-  margin: 0 0 10px 4px;
+  margin: 0 0 var(--bk-section-gap) 4px;
   font-size: 13px;
   font-weight: 600;
   color: var(--bk-text-secondary);
-}
-
-.preference-surface {
-  padding: 0 24px;
-  background: var(--bk-surface);
-  border-radius: var(--bk-radius-lg);
-}
-
-.preference-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 20px;
-  padding: 22px 0;
-}
-
-.preference-surface > * + * {
-  border-top: 1px solid var(--bk-border-light);
 }
 
 .preference-copy { min-width: 0; }
@@ -730,12 +779,12 @@ function onCsvImported(res: CsvImportResult) {
   flex-shrink: 0;
 }
 
-.preference-block { padding: 22px 0; }
+.preference-block { padding: var(--bk-row-padding) 0; }
 
 .theme-picker {
   min-width: 0;
   margin: 0;
-  padding: 24px 0 20px;
+  padding: var(--bk-row-padding) 0;
   border: 0;
 }
 
@@ -871,7 +920,10 @@ function onCsvImported(res: CsvImportResult) {
 .decimal-option span {
   display: block;
   min-width: 50px;
-  padding: 6px 4px;
+  min-height: calc(var(--bk-control-height) - 6px);
+  box-sizing: border-box;
+  padding: 4px;
+  line-height: 22px;
   border-radius: 7px;
   text-align: center;
   color: var(--bk-text-secondary);
@@ -1026,9 +1078,7 @@ function onCsvImported(res: CsvImportResult) {
 }
 
 @container settings-body (max-width: 640px) {
-  .preferences { padding: 4px 8px 24px; gap: 24px; }
-  .preference-surface { padding-inline: 18px; }
-  .preference-row { align-items: flex-start; flex-direction: column; gap: 12px; padding-block: 18px; }
+  .preference-row { align-items: flex-start; flex-direction: column; gap: 12px; }
   .preference-control { align-items: flex-start; }
   .theme-options { gap: 8px; }
   .theme-preview { height: 84px; }

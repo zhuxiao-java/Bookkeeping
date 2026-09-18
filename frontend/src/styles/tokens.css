@@ -49,7 +49,10 @@
   --bk-button-warning: #775020;
   --bk-button-danger: #9d3c38;
   --bk-button-accent: #82491e;
-  --bk-button-height: 36px;
+  --bk-control-height: 36px;
+  --bk-control-height-small: 28px;
+  --bk-control-height-large: 40px;
+  --bk-button-height: var(--bk-control-height);
   --bk-button-radius: 10px;
 
   /* —— 柔和暖阴影 —— */
@@ -62,6 +65,10 @@
   --bk-gap-lg: 24px;
   --bk-page-gap: 28px;
   --bk-panel-padding: 24px;
+  --bk-row-padding: 22px;
+  --bk-section-gap: 10px;
+  --bk-action-gap: 8px;
+  --bk-page-width: 960px;
   --bk-control-radius: 9px;
   --bk-font-body: 14px;
   --bk-font-caption: 13px;
@@ -122,7 +129,10 @@
   --el-fill-color-darker: #e2ddd2;
   --el-fill-color-blank: var(--bk-surface);
 
-  --el-border-radius-base: 10px;
+  --el-component-size: var(--bk-control-height);
+  --el-component-size-small: var(--bk-control-height-small);
+  --el-component-size-large: var(--bk-control-height-large);
+  --el-border-radius-base: var(--bk-control-radius);
   --el-border-radius-small: 8px;
   --el-border-radius-round: var(--bk-radius-pill);
 

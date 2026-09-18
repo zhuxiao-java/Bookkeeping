@@ -786,7 +786,7 @@ onBeforeUnmount(() => {
       <template #header>
         <div class="card-head">
           <h2 class="card-head__title">月度盈亏明细</h2>
-          <el-button text size="small" @click="exportBalance">导出 CSV</el-button>
+          <el-button text @click="exportBalance">导出 CSV</el-button>
         </div>
       </template>
       <el-table :data="balanceTable" style="width: 100%">
@@ -832,7 +832,7 @@ onBeforeUnmount(() => {
       <template #header>
         <div class="card-head">
           <h2 class="card-head__title">分类明细（{{ incomeExpense === 'expense' ? '支出' : '收入' }} · {{ categoryGroupBy === 'root' ? '父分类' : '子分类' }}）</h2>
-          <el-button text size="small" data-guide="rp-export" @click="exportDetail">导出 CSV</el-button>
+          <el-button text data-guide="rp-export" @click="exportDetail">导出 CSV</el-button>
         </div>
       </template>
       <el-table :data="categoryAgg" style="width: 100%">
@@ -874,8 +874,8 @@ onBeforeUnmount(() => {
 .report-summary {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 20px 28px;
-  padding: var(--bk-panel-padding);
+  gap: var(--bk-gap);
+  padding: var(--bk-row-padding) var(--bk-panel-padding);
 }
 
 .report-summary > div { border-top: 0; }
@@ -892,10 +892,6 @@ onBeforeUnmount(() => {
   font-weight: 650;
   font-variant-numeric: tabular-nums;
   overflow-wrap: anywhere;
-}
-
-.page-section > .section-heading {
-  padding-inline: 4px;
 }
 
 .chart-row {
@@ -985,12 +981,12 @@ onBeforeUnmount(() => {
 }
 
 /* 窄窗口自适应：图表双栏→单栏（卡片标题换行依赖全局响应式） */
-@container content (max-width: 1040px) {
+@container page (max-width: 880px) {
   .chart-row {
     grid-template-columns: 1fr;
   }
 }
-@container content (max-width: 620px) {
+@container page (max-width: 620px) {
   .report-summary { grid-template-columns: 1fr; }
   .filter-card .toolbar { width: 100%; }
   .filter-card :deep(.el-date-editor) { width: 100%; min-width: 0; }

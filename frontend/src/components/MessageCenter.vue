@@ -106,10 +106,10 @@ onUnmounted(() => {
           </el-select>
           <div class="msg-toolbar__ops">
             <el-tooltip content="刷新" placement="bottom">
-              <el-button link size="small" :icon="Refresh" aria-label="刷新消息" @click="message.load(true)" />
+              <el-button text circle size="small" :icon="Refresh" aria-label="刷新消息" @click="message.load(true)" />
             </el-tooltip>
             <el-button
-              link
+              text
               type="primary"
               size="small"
               :disabled="!message.unreadCount"
@@ -118,7 +118,7 @@ onUnmounted(() => {
               全部已读
             </el-button>
             <el-button
-              link
+              text
               type="danger"
               size="small"
               :disabled="!message.readCount"
@@ -159,7 +159,8 @@ onUnmounted(() => {
               <template #reference>
                 <el-button
                   class="msg-item__del"
-                  link
+                  text
+                  circle
                   type="danger"
                   size="small"
                   :icon="Delete"
@@ -172,7 +173,7 @@ onUnmounted(() => {
 
           <!-- 分页加载更多（NEW-12） -->
           <div v-if="message.hasMore" class="msg-more">
-            <el-button link type="primary" size="small" :loading="message.loadingMore" @click="message.loadMore()">
+            <el-button text type="primary" size="small" :loading="message.loadingMore" @click="message.loadMore()">
               加载更多（{{ message.list.length }}/{{ message.total }}）
             </el-button>
           </div>
@@ -203,8 +204,8 @@ onUnmounted(() => {
 }
 
 .msg-head__title {
-  font-size: 16px;
-  font-weight: 600;
+  font-size: 20px;
+  font-weight: 650;
 }
 
 .msg-head__unread {
@@ -229,8 +230,8 @@ onUnmounted(() => {
   flex-wrap: wrap;
   align-items: center;
   gap: 10px;
-  padding-bottom: 12px;
-  margin-bottom: 4px;
+  padding-bottom: var(--bk-gap);
+  margin-bottom: var(--bk-section-gap);
   border-bottom: 1px solid var(--el-border-color-lighter);
 }
 
@@ -245,9 +246,11 @@ onUnmounted(() => {
   flex-wrap: wrap;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--bk-action-gap);
   margin-left: auto;
 }
+
+.msg-toolbar__ops > .el-button + .el-button { margin-left: 0; }
 
 .msg-list {
   flex: 1;
@@ -264,7 +267,7 @@ onUnmounted(() => {
   display: flex;
   align-items: flex-start;
   gap: 10px;
-  padding: 12px 8px;
+  padding: var(--bk-row-padding) 12px;
   border-bottom: 1px solid var(--el-border-color-lighter);
   cursor: pointer;
   transition: background-color 0.2s;
@@ -365,6 +368,10 @@ onUnmounted(() => {
   flex: none;
   opacity: 0;
   transition: opacity 0.2s;
+}
+
+@media (hover: none) {
+  .msg-item__del { opacity: 1; }
 }
 
 .msg-item:hover .msg-item__del,

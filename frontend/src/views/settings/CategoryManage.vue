@@ -321,7 +321,7 @@ onBeforeUnmount(() => {
         <h1 class="page-head__title">分类管理</h1>
         <p class="page-head__sub">把收支分门别类，让每一笔钱都有迹可循。</p>
       </div>
-      <el-button type="primary" class="page-head__actions" @click="openCreate()">+ 新增分类</el-button>
+      <el-button type="primary" :icon="Plus" class="page-head__actions" @click="openCreate()">新增分类</el-button>
     </header>
     <section class="page-section" aria-labelledby="category-list-heading">
       <div class="toolbar page-section__head">
@@ -372,19 +372,20 @@ onBeforeUnmount(() => {
             </template>
             <el-button
               v-if="node.depth < maxDepth - 1"
-              link
+              text
               type="primary"
+              :icon="Plus"
               size="small"
               :disabled="node.category.archived === 1"
               @click="openCreate(node.category)"
             >
-              <el-icon><Plus /></el-icon> 添加子分类
+              添加子分类
             </el-button>
-            <el-button link type="primary" size="small" @click="openEdit(node.category)">编辑</el-button>
-            <el-button link type="primary" size="small" @click="toggleArchive(node.category)">
+            <el-button text type="primary" size="small" @click="openEdit(node.category)">编辑</el-button>
+            <el-button text size="small" @click="toggleArchive(node.category)">
               {{ node.category.archived === 0 ? '归档' : '恢复' }}
             </el-button>
-            <el-button link type="danger" size="small" @click="remove(node.category)">删除</el-button>
+            <el-button text type="danger" size="small" @click="remove(node.category)">删除</el-button>
             </div>
           </div>
         </div>
@@ -472,11 +473,11 @@ onBeforeUnmount(() => {
 </template>
 
 <style scoped>
-.cat-tree { padding-block: 4px; }
+.cat-tree { min-width: 0; }
 .cat-row:last-child .cat-row__main { border-bottom: 0; }
 .cat-row__identity { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; min-width: 0; }
 .cat-row__identity :deep(.category-dot) { flex-shrink: 0; }
-.cat-row__actions { display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: 8px; }
+.cat-row__actions { display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: var(--bk-action-gap); }
 .cat-row__actions > .el-button + .el-button { margin-left: 0; }
 
 .cat-tip {
@@ -494,12 +495,12 @@ onBeforeUnmount(() => {
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
   gap: 12px;
-  padding: 18px 0;
+  padding: var(--bk-row-padding) 0;
   border-bottom: 1px solid var(--bk-border-light);
 }
 
 .cat-row__toggle-spacer {
-  width: 24px;
+  width: var(--bk-control-height-small);
   flex: none;
 }
 
@@ -517,7 +518,7 @@ onBeforeUnmount(() => {
 .cat-row__identity .el-icon { transform: rotate(-90deg); transition: transform 0.16s; }
 .cat-row__identity .el-icon.is-expanded { transform: rotate(0deg); }
 
-@container settings-body (max-width: 760px) {
+@container page (max-width: 860px) {
   .cat-row__main { grid-template-columns: minmax(0, 1fr); gap: 8px; }
   .cat-row__actions { justify-content: flex-start; padding-left: 32px; }
 }

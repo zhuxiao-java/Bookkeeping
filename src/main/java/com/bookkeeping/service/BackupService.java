@@ -9,6 +9,9 @@ import java.util.List;
  */
 public interface BackupService {
 
+    /** 当前数据目录的绝对路径，仅查询，不创建或移动文件。 */
+    String storagePath();
+
     /**
      * 用 SQLite {@code VACUUM INTO} 生成当前库的一致性单文件快照。
      *

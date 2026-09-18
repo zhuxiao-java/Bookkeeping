@@ -33,6 +33,8 @@ const messages=[
  {id:3,title:'今日天气',content:JSON.stringify({city:'杭州',description:'晴',tempC:'26',feelsLikeC:'27',minTempC:'22',maxTempC:'29',humidity:'65',windKmph:'12'}),type:'weather',status:1,createTime:`${day(1)}T07:00:00`}
 ]
 let empty=false,unavailable=false,delay=0
+const storagePaths=['/Users/示例用户/Library/Application Support/记账本/data','C:\\Users\\示例用户\\AppData\\Roaming\\记账本\\'+'家庭长期账本目录'.repeat(16)+'\\data']
+let storageDirectory=storagePaths[0],storageUnavailable=false,storageEmpty=false,storageDelay=0
 const requests=[],checks=[],interactions=[],errors=[],warnings=[],knownIssues=[]
 let printTransition=false
 function api(url,body){
@@ -40,6 +42,7 @@ function api(url,body){
  requests.push({path:p,body})
  const resources={account:accounts,category:categories,tag:tags,transaction:transactions,budget:budgets,check_in:checkins,message:messages}
  let data=[],extra={}
+ if(p==='/backup/storagePath')return storageUnavailable?{code:'B_TEST_UNAVAILABLE',msg:'模拟路径读取失败'}:{code:'S0806',data:storageEmpty?'':storageDirectory}
  if(p.includes('/stats/'))return {code:'B_TEST_FALLBACK',msg:'隔离测试使用本地聚合'}
  if(p==='/level/currentLevel')return unavailable?{code:'B_TEST_UNAVAILABLE',msg:'模拟不可用'}:{code:'S0806',data:level}
  if(p==='/level/configs')data=Array.from({length:10},(_,i)=>({id:i+1,level:i+1,name:['初来乍到','认真记账','从容记录者','生活规划师'][i]||'持续成长 '+(i+1),expThreshold:i*100,description:'每一步都算数'}))
@@ -59,7 +62,7 @@ const mime={'.html':'text/html','.js':'text/javascript','.css':'text/css','.svg'
 const server=http.createServer(async(req,res)=>{
  try{
   const url=new URL(req.url,'http://localhost')
-  if(url.pathname.startsWith('/api/')){let body='';for await(const chunk of req)body+=chunk;if(delay)await sleep(delay);res.writeHead(200,{'Content-Type':'application/json'});res.end(JSON.stringify(api(url,body)));return}
+  if(url.pathname.startsWith('/api/')){let body='';for await(const chunk of req)body+=chunk;if(delay)await sleep(delay);if(url.pathname==='/api/backup/storagePath'&&storageDelay)await sleep(storageDelay);res.writeHead(200,{'Content-Type':'application/json'});res.end(JSON.stringify(api(url,body)));return}
   if(url.pathname==='/setup'){res.writeHead(200,{'Content-Type':'text/html'});res.end('<html><body>隔离验证</body></html>');return}
   const file=path.resolve(root,'.'+(url.pathname==='/'?'/index.html':decodeURIComponent(url.pathname)))
   if(!file.startsWith(root+'/'))throw Error('无效路径')
@@ -86,10 +89,56 @@ async function selectField(label,option){
 async function scrollShot(selector,name){
  await js(`one(${JSON.stringify(selector)}).scrollIntoView({block:'center'})`);await sleep(200);await snapshot(name)
 }
-async function snapshot(name){const image=await win.webContents.capturePage();await fs.writeFile(path.join(output,name+'.png'),image.resize({width:win.getContentSize()[0]}).toPNG())}
+async function snapshot(name){
+ await js(`all('.el-notification__closeBtn').forEach(e=>e.click())`);await sleep(250)
+ const image=await win.webContents.capturePage();await fs.writeFile(path.join(output,name+'.png'),image.resize({width:win.getContentSize()[0]}).toPNG())
+}
 async function audit(name,shot=false){
+ const styleIssues=await js(`
+  const issues=[];
+  const check=(e,key,actual,expected)=>{if(Math.abs(actual-expected)>1)issues.push({element:e.className,key,actual,expected})};
+  const css=e=>getComputedStyle(e),num=(e,key)=>parseFloat(css(e).getPropertyValue(key));
+  for(const e of all('.page--comfortable')){
+    check(e,'阅读宽度',num(e,'max-width'),960);
+    check(e,'页面间距',num(e,'row-gap'),num(e,'--bk-page-gap'));
+  }
+  for(const scroller of all('.main-layout__main,.settings__body')){
+    const page=scroller.querySelector('.page--comfortable');
+    if(!page||!['auto','scroll'].includes(css(scroller).overflowY))continue;
+    const before=page.getBoundingClientRect(),value=scroller.style.getPropertyValue('overflow-y'),priority=scroller.style.getPropertyPriority('overflow-y');
+    try{
+      scroller.style.setProperty('overflow-y','scroll');
+      const after=page.getBoundingClientRect();
+      check(page,'滚动条出现时的水平位置',after.left,before.left);
+      check(page,'滚动条出现时的内容宽度',after.width,before.width);
+    }finally{
+      if(value)scroller.style.setProperty('overflow-y',value,priority);
+      else scroller.style.removeProperty('overflow-y');
+    }
+  }
+  for(const e of all('.surface,.panel,.el-card__body'))check(e,'面板留白',num(e,'padding-left'),num(e,'--bk-panel-padding'));
+  for(const e of all('.split-row,.surface-block,.preference-block,.theme-picker,.tag-row,.cat-row__main,.tx-row,.recent-row,.ci__row'))check(e,'列表行距',num(e,'padding-top'),num(e,'--bk-row-padding'));
+  for(const e of all('.el-button:not(.is-link)')){
+    const h=e.getBoundingClientRect().height,expected=num(e,'--bk-button-height');
+    if(h<expected-1)issues.push({element:e.className,key:'按钮高度',actual:h,expected});
+    if(e.classList.contains('is-circle'))check(e,'图标按钮宽度',e.getBoundingClientRect().width,h);
+  }
+  for(const e of all('.segment,.decimal-options'))check(e,'分段控件高度',e.getBoundingClientRect().height,num(e,'--bk-control-height'));
+  for(const e of all('.quiet-controls .el-select__wrapper,.quiet-controls .el-input__wrapper')){
+    const size=e.closest('.el-select--small,.el-input--small')?'--bk-control-height-small':e.closest('.el-select--large,.el-input--large')?'--bk-control-height-large':'--bk-control-height';
+    const expected=num(e,size),actual=e.getBoundingClientRect().height;
+    if(actual<expected-1)issues.push({element:e.className,key:'输入控件高度',actual,expected});
+  }
+  for(const e of all('.dialog-footer,.page-head__actions,.tx-row__actions,.cat-row__actions,.tag-row__actions,.msg-toolbar__ops,.total-card__actions')){
+    if(e.matches('.el-button')||!['flex','inline-flex'].includes(css(e).display))continue;
+    check(e,'操作组间距',num(e,'column-gap'),num(e,'--bk-action-gap'));
+    for(const b of [...e.children].filter(x=>x.matches('.el-button')))check(b,'按钮额外边距',num(b,'margin-left'),0);
+  }
+  return issues;
+ `)
  const state=await js(`const main=one('.main-layout__main');return {name:${JSON.stringify(name)},title:one('.page-head__title')?.textContent,mainWidth:main?.clientWidth,mainScroll:main?.scrollWidth,pageOverflow:document.documentElement.scrollWidth>innerWidth+1||(main&&main.scrollWidth>main.clientWidth+1),nestedButtons:!!document.querySelector('button button'),layers:all('.bk-dialog,.bk-drawer,.el-tour__content,.screensaver').map(e=>{const r=e.getBoundingClientRect(),f=e.querySelector('.el-dialog__footer');return {width:r.width,height:r.height,within:r.left>=0&&r.right<=innerWidth+1&&r.top>=0&&r.bottom<=innerHeight+1,footerVisible:!f||f.getBoundingClientRect().bottom<=innerHeight+1}})};`)
- checks.push(state);if(state.pageOverflow||state.nestedButtons||state.layers.some(x=>!x.within||!x.footerVisible)){console.log('布局异常',state);await snapshot('FAIL-'+name)}
+ state.styleIssues=styleIssues;
+ checks.push(state);if(styleIssues.length||state.pageOverflow||state.nestedButtons||state.layers.some(x=>!x.within||!x.footerVisible)){console.log('布局异常',state);await snapshot('FAIL-'+name)}
  if(shot)await snapshot(name);return state
 }
 async function closeDialog(){await click('.el-dialog__headerbtn');await sleep(250)}
@@ -115,14 +164,15 @@ async function run(){
  await setup()
  await assertUI('模拟账本已载入',`return one('.checkin-card') && !document.body.textContent.includes('无法连接后端')`)
  if(!requests.some(r=>r.path==='/account/selectAll'))throw Error('模拟 API 未接入')
+ await storageChecks()
  const routes=['dashboard','account','transaction','budget','report','level',...['preference','category','tag','data','help','about'].map(m=>'settings?menu='+m)]
- for(const [width,height]of (process.env.UI_QUICK ? [] : [[1440,900],[1180,800],[960,720]])){
+ for(const [width,height]of (process.env.UI_QUICK ? [] : [[1920,1080],[1440,900],[1180,800],[960,720]])){
   win.setContentSize(width,height)
   for(const theme of ['light','dark']){
    if(await js(`return document.documentElement.classList.contains('dark')`)!==(theme==='dark'))await click('[data-guide="theme"]')
    for(const collapsed of [false,true]){
     if(await js(`return one('.aside-footer').getAttribute('aria-expanded')==='false'`)!==collapsed)await click('.aside-footer')
-    for(const route of routes){await navigate(route);await audit(`${width}-${theme}-${collapsed?'collapsed':'expanded'}-${route.replace('?menu=','-')}`,width===960&&!collapsed&&['dashboard','transaction','level','settings?menu=preference','settings?menu=category'].includes(route))}
+    for(const route of routes){await navigate(route);await audit(`${width}-${theme}-${collapsed?'collapsed':'expanded'}-${route.replace('?menu=','-')}`,!collapsed&&((width===1440&&theme==='light')||(width===960&&theme==='dark')))}
    }
   }
  }
@@ -151,8 +201,43 @@ async function run(){
  unavailable=false;
  delay=1500;await setup('light');await audit('loading-state',true);delay=0
  const layoutFailures=checks.filter(c=>c.pageOverflow||c.nestedButtons||c.layers.some(x=>!x.within||!x.footerVisible)).length
- console.log('验证完成',{checks:checks.length,interactions:interactions.length,layoutFailures,errors,warnings,knownIssues})
- if(layoutFailures||errors.length)process.exitCode=1
+ const styleFailures=checks.filter(c=>c.styleIssues.length).length
+ console.log('验证完成',{checks:checks.length,interactions:interactions.length,layoutFailures,styleFailures,errors,warnings,knownIssues})
+ if(layoutFailures||styleFailures||errors.length)process.exitCode=1
+}
+async function storageChecks(){
+ if(requests.some(r=>r.path==='/backup/storagePath'))throw Error('进入数据管理前不应查询存储路径')
+ for(const [index,width,height,theme]of [[0,1440,900,'light'],[1,960,720,'dark']]){
+  win.setContentSize(width,height)
+  if(await js(`return document.documentElement.classList.contains('dark')`)!==(theme==='dark'))await click('[data-guide="theme"]')
+  await navigate('settings?menu=category');storageDirectory=storagePaths[index];await navigate('settings?menu=data')
+  await assertUI('数据目录完整展示 '+theme,`const e=one('.storage-path');return e?.textContent===${JSON.stringify(storageDirectory)}&&getComputedStyle(e).userSelect==='text'&&e.scrollWidth<=e.clientWidth+1`)
+  await audit('storage-path-'+theme,true)
+ }
+ // 替换剪贴板接口以验证复制行为，避免覆盖用户的系统剪贴板。
+ await js(`window.__clipboardDescriptor=Object.getOwnPropertyDescriptor(navigator,'clipboard');Object.defineProperty(navigator,'clipboard',{configurable:true,value:{writeText:async value=>{window.__copiedStoragePath=value}}});`)
+ try{
+  await click('[aria-labelledby="data-storage-heading"] button','复制路径')
+  await assertUI('复制完整路径（隔离剪贴板）',`return window.__copiedStoragePath===${JSON.stringify(storageDirectory)}&&all('.el-message--success').some(e=>e.textContent.includes('存储路径已复制'))`)
+  await js(`navigator.clipboard.writeText=async()=>{throw Error('模拟剪贴板权限拒绝')}`)
+  await click('[aria-labelledby="data-storage-heading"] button','复制路径')
+  await assertUI('复制失败提供手动复制提示',`return all('.el-message--warning').some(e=>e.textContent.includes('手动复制'))&&!!one('.storage-path')`)
+ }finally{
+  await js(`if(window.__clipboardDescriptor)Object.defineProperty(navigator,'clipboard',window.__clipboardDescriptor);else delete navigator.clipboard;delete window.__clipboardDescriptor;delete window.__copiedStoragePath;`)
+ }
+ storageUnavailable=true;await navigate('settings?menu=category');await navigate('settings?menu=data')
+ await assertUI('路径读取失败不展示猜测路径',`return !one('.storage-path')&&one('[aria-labelledby="data-storage-heading"] [role="status"]')?.textContent.includes('暂时无法读取')`)
+ await audit('storage-path-unavailable',true)
+ storageUnavailable=false;await click('[aria-labelledby="data-storage-heading"] button','重新读取')
+ await assertUI('路径读取失败后可重试',`return one('.storage-path')?.textContent===${JSON.stringify(storageDirectory)}`)
+ storageEmpty=true;await navigate('settings?menu=category');await navigate('settings?menu=data')
+ await assertUI('空路径响应显示重试入口',`return !one('.storage-path')&&one('[aria-labelledby="data-storage-heading"] button')?.textContent.trim()==='重新读取'`)
+ storageEmpty=false;await click('[aria-labelledby="data-storage-heading"] button','重新读取')
+ storageDelay=1600;await navigate('settings?menu=category');await navigate('settings?menu=data')
+ await assertUI('读取期间禁用复制并提示加载',`return one('[aria-labelledby="data-storage-heading"] button')?.disabled&&one('[aria-labelledby="data-storage-heading"] [role="status"]')?.textContent.includes('正在读取')`)
+ await audit('storage-path-loading',true);await sleep(1700);storageDelay=0
+ await assertUI('加载后恢复路径展示',`return one('.storage-path')?.textContent===${JSON.stringify(storageDirectory)}`)
+ storageDirectory=storagePaths[0];win.setContentSize(1440,900);await setup('light')
 }
 async function extendedChecks(){
  await setup('light')

@@ -115,7 +115,7 @@ function run(link: HelpLink) {
           </ul>
 
           <div v-if="b.links?.length" class="help-block__links">
-            <el-button v-for="l in b.links" :key="l.label" link type="primary" size="small" @click="run(l)">
+            <el-button v-for="l in b.links" :key="l.label" text type="primary" size="small" @click="run(l)">
               {{ l.label }}
               <el-icon class="el-icon--right"><Right /></el-icon>
             </el-button>
@@ -138,13 +138,13 @@ function run(link: HelpLink) {
   position: sticky;
   top: 0;
   z-index: 1;
-  padding-bottom: 10px;
+  padding-bottom: var(--bk-gap);
   background: var(--bk-bg);
 }
 
 .help__title {
-  font-size: 15px;
-  font-weight: 600;
+  font-size: 14px;
+  font-weight: 550;
 }
 
 .help__intro {
@@ -155,17 +155,17 @@ function run(link: HelpLink) {
 }
 
 .help-block {
-  padding: 4px 0 14px;
+  padding: 4px 0 var(--bk-row-padding);
 }
 
 .help-block + .help-block {
-  border-top: 1px dashed var(--el-border-color-lighter);
-  padding-top: 12px;
+  border-top: 1px solid var(--bk-border-light);
+  padding-top: var(--bk-row-padding);
 }
 
 .help-block__title {
   margin-bottom: 6px;
-  font-size: 13.5px;
+  font-size: 14px;
   font-weight: 600;
 }
 
@@ -180,8 +180,8 @@ function run(link: HelpLink) {
 .help-block__links {
   display: flex;
   flex-wrap: wrap;
-  gap: 4px;
-  margin-top: 6px;
+  gap: var(--bk-action-gap);
+  margin-top: 12px;
 }
 
 .help-table {
@@ -216,10 +216,19 @@ function run(link: HelpLink) {
 .help-table .is-key {
   color: var(--el-color-primary);
 }
+.help__collapse { border: 0; }
+.help__collapse :deep(.el-collapse-item) {
+  margin-bottom: var(--bk-gap);
+  padding-inline: var(--bk-panel-padding);
+  border-radius: var(--bk-radius-lg);
+  background: var(--bk-surface);
+}
+.help__collapse :deep(.el-collapse-item:last-child) { margin-bottom: 0; }
 .help__collapse :deep(.el-collapse-item__header),
-.help__collapse :deep(.el-collapse-item__wrap) { background: transparent; }
-.help__collapse :deep(.el-collapse-item__header) { min-height: 56px; height: auto; }
-.help-block__links :deep(.el-button) { margin-left: 0; white-space: normal; height: auto; min-height: 30px; text-align: left; }
+.help__collapse :deep(.el-collapse-item__wrap) { background: transparent; border-bottom: 0; }
+.help__collapse :deep(.el-collapse-item__header) { min-height: 0; height: auto; padding-block: var(--bk-row-padding); line-height: 1.6; }
+.help__collapse :deep(.el-collapse-item__content) { padding-bottom: 0; }
+.help-block__links :deep(.el-button) { margin-left: 0; white-space: normal; height: auto; min-height: var(--bk-control-height-small); padding-block: 6px; text-align: left; }
 @container help (max-width: 420px) {
   .help-table__row { grid-template-columns: minmax(80px, 0.65fr) repeat(var(--help-cols, 1), minmax(0, 1fr)); }
   .help-table__row > span { padding: 8px; }

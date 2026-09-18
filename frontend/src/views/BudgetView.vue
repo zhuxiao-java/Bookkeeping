@@ -2,7 +2,7 @@
 import { computed, nextTick, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { ArrowLeft, ArrowRight, MoreFilled } from '@element-plus/icons-vue'
+import { ArrowLeft, ArrowRight, MoreFilled, Plus } from '@element-plus/icons-vue'
 import { budgetApi, ApiError } from '@/api'
 import { useDictStore } from '@/stores/dict'
 import { useSettingsStore } from '@/stores/settings'
@@ -453,7 +453,7 @@ onBeforeUnmount(() => {
       </div>
       <div class="toolbar page-head__actions">
         <el-button text :loading="copying" data-guide="bd-copy" @click="copyLastMonth">复制上月</el-button>
-        <el-button type="primary" data-guide="bd-create" @click="openCreate">+ 设置预算</el-button>
+        <el-button type="primary" :icon="Plus" data-guide="bd-create" @click="openCreate">设置预算</el-button>
       </div>
     </header>
     <section class="page-section" aria-labelledby="budget-month-heading">
@@ -635,10 +635,6 @@ onBeforeUnmount(() => {
 </template>
 
 <style scoped>
-.page-section > .section-heading {
-  padding-inline: 4px;
-}
-
 .month-nav {
   display: flex;
   align-items: center;
@@ -701,7 +697,7 @@ onBeforeUnmount(() => {
 .total-card__actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 4px;
+  gap: var(--bk-action-gap);
   margin-left: auto;
 }
 
@@ -722,7 +718,7 @@ onBeforeUnmount(() => {
 .budget-card :deep(.el-card__body) {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: var(--bk-gap);
 }
 
 .budget-card__header {
@@ -737,8 +733,8 @@ onBeforeUnmount(() => {
 }
 
 .budget-card__name {
-  font-size: 15px;
-  font-weight: 600;
+  font-size: 14px;
+  font-weight: 550;
   overflow-wrap: anywhere;
 }
 
@@ -768,7 +764,7 @@ onBeforeUnmount(() => {
   width: 100%;
 }
 .total-card__actions > .el-button + .el-button { margin-left: 0; }
-@container content (max-width: 540px) {
+@container page (max-width: 540px) {
   .budget-metrics { grid-template-columns: minmax(0, 1fr); gap: 14px; }
   .budget-metrics > div { flex-direction: row; align-items: baseline; justify-content: space-between; gap: 12px; }
   .budget-metrics strong { font-size: 22px; }

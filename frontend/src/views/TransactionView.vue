@@ -2,7 +2,7 @@
 import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Search, Edit, DocumentCopy, Delete, Wallet } from '@element-plus/icons-vue'
+import { Search, Edit, DocumentCopy, Delete, Wallet, Plus } from '@element-plus/icons-vue'
 import { transactionApi, ApiError } from '@/api'
 import { useDictStore } from '@/stores/dict'
 import { useSettingsStore } from '@/stores/settings'
@@ -487,7 +487,7 @@ onBeforeUnmount(() => {
         <el-button :type="batchMode ? 'warning' : 'default'" text data-guide="tx-batch" @click="toggleBatchMode">
           {{ batchMode ? '退出批量' : '批量管理' }}
         </el-button>
-        <el-button type="primary" data-guide="tx-create" @click="openCreate">+ 新增记录</el-button>
+        <el-button type="primary" :icon="Plus" data-guide="tx-create" @click="openCreate">新增记录</el-button>
       </div>
     </header>
 
@@ -703,9 +703,9 @@ onBeforeUnmount(() => {
           </div>
 
           <div class="tx-row__actions">
-            <el-button link type="primary" title="编辑" aria-label="编辑流水" @click="openEdit(row)"><el-icon><Edit /></el-icon></el-button>
-            <el-button link type="primary" title="复制" aria-label="复制流水" @click="openCopy(row)"><el-icon><DocumentCopy /></el-icon></el-button>
-            <el-button link type="danger" title="删除" aria-label="删除流水" @click="remove(row)"><el-icon><Delete /></el-icon></el-button>
+            <el-button text circle size="small" type="primary" title="编辑" aria-label="编辑流水" @click="openEdit(row)"><el-icon><Edit /></el-icon></el-button>
+            <el-button text circle size="small" type="primary" title="复制" aria-label="复制流水" @click="openCopy(row)"><el-icon><DocumentCopy /></el-icon></el-button>
+            <el-button text circle size="small" type="danger" title="删除" aria-label="删除流水" @click="remove(row)"><el-icon><Delete /></el-icon></el-button>
           </div>
         </div>
 
@@ -798,7 +798,7 @@ onBeforeUnmount(() => {
   min-width: 0;
 }
 
-@container content (max-width: 820px) {
+@container page (max-width: 820px) {
   .tx-filter-row {
     grid-template-columns: minmax(0, 1fr);
     gap: 12px;
@@ -841,10 +841,7 @@ onBeforeUnmount(() => {
 }
 
 /* —— 消费级流水行 —— */
-.tx-panel {
-  padding: 20px var(--bk-panel-padding);
-}
-.tx-panel__head { padding-bottom: 14px; }
+.tx-panel__head { padding-bottom: var(--bk-gap); }
 .tx-list.is-batch .tx-row { grid-template-columns: 22px 40px minmax(0, 1fr) auto auto; }
 
 .tx-list {
@@ -862,7 +859,7 @@ onBeforeUnmount(() => {
   display: flex;
   align-items: center;
   gap: 14px;
-  padding: 12px 14px;
+  padding: var(--bk-row-padding) 0;
 }
 
 .tx-skel-icon {
@@ -886,7 +883,7 @@ onBeforeUnmount(() => {
   grid-template-columns: 40px minmax(0, 1fr) auto auto;
   align-items: center;
   gap: 14px;
-  padding: 18px 8px;
+  padding: var(--bk-row-padding) 0;
   border-bottom: 1px solid var(--bk-border-light);
   border-radius: var(--bk-radius-md);
   transition: background-color 0.16s ease;
@@ -974,9 +971,15 @@ onBeforeUnmount(() => {
   flex-shrink: 0;
   display: flex;
   align-items: center;
-  gap: 2px;
+  gap: var(--bk-action-gap);
   opacity: 0;
   transition: opacity 0.16s ease;
+}
+
+.tx-row__actions > .el-button + .el-button { margin-left: 0; }
+
+@media (hover: none) {
+  .tx-row__actions { opacity: 1; }
 }
 
 .tx-row:hover .tx-row__actions,
@@ -1043,7 +1046,7 @@ onBeforeUnmount(() => {
   color: var(--el-color-primary);
   background: var(--el-color-primary-light-9);
 }
-@container content (max-width: 620px) {
+@container page (max-width: 620px) {
   .tx-dimensions { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .tx-row { grid-template-columns: 40px minmax(0, 1fr) auto; gap: 10px; }
   .tx-list.is-batch .tx-row { grid-template-columns: 22px 40px minmax(0, 1fr) auto; }

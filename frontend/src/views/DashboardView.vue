@@ -551,7 +551,7 @@ onBeforeUnmount(() => {
               </b>
             </span>
           </div>
-          <el-button link type="primary" @click="router.push('/report')">查看报表</el-button>
+          <el-button text type="primary" @click="router.push('/report')">查看报表</el-button>
         </div>
       </template>
       <div class="chart-slot">
@@ -571,7 +571,7 @@ onBeforeUnmount(() => {
         <template #header>
           <div class="card-head">
             <h2 class="card-head__title">最近流水</h2>
-            <el-button link type="primary" @click="router.push('/transaction')">查看全部</el-button>
+            <el-button text type="primary" @click="router.push('/transaction')">查看全部</el-button>
           </div>
         </template>
         <template v-if="recentTransactions.length">
@@ -605,7 +605,7 @@ onBeforeUnmount(() => {
         <template #header>
           <div class="card-head">
             <h2 class="card-head__title">{{ monthLabel }} 预算</h2>
-            <el-button link type="primary" @click="router.push('/budget')">管理预算</el-button>
+            <el-button text type="primary" @click="router.push('/budget')">管理预算</el-button>
           </div>
         </template>
         <template v-if="monthTotalBudget">
@@ -643,10 +643,6 @@ onBeforeUnmount(() => {
 </template>
 
 <style scoped>
-.page-section > .section-heading {
-  padding-inline: 4px;
-}
-
 /* —— Hero 叙事首屏 —— */
 .hero {
   display: flex;
@@ -654,7 +650,7 @@ onBeforeUnmount(() => {
   justify-content: space-between;
   gap: 24px;
   flex-wrap: wrap;
-  padding: var(--bk-panel-padding);
+  padding: var(--bk-row-padding) var(--bk-panel-padding);
   border-radius: var(--bk-radius-lg);
   background: var(--bk-surface);
   border: 0;
@@ -801,12 +797,12 @@ onBeforeUnmount(() => {
 /* —— 统计 tile —— */
 .stat-grid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: var(--bk-gap);
 }
 
 .tile {
-  padding: 22px var(--bk-panel-padding);
+  padding: var(--bk-row-padding) var(--bk-panel-padding);
   min-width: 0;
   border-radius: var(--bk-radius-lg);
   background: var(--bk-surface);
@@ -920,7 +916,7 @@ onBeforeUnmount(() => {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 14px 0;
+  padding: var(--bk-row-padding) 0;
   border-bottom: 1px solid var(--bk-border-light);
 }
 
@@ -980,7 +976,7 @@ onBeforeUnmount(() => {
 }
 
 /* 窄窗口自适应（桌面端窗口可自由缩放）：统计卡 4→2→1，图表/底部双栏→单栏 */
-@container content (max-width: 1040px) {
+@container page (max-width: 880px) {
   .hero {
     flex-wrap: wrap;
   }
@@ -995,7 +991,7 @@ onBeforeUnmount(() => {
   }
 }
 
-@container content (max-width: 520px) {
+@container page (max-width: 520px) {
   .stat-grid {
     grid-template-columns: 1fr;
   }

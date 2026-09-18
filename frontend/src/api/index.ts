@@ -383,6 +383,19 @@ export interface CsvPreviewResult {
 }
 
 export const backupApi = {
+  /** 获取后端实际数据目录；读取失败由设置页就地提示并提供重试。 */
+  async storagePath(): Promise<string> {
+    const resp = await request<DataResponse<string>>({
+      url: '/backup/storagePath',
+      method: 'get',
+      silent: true,
+      noRetry: true
+    })
+    if (typeof resp.data !== 'string' || !resp.data.trim()) {
+      throw new Error('未获取到数据存储路径')
+    }
+    return resp.data
+  },
   /** 导出整库 .db 快照 */
   async exportDb(): Promise<void> {
     await downloadAttachment('/backup/export', `bookkeeping-backup-${fileStamp()}.db`)

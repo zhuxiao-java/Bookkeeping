@@ -70,7 +70,7 @@ const lit = computed(() => !!today.value || checkin.currentStreak > 0)
   display: block;
   color: var(--bk-text);
   text-decoration: none;
-  padding: var(--bk-panel-padding);
+  padding: var(--bk-row-padding) var(--bk-panel-padding);
   container: checkin-card / inline-size;
 }
 
@@ -80,7 +80,7 @@ const lit = computed(() => !!today.value || checkin.currentStreak > 0)
 .cc__row {
   display: flex;
   align-items: center;
-  gap: 18px;
+  gap: var(--bk-gap);
 }
 
 .cc__flame {
@@ -176,7 +176,7 @@ const lit = computed(() => !!today.value || checkin.currentStreak > 0)
   font-size: 13px;
   color: var(--el-color-primary);
   border-left: 1px solid var(--el-border-color-lighter);
-  padding-left: 18px;
+  padding-left: var(--bk-gap);
   line-height: 20px;
 }
 @container checkin-card (max-width: 1000px) {

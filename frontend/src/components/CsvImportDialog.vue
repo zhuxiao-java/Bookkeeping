@@ -261,7 +261,7 @@ const importableCount = computed(() => {
 
 <style scoped>
 .csv-steps {
-  margin-bottom: 18px;
+  margin-bottom: var(--bk-row-padding);
 }
 
 .csv-body {
@@ -342,7 +342,7 @@ const importableCount = computed(() => {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  margin-bottom: 10px;
+  margin-bottom: var(--bk-gap);
 }
 
 .csv-table {
@@ -390,9 +390,5 @@ const importableCount = computed(() => {
   overflow-wrap: anywhere;
 }
 
-.csv-footer {
-  display: flex;
-  justify-content: flex-end;
-  gap: 10px;
-}
+.csv-footer { gap: var(--bk-action-gap); }
 </style>

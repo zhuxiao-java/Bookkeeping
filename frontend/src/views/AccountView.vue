@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { MoreFilled } from '@element-plus/icons-vue'
+import { MoreFilled, Plus } from '@element-plus/icons-vue'
 import { accountApi, transactionApi, ApiError } from '@/api'
 import { useSettingsStore } from '@/stores/settings'
 import { useDictStore } from '@/stores/dict'
@@ -205,7 +205,7 @@ onBeforeUnmount(() => {
       </div>
       <div class="toolbar page-head__actions">
         <el-button text :loading="reconciling" data-guide="account-reconcile" @click="reconcile">对账</el-button>
-        <el-button type="primary" data-guide="account-create" @click="openCreate">+ 新增账户</el-button>
+        <el-button type="primary" :icon="Plus" data-guide="account-create" @click="openCreate">新增账户</el-button>
       </div>
     </header>
     <div class="surface bk-enter">
@@ -381,7 +381,7 @@ onBeforeUnmount(() => {
 .account-card::before {
   content: '';
   position: absolute;
-  left: 24px;
+  left: var(--bk-panel-padding);
   top: 0;
   height: 3px;
   width: 32px;
@@ -406,8 +406,8 @@ onBeforeUnmount(() => {
 }
 
 .account-card__name {
-  font-size: 15px;
-  font-weight: 600;
+  font-size: 14px;
+  font-weight: 550;
   overflow-wrap: anywhere;
   display: flex;
   flex-wrap: wrap;
@@ -423,7 +423,7 @@ onBeforeUnmount(() => {
 }
 
 .account-card__balance {
-  margin-top: 22px;
+  margin-top: var(--bk-row-padding);
   font-size: 14px;
   color: var(--bk-text-secondary);
   display: flex;

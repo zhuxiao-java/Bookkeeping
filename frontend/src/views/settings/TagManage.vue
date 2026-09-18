@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, reactive, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { Plus } from '@element-plus/icons-vue'
 import { tagApi, ApiError } from '@/api'
 import { useDictStore } from '@/stores/dict'
 import { transactionApi } from '@/api'
@@ -134,7 +135,7 @@ onBeforeUnmount(() => {
         <h1 class="page-head__title">标签管理</h1>
         <p class="page-head__sub">为交易加个标记，报销、旅行和日常都能轻松找到。</p>
       </div>
-      <el-button type="primary" class="page-head__actions" @click="openCreate">+ 新增标签</el-button>
+      <el-button type="primary" :icon="Plus" class="page-head__actions" @click="openCreate">新增标签</el-button>
     </header>
     <section class="page-section" aria-labelledby="tag-list-heading">
       <div class="toolbar page-section__head">
@@ -198,11 +199,11 @@ onBeforeUnmount(() => {
 </template>
 
 <style scoped>
-.tag-row { display: flex; align-items: center; gap: 16px; padding-block: 20px; }
+.tag-row { display: flex; align-items: center; gap: 16px; padding-block: var(--bk-row-padding); }
 .tag-row__copy { display: flex; flex-direction: column; flex: 1; min-width: 0; gap: 3px; }
 .tag-row__name { font-size: 14px; font-weight: 550; overflow-wrap: anywhere; }
 .tag-row__usage { font-size: 13px; color: var(--bk-text-secondary); }
-.tag-row__actions { flex-shrink: 0; gap: 4px; }
+.tag-row__actions { flex-shrink: 0; gap: var(--bk-action-gap); }
 
 .color-dot {
   display: inline-block;

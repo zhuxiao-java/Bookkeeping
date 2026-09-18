@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
+import { ArrowLeft, ArrowRight } from '@element-plus/icons-vue'
 import { useCheckInStore, todayStr } from '@/stores/checkin'
 import CheckInCalendar from './CheckInCalendar.vue'
 import EmptyState from './EmptyState.vue'
@@ -47,9 +48,9 @@ function rowLabel(date: string): string {
     <div class="ci__head">
       <span class="ci__title">签到日历</span>
       <span class="ci__nav">
-        <el-button link aria-label="上个月" @click="prevMonth">‹</el-button>
+        <el-button text circle :icon="ArrowLeft" aria-label="上个月" @click="prevMonth" />
         <span class="ci__month">{{ year }} 年 {{ month }} 月</span>
-        <el-button link aria-label="下个月" :disabled="atCurrentMonth" @click="nextMonth">›</el-button>
+        <el-button text circle :icon="ArrowRight" aria-label="下个月" :disabled="atCurrentMonth" @click="nextMonth" />
       </span>
       <div class="ci__stats">
         <div>
@@ -109,8 +110,8 @@ function rowLabel(date: string): string {
 .ci__nav {
   display: flex;
   align-items: center;
-  gap: 2px;
-  margin-left: 14px;
+  gap: var(--bk-action-gap);
+  margin-left: 0;
 }
 
 .ci__month {
@@ -150,7 +151,7 @@ function rowLabel(date: string): string {
 .ci__body {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
-  gap: 28px;
+  gap: var(--bk-gap-lg);
 }
 
 .ci__cal {
@@ -171,7 +172,7 @@ function rowLabel(date: string): string {
 .ci__row {
   display: flex;
   align-items: center;
-  padding: 12px 2px;
+  padding: var(--bk-row-padding) 0;
   gap: 8px;
   flex-wrap: wrap;
   border-bottom: 1px solid var(--el-border-color-lighter);

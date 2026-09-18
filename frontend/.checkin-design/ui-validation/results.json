@@ -1,22 +1,544 @@
 {
   "checks": [
     {
+      "name": "storage-path-light",
+      "title": "数据管理",
+      "mainWidth": 1232,
+      "mainScroll": 1232,
+      "pageOverflow": false,
+      "nestedButtons": false,
+      "layers": [],
+      "styleIssues": []
+    },
+    {
+      "name": "storage-path-dark",
+      "title": "数据管理",
+      "mainWidth": 752,
+      "mainScroll": 752,
+      "pageOverflow": false,
+      "nestedButtons": false,
+      "layers": [],
+      "styleIssues": []
+    },
+    {
+      "name": "storage-path-unavailable",
+      "title": "数据管理",
+      "mainWidth": 752,
+      "mainScroll": 752,
+      "pageOverflow": false,
+      "nestedButtons": false,
+      "layers": [],
+      "styleIssues": []
+    },
+    {
+      "name": "storage-path-loading",
+      "title": "数据管理",
+      "mainWidth": 752,
+      "mainScroll": 752,
+      "pageOverflow": false,
+      "nestedButtons": false,
+      "layers": [],
+      "styleIssues": []
+    },
+    {
+      "name": "1920-light-expanded-dashboard",
+      "title": "总览",
+      "mainWidth": 1712,
+      "mainScroll": 1712,
+      "pageOverflow": false,
+      "nestedButtons": false,
+      "layers": [],
+      "styleIssues": []
+    },
+    {
+      "name": "1920-light-expanded-account",
+      "title": "账户",
+      "mainWidth": 1712,
+      "mainScroll": 1712,
+      "pageOverflow": false,
+      "nestedButtons": false,
+      "layers": [],
+      "styleIssues": []
+    },
+    {
+      "name": "1920-light-expanded-transaction",
+      "title": "流水",
+      "mainWidth": 1712,
+      "mainScroll": 1712,
+      "pageOverflow": false,
+      "nestedButtons": false,
+      "layers": [],
+      "styleIssues": []
+    },
+    {
+      "name": "1920-light-expanded-budget",
+      "title": "预算",
+      "mainWidth": 1712,
+      "mainScroll": 1712,
+      "pageOverflow": false,
+      "nestedButtons": false,
+      "layers": [],
+      "styleIssues": []
+    },
+    {
+      "name": "1920-light-expanded-report",
+      "title": "报表",
+      "mainWidth": 1712,
+      "mainScroll": 1712,
+      "pageOverflow": false,
+      "nestedButtons": false,
+      "layers": [],
+      "styleIssues": []
+    },
+    {
+      "name": "1920-light-expanded-level",
+      "title": "等级",
+      "mainWidth": 1712,
+      "mainScroll": 1712,
+      "pageOverflow": false,
+      "nestedButtons": false,
+      "layers": [],
+      "styleIssues": []
+    },
+    {
+      "name": "1920-light-expanded-settings-preference",
+      "title": "个性化",
+      "mainWidth": 1712,
+      "mainScroll": 1712,
+      "pageOverflow": false,
+      "nestedButtons": false,
+      "layers": [],
+      "styleIssues": []
+    },
+    {
+      "name": "1920-light-expanded-settings-category",
+      "title": "分类管理",
+      "mainWidth": 1712,
+      "mainScroll": 1712,
+      "pageOverflow": false,
+      "nestedButtons": false,
+      "layers": [],
+      "styleIssues": []
+    },
+    {
+      "name": "1920-light-expanded-settings-tag",
+      "title": "标签管理",
+      "mainWidth": 1712,
+      "mainScroll": 1712,
+      "pageOverflow": false,
+      "nestedButtons": false,
+      "layers": [],
+      "styleIssues": []
+    },
+    {
+      "name": "1920-light-expanded-settings-data",
+      "title": "数据管理",
+      "mainWidth": 1712,
+      "mainScroll": 1712,
+      "pageOverflow": false,
+      "nestedButtons": false,
+      "layers": [],
+      "styleIssues": []
+    },
+    {
+      "name": "1920-light-expanded-settings-help",
+      "title": "使用说明",
+      "mainWidth": 1712,
+      "mainScroll": 1712,
+      "pageOverflow": false,
+      "nestedButtons": false,
+      "layers": [],
+      "styleIssues": []
+    },
+    {
+      "name": "1920-light-expanded-settings-about",
+      "title": "关于",
+      "mainWidth": 1712,
+      "mainScroll": 1712,
+      "pageOverflow": false,
+      "nestedButtons": false,
+      "layers": [],
+      "styleIssues": []
+    },
+    {
+      "name": "1920-light-collapsed-dashboard",
+      "title": "总览",
+      "mainWidth": 1848,
+      "mainScroll": 1848,
+      "pageOverflow": false,
+      "nestedButtons": false,
+      "layers": [],
+      "styleIssues": []
+    },
+    {
+      "name": "1920-light-collapsed-account",
+      "title": "账户",
+      "mainWidth": 1848,
+      "mainScroll": 1848,
+      "pageOverflow": false,
+      "nestedButtons": false,
+      "layers": [],
+      "styleIssues": []
+    },
+    {
+      "name": "1920-light-collapsed-transaction",
+      "title": "流水",
+      "mainWidth": 1848,
+      "mainScroll": 1848,
+      "pageOverflow": false,
+      "nestedButtons": false,
+      "layers": [],
+      "styleIssues": []
+    },
+    {
+      "name": "1920-light-collapsed-budget",
+      "title": "预算",
+      "mainWidth": 1848,
+      "mainScroll": 1848,
+      "pageOverflow": false,
+      "nestedButtons": false,
+      "layers": [],
+      "styleIssues": []
+    },
+    {
+      "name": "1920-light-collapsed-report",
+      "title": "报表",
+      "mainWidth": 1848,
+      "mainScroll": 1848,
+      "pageOverflow": false,
+      "nestedButtons": false,
+      "layers": [],
+      "styleIssues": []
+    },
+    {
+      "name": "1920-light-collapsed-level",
+      "title": "等级",
+      "mainWidth": 1848,
+      "mainScroll": 1848,
+      "pageOverflow": false,
+      "nestedButtons": false,
+      "layers": [],
+      "styleIssues": []
+    },
+    {
+      "name": "1920-light-collapsed-settings-preference",
+      "title": "个性化",
+      "mainWidth": 1848,
+      "mainScroll": 1848,
+      "pageOverflow": false,
+      "nestedButtons": false,
+      "layers": [],
+      "styleIssues": []
+    },
+    {
+      "name": "1920-light-collapsed-settings-category",
+      "title": "分类管理",
+      "mainWidth": 1848,
+      "mainScroll": 1848,
+      "pageOverflow": false,
+      "nestedButtons": false,
+      "layers": [],
+      "styleIssues": []
+    },
+    {
+      "name": "1920-light-collapsed-settings-tag",
+      "title": "标签管理",
+      "mainWidth": 1848,
+      "mainScroll": 1848,
+      "pageOverflow": false,
+      "nestedButtons": false,
+      "layers": [],
+      "styleIssues": []
+    },
+    {
+      "name": "1920-light-collapsed-settings-data",
+      "title": "数据管理",
+      "mainWidth": 1848,
+      "mainScroll": 1848,
+      "pageOverflow": false,
+      "nestedButtons": false,
+      "layers": [],
+      "styleIssues": []
+    },
+    {
+      "name": "1920-light-collapsed-settings-help",
+      "title": "使用说明",
+      "mainWidth": 1848,
+      "mainScroll": 1848,
+      "pageOverflow": false,
+      "nestedButtons": false,
+      "layers": [],
+      "styleIssues": []
+    },
+    {
+      "name": "1920-light-collapsed-settings-about",
+      "title": "关于",
+      "mainWidth": 1848,
+      "mainScroll": 1848,
+      "pageOverflow": false,
+      "nestedButtons": false,
+      "layers": [],
+      "styleIssues": []
+    },
+    {
+      "name": "1920-dark-expanded-dashboard",
+      "title": "总览",
+      "mainWidth": 1712,
+      "mainScroll": 1712,
+      "pageOverflow": false,
+      "nestedButtons": false,
+      "layers": [],
+      "styleIssues": []
+    },
+    {
+      "name": "1920-dark-expanded-account",
+      "title": "账户",
+      "mainWidth": 1712,
+      "mainScroll": 1712,
+      "pageOverflow": false,
+      "nestedButtons": false,
+      "layers": [],
+      "styleIssues": []
+    },
+    {
+      "name": "1920-dark-expanded-transaction",
+      "title": "流水",
+      "mainWidth": 1712,
+      "mainScroll": 1712,
+      "pageOverflow": false,
+      "nestedButtons": false,
+      "layers": [],
+      "styleIssues": []
+    },
+    {
+      "name": "1920-dark-expanded-budget",
+      "title": "预算",
+      "mainWidth": 1712,
+      "mainScroll": 1712,
+      "pageOverflow": false,
+      "nestedButtons": false,
+      "layers": [],
+      "styleIssues": []
+    },
+    {
+      "name": "1920-dark-expanded-report",
+      "title": "报表",
+      "mainWidth": 1712,
+      "mainScroll": 1712,
+      "pageOverflow": false,
+      "nestedButtons": false,
+      "layers": [],
+      "styleIssues": []
+    },
+    {
+      "name": "1920-dark-expanded-level",
+      "title": "等级",
+      "mainWidth": 1712,
+      "mainScroll": 1712,
+      "pageOverflow": false,
+      "nestedButtons": false,
+      "layers": [],
+      "styleIssues": []
+    },
+    {
+      "name": "1920-dark-expanded-settings-preference",
+      "title": "个性化",
+      "mainWidth": 1712,
+      "mainScroll": 1712,
+      "pageOverflow": false,
+      "nestedButtons": false,
+      "layers": [],
+      "styleIssues": []
+    },
+    {
+      "name": "1920-dark-expanded-settings-category",
+      "title": "分类管理",
+      "mainWidth": 1712,
+      "mainScroll": 1712,
+      "pageOverflow": false,
+      "nestedButtons": false,
+      "layers": [],
+      "styleIssues": []
+    },
+    {
+      "name": "1920-dark-expanded-settings-tag",
+      "title": "标签管理",
+      "mainWidth": 1712,
+      "mainScroll": 1712,
+      "pageOverflow": false,
+      "nestedButtons": false,
+      "layers": [],
+      "styleIssues": []
+    },
+    {
+      "name": "1920-dark-expanded-settings-data",
+      "title": "数据管理",
+      "mainWidth": 1712,
+      "mainScroll": 1712,
+      "pageOverflow": false,
+      "nestedButtons": false,
+      "layers": [],
+      "styleIssues": []
+    },
+    {
+      "name": "1920-dark-expanded-settings-help",
+      "title": "使用说明",
+      "mainWidth": 1712,
+      "mainScroll": 1712,
+      "pageOverflow": false,
+      "nestedButtons": false,
+      "layers": [],
+      "styleIssues": []
+    },
+    {
+      "name": "1920-dark-expanded-settings-about",
+      "title": "关于",
+      "mainWidth": 1712,
+      "mainScroll": 1712,
+      "pageOverflow": false,
+      "nestedButtons": false,
+      "layers": [],
+      "styleIssues": []
+    },
+    {
+      "name": "1920-dark-collapsed-dashboard",
+      "title": "总览",
+      "mainWidth": 1848,
+      "mainScroll": 1848,
+      "pageOverflow": false,
+      "nestedButtons": false,
+      "layers": [],
+      "styleIssues": []
+    },
+    {
+      "name": "1920-dark-collapsed-account",
+      "title": "账户",
+      "mainWidth": 1848,
+      "mainScroll": 1848,
+      "pageOverflow": false,
+      "nestedButtons": false,
+      "layers": [],
+      "styleIssues": []
+    },
+    {
+      "name": "1920-dark-collapsed-transaction",
+      "title": "流水",
+      "mainWidth": 1848,
+      "mainScroll": 1848,
+      "pageOverflow": false,
+      "nestedButtons": false,
+      "layers": [],
+      "styleIssues": []
+    },
+    {
+      "name": "1920-dark-collapsed-budget",
+      "title": "预算",
+      "mainWidth": 1848,
+      "mainScroll": 1848,
+      "pageOverflow": false,
+      "nestedButtons": false,
+      "layers": [],
+      "styleIssues": []
+    },
+    {
+      "name": "1920-dark-collapsed-report",
+      "title": "报表",
+      "mainWidth": 1848,
+      "mainScroll": 1848,
+      "pageOverflow": false,
+      "nestedButtons": false,
+      "layers": [],
+      "styleIssues": []
+    },
+    {
+      "name": "1920-dark-collapsed-level",
+      "title": "等级",
+      "mainWidth": 1848,
+      "mainScroll": 1848,
+      "pageOverflow": false,
+      "nestedButtons": false,
+      "layers": [],
+      "styleIssues": []
+    },
+    {
+      "name": "1920-dark-collapsed-settings-preference",
+      "title": "个性化",
+      "mainWidth": 1848,
+      "mainScroll": 1848,
+      "pageOverflow": false,
+      "nestedButtons": false,
+      "layers": [],
+      "styleIssues": []
+    },
+    {
+      "name": "1920-dark-collapsed-settings-category",
+      "title": "分类管理",
+      "mainWidth": 1848,
+      "mainScroll": 1848,
+      "pageOverflow": false,
+      "nestedButtons": false,
+      "layers": [],
+      "styleIssues": []
+    },
+    {
+      "name": "1920-dark-collapsed-settings-tag",
+      "title": "标签管理",
+      "mainWidth": 1848,
+      "mainScroll": 1848,
+      "pageOverflow": false,
+      "nestedButtons": false,
+      "layers": [],
+      "styleIssues": []
+    },
+    {
+      "name": "1920-dark-collapsed-settings-data",
+      "title": "数据管理",
+      "mainWidth": 1848,
+      "mainScroll": 1848,
+      "pageOverflow": false,
+      "nestedButtons": false,
+      "layers": [],
+      "styleIssues": []
+    },
+    {
+      "name": "1920-dark-collapsed-settings-help",
+      "title": "使用说明",
+      "mainWidth": 1848,
+      "mainScroll": 1848,
+      "pageOverflow": false,
+      "nestedButtons": false,
+      "layers": [],
+      "styleIssues": []
+    },
+    {
+      "name": "1920-dark-collapsed-settings-about",
+      "title": "关于",
+      "mainWidth": 1848,
+      "mainScroll": 1848,
+      "pageOverflow": false,
+      "nestedButtons": false,
+      "layers": [],
+      "styleIssues": []
+    },
+    {
       "name": "1440-light-expanded-dashboard",
       "title": "总览",
       "mainWidth": 1232,
       "mainScroll": 1232,
       "pageOverflow": false,
       "nestedButtons": false,
-      "layers": []
+      "layers": [],
+      "styleIssues": []
     },
     {
       "name": "1440-light-expanded-account",
       "title": "账户",
-      "mainWidth": 1240,
-      "mainScroll": 1240,
+      "mainWidth": 1232,
+      "mainScroll": 1232,
       "pageOverflow": false,
       "nestedButtons": false,
-      "layers": []
+      "layers": [],
+      "styleIssues": []
     },
     {
       "name": "1440-light-expanded-transaction",
@@ -25,7 +547,8 @@
       "mainScroll": 1232,
       "pageOverflow": false,
       "nestedButtons": false,
-      "layers": []
+      "layers": [],
+      "styleIssues": []
     },
     {
       "name": "1440-light-expanded-budget",
@@ -34,7 +557,8 @@
       "mainScroll": 1232,
       "pageOverflow": false,
       "nestedButtons": false,
-      "layers": []
+      "layers": [],
+      "styleIssues": []
     },
     {
       "name": "1440-light-expanded-report",
@@ -43,7 +567,8 @@
       "mainScroll": 1232,
       "pageOverflow": false,
       "nestedButtons": false,
-      "layers": []
+      "layers": [],
+      "styleIssues": []
     },
     {
       "name": "1440-light-expanded-level",
@@ -52,61 +577,68 @@
       "mainScroll": 1232,
       "pageOverflow": false,
       "nestedButtons": false,
-      "layers": []
+      "layers": [],
+      "styleIssues": []
     },
     {
       "name": "1440-light-expanded-settings-preference",
       "title": "个性化",
-      "mainWidth": 1240,
-      "mainScroll": 1240,
+      "mainWidth": 1232,
+      "mainScroll": 1232,
       "pageOverflow": false,
       "nestedButtons": false,
-      "layers": []
+      "layers": [],
+      "styleIssues": []
     },
     {
       "name": "1440-light-expanded-settings-category",
       "title": "分类管理",
-      "mainWidth": 1240,
-      "mainScroll": 1240,
+      "mainWidth": 1232,
+      "mainScroll": 1232,
       "pageOverflow": false,
       "nestedButtons": false,
-      "layers": []
+      "layers": [],
+      "styleIssues": []
     },
     {
       "name": "1440-light-expanded-settings-tag",
       "title": "标签管理",
-      "mainWidth": 1240,
-      "mainScroll": 1240,
+      "mainWidth": 1232,
+      "mainScroll": 1232,
       "pageOverflow": false,
       "nestedButtons": false,
-      "layers": []
+      "layers": [],
+      "styleIssues": []
     },
     {
       "name": "1440-light-expanded-settings-data",
       "title": "数据管理",
-      "mainWidth": 1240,
-      "mainScroll": 1240,
+      "mainWidth": 1232,
+      "mainScroll": 1232,
       "pageOverflow": false,
       "nestedButtons": false,
-      "layers": []
+      "layers": [],
+      "styleIssues": []
     },
     {
       "name": "1440-light-expanded-settings-help",
       "title": "使用说明",
-      "mainWidth": 1240,
-      "mainScroll": 1240,
+      "mainWidth": 1232,
+      "mainScroll": 1232,
       "pageOverflow": false,
       "nestedButtons": false,
-      "layers": []
+      "layers": [],
+      "styleIssues": []
     },
     {
       "name": "1440-light-expanded-settings-about",
       "title": "关于",
-      "mainWidth": 1240,
-      "mainScroll": 1240,
+      "mainWidth": 1232,
+      "mainScroll": 1232,
       "pageOverflow": false,
       "nestedButtons": false,
-      "layers": []
+      "layers": [],
+      "styleIssues": []
     },
     {
       "name": "1440-light-collapsed-dashboard",
@@ -115,16 +647,18 @@
       "mainScroll": 1368,
       "pageOverflow": false,
       "nestedButtons": false,
-      "layers": []
+      "layers": [],
+      "styleIssues": []
     },
     {
       "name": "1440-light-collapsed-account",
       "title": "账户",
-      "mainWidth": 1376,
-      "mainScroll": 1376,
+      "mainWidth": 1368,
+      "mainScroll": 1368,
       "pageOverflow": false,
       "nestedButtons": false,
-      "layers": []
+      "layers": [],
+      "styleIssues": []
     },
     {
       "name": "1440-light-collapsed-transaction",
@@ -133,7 +667,8 @@
       "mainScroll": 1368,
       "pageOverflow": false,
       "nestedButtons": false,
-      "layers": []
+      "layers": [],
+      "styleIssues": []
     },
     {
       "name": "1440-light-collapsed-budget",
@@ -142,7 +677,8 @@
       "mainScroll": 1368,
       "pageOverflow": false,
       "nestedButtons": false,
-      "layers": []
+      "layers": [],
+      "styleIssues": []
     },
     {
       "name": "1440-light-collapsed-report",
@@ -151,7 +687,8 @@
       "mainScroll": 1368,
       "pageOverflow": false,
       "nestedButtons": false,
-      "layers": []
+      "layers": [],
+      "styleIssues": []
     },
     {
       "name": "1440-light-collapsed-level",
@@ -160,61 +697,68 @@
       "mainScroll": 1368,
       "pageOverflow": false,
       "nestedButtons": false,
-      "layers": []
+      "layers": [],
+      "styleIssues": []
     },
     {
       "name": "1440-light-collapsed-settings-preference",
       "title": "个性化",
-      "mainWidth": 1376,
-      "mainScroll": 1376,
+      "mainWidth": 1368,
+      "mainScroll": 1368,
       "pageOverflow": false,
       "nestedButtons": false,
-      "layers": []
+      "layers": [],
+      "styleIssues": []
     },
     {
       "name": "1440-light-collapsed-settings-category",
       "title": "分类管理",
-      "mainWidth": 1376,
-      "mainScroll": 1376,
+      "mainWidth": 1368,
+      "mainScroll": 1368,
       "pageOverflow": false,
       "nestedButtons": false,
-      "layers": []
+      "layers": [],
+      "styleIssues": []
     },
     {
       "name": "1440-light-collapsed-settings-tag",
       "title": "标签管理",
-      "mainWidth": 1376,
-      "mainScroll": 1376,
+      "mainWidth": 1368,
+      "mainScroll": 1368,
       "pageOverflow": false,
       "nestedButtons": false,
-      "layers": []
+      "layers": [],
+      "styleIssues": []
     },
     {
       "name": "1440-light-collapsed-settings-data",
       "title": "数据管理",
-      "mainWidth": 1376,
-      "mainScroll": 1376,
+      "mainWidth": 1368,
+      "mainScroll": 1368,
       "pageOverflow": false,
       "nestedButtons": false,
-      "layers": []
+      "layers": [],
+      "styleIssues": []
     },
     {
       "name": "1440-light-collapsed-settings-help",
       "title": "使用说明",
-      "mainWidth": 1376,
-      "mainScroll": 1376,
+      "mainWidth": 1368,
+      "mainScroll": 1368,
       "pageOverflow": false,
       "nestedButtons": false,
-      "layers": []
+      "layers": [],
+      "styleIssues": []
     },
     {
       "name": "1440-light-collapsed-settings-about",
       "title": "关于",
-      "mainWidth": 1376,
-      "mainScroll": 1376,
+      "mainWidth": 1368,
+      "mainScroll": 1368,
       "pageOverflow": false,
       "nestedButtons": false,
-      "layers": []
+      "layers": [],
+      "styleIssues": []
     },
     {
       "name": "1440-dark-expanded-dashboard",
@@ -223,16 +767,18 @@
       "mainScroll": 1232,
       "pageOverflow": false,
       "nestedButtons": false,
-      "layers": []
+      "layers": [],
+      "styleIssues": []
     },
     {
       "name": "1440-dark-expanded-account",
       "title": "账户",
-      "mainWidth": 1240,
-      "mainScroll": 1240,
+      "mainWidth": 1232,
+      "mainScroll": 1232,
       "pageOverflow": false,
       "nestedButtons": false,
-      "layers": []
+      "layers": [],
+      "styleIssues": []
     },
     {
       "name": "1440-dark-expanded-transaction",
@@ -241,7 +787,8 @@
       "mainScroll": 1232,
       "pageOverflow": false,
       "nestedButtons": false,
-      "layers": []
+      "layers": [],
+      "styleIssues": []
     },
     {
       "name": "1440-dark-expanded-budget",
@@ -250,7 +797,8 @@
       "mainScroll": 1232,
       "pageOverflow": false,
       "nestedButtons": false,
-      "layers": []
+      "layers": [],
+      "styleIssues": []
     },
     {
       "name": "1440-dark-expanded-report",
@@ -259,7 +807,8 @@
       "mainScroll": 1232,
       "pageOverflow": false,
       "nestedButtons": false,
-      "layers": []
+      "layers": [],
+      "styleIssues": []
     },
     {
       "name": "1440-dark-expanded-level",
@@ -268,61 +817,68 @@
       "mainScroll": 1232,
       "pageOverflow": false,
       "nestedButtons": false,
-      "layers": []
+      "layers": [],
+      "styleIssues": []
     },
     {
       "name": "1440-dark-expanded-settings-preference",
       "title": "个性化",
-      "mainWidth": 1240,
-      "mainScroll": 1240,
+      "mainWidth": 1232,
+      "mainScroll": 1232,
       "pageOverflow": false,
       "nestedButtons": false,
-      "layers": []
+      "layers": [],
+      "styleIssues": []
     },
     {
       "name": "1440-dark-expanded-settings-category",
       "title": "分类管理",
-      "mainWidth": 1240,
-      "mainScroll": 1240,
+      "mainWidth": 1232,
+      "mainScroll": 1232,
       "pageOverflow": false,
       "nestedButtons": false,
-      "layers": []
+      "layers": [],
+      "styleIssues": []
     },
     {
       "name": "1440-dark-expanded-settings-tag",
       "title": "标签管理",
-      "mainWidth": 1240,
-      "mainScroll": 1240,
+      "mainWidth": 1232,
+      "mainScroll": 1232,
       "pageOverflow": false,
       "nestedButtons": false,
-      "layers": []
+      "layers": [],
+      "styleIssues": []
     },
     {
       "name": "1440-dark-expanded-settings-data",
       "title": "数据管理",
-      "mainWidth": 1240,
-      "mainScroll": 1240,
+      "mainWidth": 1232,
+      "mainScroll": 1232,
       "pageOverflow": false,
       "nestedButtons": false,
-      "layers": []
+      "layers": [],
+      "styleIssues": []
     },
     {
       "name": "1440-dark-expanded-settings-help",
       "title": "使用说明",
-      "mainWidth": 1240,
-      "mainScroll": 1240,
+      "mainWidth": 1232,
+      "mainScroll": 1232,
       "pageOverflow": false,
       "nestedButtons": false,
-      "layers": []
+      "layers": [],
+      "styleIssues": []
     },
     {
       "name": "1440-dark-expanded-settings-about",
       "title": "关于",
-      "mainWidth": 1240,
-      "mainScroll": 1240,
+      "mainWidth": 1232,
+      "mainScroll": 1232,
       "pageOverflow": false,
       "nestedButtons": false,
-      "layers": []
+      "layers": [],
+      "styleIssues": []
     },
     {
       "name": "1440-dark-collapsed-dashboard",
@@ -331,16 +887,18 @@
       "mainScroll": 1368,
       "pageOverflow": false,
       "nestedButtons": false,
-      "layers": []
+      "layers": [],
+      "styleIssues": []
     },
     {
       "name": "1440-dark-collapsed-account",
       "title": "账户",
-      "mainWidth": 1376,
-      "mainScroll": 1376,
+      "mainWidth": 1368,
+      "mainScroll": 1368,
       "pageOverflow": false,
       "nestedButtons": false,
-      "layers": []
+      "layers": [],
+      "styleIssues": []
     },
     {
       "name": "1440-dark-collapsed-transaction",
@@ -349,7 +907,8 @@
       "mainScroll": 1368,
       "pageOverflow": false,
       "nestedButtons": false,
-      "layers": []
+      "layers": [],
+      "styleIssues": []
     },
     {
       "name": "1440-dark-collapsed-budget",
@@ -358,7 +917,8 @@
       "mainScroll": 1368,
       "pageOverflow": false,
       "nestedButtons": false,
-      "layers": []
+      "layers": [],
+      "styleIssues": []
     },
     {
       "name": "1440-dark-collapsed-report",
@@ -367,7 +927,8 @@
       "mainScroll": 1368,
       "pageOverflow": false,
       "nestedButtons": false,
-      "layers": []
+      "layers": [],
+      "styleIssues": []
     },
     {
       "name": "1440-dark-collapsed-level",
@@ -376,61 +937,68 @@
       "mainScroll": 1368,
       "pageOverflow": false,
       "nestedButtons": false,
-      "layers": []
+      "layers": [],
+      "styleIssues": []
     },
     {
       "name": "1440-dark-collapsed-settings-preference",
       "title": "个性化",
-      "mainWidth": 1376,
-      "mainScroll": 1376,
+      "mainWidth": 1368,
+      "mainScroll": 1368,
       "pageOverflow": false,
       "nestedButtons": false,
-      "layers": []
+      "layers": [],
+      "styleIssues": []
     },
     {
       "name": "1440-dark-collapsed-settings-category",
       "title": "分类管理",
-      "mainWidth": 1376,
-      "mainScroll": 1376,
+      "mainWidth": 1368,
+      "mainScroll": 1368,
       "pageOverflow": false,
       "nestedButtons": false,
-      "layers": []
+      "layers": [],
+      "styleIssues": []
     },
     {
       "name": "1440-dark-collapsed-settings-tag",
       "title": "标签管理",
-      "mainWidth": 1376,
-      "mainScroll": 1376,
+      "mainWidth": 1368,
+      "mainScroll": 1368,
       "pageOverflow": false,
       "nestedButtons": false,
-      "layers": []
+      "layers": [],
+      "styleIssues": []
     },
     {
       "name": "1440-dark-collapsed-settings-data",
       "title": "数据管理",
-      "mainWidth": 1376,
-      "mainScroll": 1376,
+      "mainWidth": 1368,
+      "mainScroll": 1368,
       "pageOverflow": false,
       "nestedButtons": false,
-      "layers": []
+      "layers": [],
+      "styleIssues": []
     },
     {
       "name": "1440-dark-collapsed-settings-help",
       "title": "使用说明",
-      "mainWidth": 1376,
-      "mainScroll": 1376,
+      "mainWidth": 1368,
+      "mainScroll": 1368,
       "pageOverflow": false,
       "nestedButtons": false,
-      "layers": []
+      "layers": [],
+      "styleIssues": []
     },
     {
       "name": "1440-dark-collapsed-settings-about",
       "title": "关于",
-      "mainWidth": 1376,
-      "mainScroll": 1376,
+      "mainWidth": 1368,
+      "mainScroll": 1368,
       "pageOverflow": false,
       "nestedButtons": false,
-      "layers": []
+      "layers": [],
+      "styleIssues": []
     },
     {
       "name": "1180-light-expanded-dashboard",
@@ -439,16 +1007,18 @@
       "mainScroll": 972,
       "pageOverflow": false,
       "nestedButtons": false,
-      "layers": []
+      "layers": [],
+      "styleIssues": []
     },
     {
       "name": "1180-light-expanded-account",
       "title": "账户",
-      "mainWidth": 980,
-      "mainScroll": 980,
+      "mainWidth": 972,
+      "mainScroll": 972,
       "pageOverflow": false,
       "nestedButtons": false,
-      "layers": []
+      "layers": [],
+      "styleIssues": []
     },
     {
       "name": "1180-light-expanded-transaction",
@@ -457,7 +1027,8 @@
       "mainScroll": 972,
       "pageOverflow": false,
       "nestedButtons": false,
-      "layers": []
+      "layers": [],
+      "styleIssues": []
     },
     {
       "name": "1180-light-expanded-budget",
@@ -466,7 +1037,8 @@
       "mainScroll": 972,
       "pageOverflow": false,
       "nestedButtons": false,
-      "layers": []
+      "layers": [],
+      "styleIssues": []
     },
     {
       "name": "1180-light-expanded-report",
@@ -475,7 +1047,8 @@
       "mainScroll": 972,
       "pageOverflow": false,
       "nestedButtons": false,
-      "layers": []
+      "layers": [],
+      "styleIssues": []
     },
     {
       "name": "1180-light-expanded-level",
@@ -484,61 +1057,68 @@
       "mainScroll": 972,
       "pageOverflow": false,
       "nestedButtons": false,
-      "layers": []
+      "layers": [],
+      "styleIssues": []
     },
     {
       "name": "1180-light-expanded-settings-preference",
       "title": "个性化",
-      "mainWidth": 980,
-      "mainScroll": 980,
+      "mainWidth": 972,
+      "mainScroll": 972,
       "pageOverflow": false,
       "nestedButtons": false,
-      "layers": []
+      "layers": [],
+      "styleIssues": []
     },
     {
       "name": "1180-light-expanded-settings-category",
       "title": "分类管理",
-      "mainWidth": 980,
-      "mainScroll": 980,
+      "mainWidth": 972,
+      "mainScroll": 972,
       "pageOverflow": false,
       "nestedButtons": false,
-      "layers": []
+      "layers": [],
+      "styleIssues": []
     },
     {
       "name": "1180-light-expanded-settings-tag",
       "title": "标签管理",
-      "mainWidth": 980,
-      "mainScroll": 980,
+      "mainWidth": 972,
+      "mainScroll": 972,
       "pageOverflow": false,
       "nestedButtons": false,
-      "layers": []
+      "layers": [],
+      "styleIssues": []
     },
     {
       "name": "1180-light-expanded-settings-data",
       "title": "数据管理",
-      "mainWidth": 980,
-      "mainScroll": 980,
+      "mainWidth": 972,
+      "mainScroll": 972,
       "pageOverflow": false,
       "nestedButtons": false,
-      "layers": []
+      "layers": [],
+      "styleIssues": []
     },
     {
       "name": "1180-light-expanded-settings-help",
       "title": "使用说明",
-      "mainWidth": 980,
-      "mainScroll": 980,
+      "mainWidth": 972,
+      "mainScroll": 972,
       "pageOverflow": false,
       "nestedButtons": false,
-      "layers": []
+      "layers": [],
+      "styleIssues": []
     },
     {
       "name": "1180-light-expanded-settings-about",
       "title": "关于",
-      "mainWidth": 980,
-      "mainScroll": 980,
+      "mainWidth": 972,
+      "mainScroll": 972,
       "pageOverflow": false,
       "nestedButtons": false,
-      "layers": []
+      "layers": [],
+      "styleIssues": []
     },
     {
       "name": "1180-light-collapsed-dashboard",
@@ -547,16 +1127,18 @@
       "mainScroll": 1108,
       "pageOverflow": false,
       "nestedButtons": false,
-      "layers": []
+      "layers": [],
+      "styleIssues": []
     },
     {
       "name": "1180-light-collapsed-account",
       "title": "账户",
-      "mainWidth": 1116,
-      "mainScroll": 1116,
+      "mainWidth": 1108,
+      "mainScroll": 1108,
       "pageOverflow": false,
       "nestedButtons": false,
-      "layers": []
+      "layers": [],
+      "styleIssues": []
     },
     {
       "name": "1180-light-collapsed-transaction",
@@ -565,7 +1147,8 @@
       "mainScroll": 1108,
       "pageOverflow": false,
       "nestedButtons": false,
-      "layers": []
+      "layers": [],
+      "styleIssues": []
     },
     {
       "name": "1180-light-collapsed-budget",
@@ -574,7 +1157,8 @@
       "mainScroll": 1108,
       "pageOverflow": false,
       "nestedButtons": false,
-      "layers": []
+      "layers": [],
+      "styleIssues": []
     },
     {
       "name": "1180-light-collapsed-report",
@@ -583,7 +1167,8 @@
       "mainScroll": 1108,
       "pageOverflow": false,
       "nestedButtons": false,
-      "layers": []
+      "layers": [],
+      "styleIssues": []
     },
     {
       "name": "1180-light-collapsed-level",
@@ -592,61 +1177,68 @@
       "mainScroll": 1108,
       "pageOverflow": false,
       "nestedButtons": false,
-      "layers": []
+      "layers": [],
+      "styleIssues": []
     },
     {
       "name": "1180-light-collapsed-settings-preference",
       "title": "个性化",
-      "mainWidth": 1116,
-      "mainScroll": 1116,
+      "mainWidth": 1108,
+      "mainScroll": 1108,
       "pageOverflow": false,
       "nestedButtons": false,
-      "layers": []
+      "layers": [],
+      "styleIssues": []
     },
     {
       "name": "1180-light-collapsed-settings-category",
       "title": "分类管理",
-      "mainWidth": 1116,
-      "mainScroll": 1116,
+      "mainWidth": 1108,
+      "mainScroll": 1108,
       "pageOverflow": false,
       "nestedButtons": false,
-      "layers": []
+      "layers": [],
+      "styleIssues": []
     },
     {
       "name": "1180-light-collapsed-settings-tag",
       "title": "标签管理",
-      "mainWidth": 1116,
-      "mainScroll": 1116,
+      "mainWidth": 1108,
+      "mainScroll": 1108,
       "pageOverflow": false,
       "nestedButtons": false,
-      "layers": []
+      "layers": [],
+      "styleIssues": []
     },
     {
       "name": "1180-light-collapsed-settings-data",
       "title": "数据管理",
-      "mainWidth": 1116,
-      "mainScroll": 1116,
+      "mainWidth": 1108,
+      "mainScroll": 1108,
       "pageOverflow": false,
       "nestedButtons": false,
-      "layers": []
+      "layers": [],
+      "styleIssues": []
     },
     {
       "name": "1180-light-collapsed-settings-help",
       "title": "使用说明",
-      "mainWidth": 1116,
-      "mainScroll": 1116,
+      "mainWidth": 1108,
+      "mainScroll": 1108,
       "pageOverflow": false,
       "nestedButtons": false,
-      "layers": []
+      "layers": [],
+      "styleIssues": []
     },
     {
       "name": "1180-light-collapsed-settings-about",
       "title": "关于",
-      "mainWidth": 1116,
-      "mainScroll": 1116,
+      "mainWidth": 1108,
+      "mainScroll": 1108,
       "pageOverflow": false,
       "nestedButtons": false,
-      "layers": []
+      "layers": [],
+      "styleIssues": []
     },
     {
       "name": "1180-dark-expanded-dashboard",
@@ -655,16 +1247,18 @@
       "mainScroll": 972,
       "pageOverflow": false,
       "nestedButtons": false,
-      "layers": []
+      "layers": [],
+      "styleIssues": []
     },
     {
       "name": "1180-dark-expanded-account",
       "title": "账户",
-      "mainWidth": 980,
-      "mainScroll": 980,
+      "mainWidth": 972,
+      "mainScroll": 972,
       "pageOverflow": false,
       "nestedButtons": false,
-      "layers": []
+      "layers": [],
+      "styleIssues": []
     },
     {
       "name": "1180-dark-expanded-transaction",
@@ -673,7 +1267,8 @@
       "mainScroll": 972,
       "pageOverflow": false,
       "nestedButtons": false,
-      "layers": []
+      "layers": [],
+      "styleIssues": []
     },
     {
       "name": "1180-dark-expanded-budget",
@@ -682,7 +1277,8 @@
       "mainScroll": 972,
       "pageOverflow": false,
       "nestedButtons": false,
-      "layers": []
+      "layers": [],
+      "styleIssues": []
     },
     {
       "name": "1180-dark-expanded-report",
@@ -691,7 +1287,8 @@
       "mainScroll": 972,
       "pageOverflow": false,
       "nestedButtons": false,
-      "layers": []
+      "layers": [],
+      "styleIssues": []
     },
     {
       "name": "1180-dark-expanded-level",
@@ -700,61 +1297,68 @@
       "mainScroll": 972,
       "pageOverflow": false,
       "nestedButtons": false,
-      "layers": []
+      "layers": [],
+      "styleIssues": []
     },
     {
       "name": "1180-dark-expanded-settings-preference",
       "title": "个性化",
-      "mainWidth": 980,
-      "mainScroll": 980,
+      "mainWidth": 972,
+      "mainScroll": 972,
       "pageOverflow": false,
       "nestedButtons": false,
-      "layers": []
+      "layers": [],
+      "styleIssues": []
     },
     {
       "name": "1180-dark-expanded-settings-category",
       "title": "分类管理",
-      "mainWidth": 980,
-      "mainScroll": 980,
+      "mainWidth": 972,
+      "mainScroll": 972,
       "pageOverflow": false,
       "nestedButtons": false,
-      "layers": []
+      "layers": [],
+      "styleIssues": []
     },
     {
       "name": "1180-dark-expanded-settings-tag",
       "title": "标签管理",
-      "mainWidth": 980,
-      "mainScroll": 980,
+      "mainWidth": 972,
+      "mainScroll": 972,
       "pageOverflow": false,
       "nestedButtons": false,
-      "layers": []
+      "layers": [],
+      "styleIssues": []
     },
     {
       "name": "1180-dark-expanded-settings-data",
       "title": "数据管理",
-      "mainWidth": 980,
-      "mainScroll": 980,
+      "mainWidth": 972,
+      "mainScroll": 972,
       "pageOverflow": false,
       "nestedButtons": false,
-      "layers": []
+      "layers": [],
+      "styleIssues": []
     },
     {
       "name": "1180-dark-expanded-settings-help",
       "title": "使用说明",
-      "mainWidth": 980,
-      "mainScroll": 980,
+      "mainWidth": 972,
+      "mainScroll": 972,
       "pageOverflow": false,
       "nestedButtons": false,
-      "layers": []
+      "layers": [],
+      "styleIssues": []
     },
     {
       "name": "1180-dark-expanded-settings-about",
       "title": "关于",
-      "mainWidth": 980,
-      "mainScroll": 980,
+      "mainWidth": 972,
+      "mainScroll": 972,
       "pageOverflow": false,
       "nestedButtons": false,
-      "layers": []
+      "layers": [],
+      "styleIssues": []
     },
     {
       "name": "1180-dark-collapsed-dashboard",
@@ -763,16 +1367,18 @@
       "mainScroll": 1108,
       "pageOverflow": false,
       "nestedButtons": false,
-      "layers": []
+      "layers": [],
+      "styleIssues": []
     },
     {
       "name": "1180-dark-collapsed-account",
       "title": "账户",
-      "mainWidth": 1116,
-      "mainScroll": 1116,
+      "mainWidth": 1108,
+      "mainScroll": 1108,
       "pageOverflow": false,
       "nestedButtons": false,
-      "layers": []
+      "layers": [],
+      "styleIssues": []
     },
     {
       "name": "1180-dark-collapsed-transaction",
@@ -781,7 +1387,8 @@
       "mainScroll": 1108,
       "pageOverflow": false,
       "nestedButtons": false,
-      "layers": []
+      "layers": [],
+      "styleIssues": []
     },
     {
       "name": "1180-dark-collapsed-budget",
@@ -790,7 +1397,8 @@
       "mainScroll": 1108,
       "pageOverflow": false,
       "nestedButtons": false,
-      "layers": []
+      "layers": [],
+      "styleIssues": []
     },
     {
       "name": "1180-dark-collapsed-report",
@@ -799,7 +1407,8 @@
       "mainScroll": 1108,
       "pageOverflow": false,
       "nestedButtons": false,
-      "layers": []
+      "layers": [],
+      "styleIssues": []
     },
     {
       "name": "1180-dark-collapsed-level",
@@ -808,61 +1417,68 @@
       "mainScroll": 1108,
       "pageOverflow": false,
       "nestedButtons": false,
-      "layers": []
+      "layers": [],
+      "styleIssues": []
     },
     {
       "name": "1180-dark-collapsed-settings-preference",
       "title": "个性化",
-      "mainWidth": 1116,
-      "mainScroll": 1116,
+      "mainWidth": 1108,
+      "mainScroll": 1108,
       "pageOverflow": false,
       "nestedButtons": false,
-      "layers": []
+      "layers": [],
+      "styleIssues": []
     },
     {
       "name": "1180-dark-collapsed-settings-category",
       "title": "分类管理",
-      "mainWidth": 1116,
-      "mainScroll": 1116,
+      "mainWidth": 1108,
+      "mainScroll": 1108,
       "pageOverflow": false,
       "nestedButtons": false,
-      "layers": []
+      "layers": [],
+      "styleIssues": []
     },
     {
       "name": "1180-dark-collapsed-settings-tag",
       "title": "标签管理",
-      "mainWidth": 1116,
-      "mainScroll": 1116,
+      "mainWidth": 1108,
+      "mainScroll": 1108,
       "pageOverflow": false,
       "nestedButtons": false,
-      "layers": []
+      "layers": [],
+      "styleIssues": []
     },
     {
       "name": "1180-dark-collapsed-settings-data",
       "title": "数据管理",
-      "mainWidth": 1116,
-      "mainScroll": 1116,
+      "mainWidth": 1108,
+      "mainScroll": 1108,
       "pageOverflow": false,
       "nestedButtons": false,
-      "layers": []
+      "layers": [],
+      "styleIssues": []
     },
     {
       "name": "1180-dark-collapsed-settings-help",
       "title": "使用说明",
-      "mainWidth": 1116,
-      "mainScroll": 1116,
+      "mainWidth": 1108,
+      "mainScroll": 1108,
       "pageOverflow": false,
       "nestedButtons": false,
-      "layers": []
+      "layers": [],
+      "styleIssues": []
     },
     {
       "name": "1180-dark-collapsed-settings-about",
       "title": "关于",
-      "mainWidth": 1116,
-      "mainScroll": 1116,
+      "mainWidth": 1108,
+      "mainScroll": 1108,
       "pageOverflow": false,
       "nestedButtons": false,
-      "layers": []
+      "layers": [],
+      "styleIssues": []
     },
     {
       "name": "960-light-expanded-dashboard",
@@ -871,16 +1487,18 @@
       "mainScroll": 752,
       "pageOverflow": false,
       "nestedButtons": false,
-      "layers": []
+      "layers": [],
+      "styleIssues": []
     },
     {
       "name": "960-light-expanded-account",
       "title": "账户",
-      "mainWidth": 760,
-      "mainScroll": 760,
+      "mainWidth": 752,
+      "mainScroll": 752,
       "pageOverflow": false,
       "nestedButtons": false,
-      "layers": []
+      "layers": [],
+      "styleIssues": []
     },
     {
       "name": "960-light-expanded-transaction",
@@ -889,7 +1507,8 @@
       "mainScroll": 752,
       "pageOverflow": false,
       "nestedButtons": false,
-      "layers": []
+      "layers": [],
+      "styleIssues": []
     },
     {
       "name": "960-light-expanded-budget",
@@ -898,7 +1517,8 @@
       "mainScroll": 752,
       "pageOverflow": false,
       "nestedButtons": false,
-      "layers": []
+      "layers": [],
+      "styleIssues": []
     },
     {
       "name": "960-light-expanded-report",
@@ -907,7 +1527,8 @@
       "mainScroll": 752,
       "pageOverflow": false,
       "nestedButtons": false,
-      "layers": []
+      "layers": [],
+      "styleIssues": []
     },
     {
       "name": "960-light-expanded-level",
@@ -916,7 +1537,8 @@
       "mainScroll": 752,
       "pageOverflow": false,
       "nestedButtons": false,
-      "layers": []
+      "layers": [],
+      "styleIssues": []
     },
     {
       "name": "960-light-expanded-settings-preference",
@@ -925,25 +1547,28 @@
       "mainScroll": 752,
       "pageOverflow": false,
       "nestedButtons": false,
-      "layers": []
+      "layers": [],
+      "styleIssues": []
     },
     {
       "name": "960-light-expanded-settings-category",
       "title": "分类管理",
-      "mainWidth": 760,
-      "mainScroll": 760,
+      "mainWidth": 752,
+      "mainScroll": 752,
       "pageOverflow": false,
       "nestedButtons": false,
-      "layers": []
+      "layers": [],
+      "styleIssues": []
     },
     {
       "name": "960-light-expanded-settings-tag",
       "title": "标签管理",
-      "mainWidth": 760,
-      "mainScroll": 760,
+      "mainWidth": 752,
+      "mainScroll": 752,
       "pageOverflow": false,
       "nestedButtons": false,
-      "layers": []
+      "layers": [],
+      "styleIssues": []
     },
     {
       "name": "960-light-expanded-settings-data",
@@ -952,7 +1577,8 @@
       "mainScroll": 752,
       "pageOverflow": false,
       "nestedButtons": false,
-      "layers": []
+      "layers": [],
+      "styleIssues": []
     },
     {
       "name": "960-light-expanded-settings-help",
@@ -961,16 +1587,18 @@
       "mainScroll": 752,
       "pageOverflow": false,
       "nestedButtons": false,
-      "layers": []
+      "layers": [],
+      "styleIssues": []
     },
     {
       "name": "960-light-expanded-settings-about",
       "title": "关于",
-      "mainWidth": 760,
-      "mainScroll": 760,
+      "mainWidth": 752,
+      "mainScroll": 752,
       "pageOverflow": false,
       "nestedButtons": false,
-      "layers": []
+      "layers": [],
+      "styleIssues": []
     },
     {
       "name": "960-light-collapsed-dashboard",
@@ -979,16 +1607,18 @@
       "mainScroll": 888,
       "pageOverflow": false,
       "nestedButtons": false,
-      "layers": []
+      "layers": [],
+      "styleIssues": []
     },
     {
       "name": "960-light-collapsed-account",
       "title": "账户",
-      "mainWidth": 896,
-      "mainScroll": 896,
+      "mainWidth": 888,
+      "mainScroll": 888,
       "pageOverflow": false,
       "nestedButtons": false,
-      "layers": []
+      "layers": [],
+      "styleIssues": []
     },
     {
       "name": "960-light-collapsed-transaction",
@@ -997,7 +1627,8 @@
       "mainScroll": 888,
       "pageOverflow": false,
       "nestedButtons": false,
-      "layers": []
+      "layers": [],
+      "styleIssues": []
     },
     {
       "name": "960-light-collapsed-budget",
@@ -1006,7 +1637,8 @@
       "mainScroll": 888,
       "pageOverflow": false,
       "nestedButtons": false,
-      "layers": []
+      "layers": [],
+      "styleIssues": []
     },
     {
       "name": "960-light-collapsed-report",
@@ -1015,7 +1647,8 @@
       "mainScroll": 888,
       "pageOverflow": false,
       "nestedButtons": false,
-      "layers": []
+      "layers": [],
+      "styleIssues": []
     },
     {
       "name": "960-light-collapsed-level",
@@ -1024,7 +1657,8 @@
       "mainScroll": 888,
       "pageOverflow": false,
       "nestedButtons": false,
-      "layers": []
+      "layers": [],
+      "styleIssues": []
     },
     {
       "name": "960-light-collapsed-settings-preference",
@@ -1033,25 +1667,28 @@
       "mainScroll": 888,
       "pageOverflow": false,
       "nestedButtons": false,
-      "layers": []
+      "layers": [],
+      "styleIssues": []
     },
     {
       "name": "960-light-collapsed-settings-category",
       "title": "分类管理",
-      "mainWidth": 896,
-      "mainScroll": 896,
+      "mainWidth": 888,
+      "mainScroll": 888,
       "pageOverflow": false,
       "nestedButtons": false,
-      "layers": []
+      "layers": [],
+      "styleIssues": []
     },
     {
       "name": "960-light-collapsed-settings-tag",
       "title": "标签管理",
-      "mainWidth": 896,
-      "mainScroll": 896,
+      "mainWidth": 888,
+      "mainScroll": 888,
       "pageOverflow": false,
       "nestedButtons": false,
-      "layers": []
+      "layers": [],
+      "styleIssues": []
     },
     {
       "name": "960-light-collapsed-settings-data",
@@ -1060,7 +1697,8 @@
       "mainScroll": 888,
       "pageOverflow": false,
       "nestedButtons": false,
-      "layers": []
+      "layers": [],
+      "styleIssues": []
     },
     {
       "name": "960-light-collapsed-settings-help",
@@ -1069,16 +1707,18 @@
       "mainScroll": 888,
       "pageOverflow": false,
       "nestedButtons": false,
-      "layers": []
+      "layers": [],
+      "styleIssues": []
     },
     {
       "name": "960-light-collapsed-settings-about",
       "title": "关于",
-      "mainWidth": 896,
-      "mainScroll": 896,
+      "mainWidth": 888,
+      "mainScroll": 888,
       "pageOverflow": false,
       "nestedButtons": false,
-      "layers": []
+      "layers": [],
+      "styleIssues": []
     },
     {
       "name": "960-dark-expanded-dashboard",
@@ -1087,16 +1727,18 @@
       "mainScroll": 752,
       "pageOverflow": false,
       "nestedButtons": false,
-      "layers": []
+      "layers": [],
+      "styleIssues": []
     },
     {
       "name": "960-dark-expanded-account",
       "title": "账户",
-      "mainWidth": 760,
-      "mainScroll": 760,
+      "mainWidth": 752,
+      "mainScroll": 752,
       "pageOverflow": false,
       "nestedButtons": false,
-      "layers": []
+      "layers": [],
+      "styleIssues": []
     },
     {
       "name": "960-dark-expanded-transaction",
@@ -1105,7 +1747,8 @@
       "mainScroll": 752,
       "pageOverflow": false,
       "nestedButtons": false,
-      "layers": []
+      "layers": [],
+      "styleIssues": []
     },
     {
       "name": "960-dark-expanded-budget",
@@ -1114,7 +1757,8 @@
       "mainScroll": 752,
       "pageOverflow": false,
       "nestedButtons": false,
-      "layers": []
+      "layers": [],
+      "styleIssues": []
     },
     {
       "name": "960-dark-expanded-report",
@@ -1123,7 +1767,8 @@
       "mainScroll": 752,
       "pageOverflow": false,
       "nestedButtons": false,
-      "layers": []
+      "layers": [],
+      "styleIssues": []
     },
     {
       "name": "960-dark-expanded-level",
@@ -1132,7 +1777,8 @@
       "mainScroll": 752,
       "pageOverflow": false,
       "nestedButtons": false,
-      "layers": []
+      "layers": [],
+      "styleIssues": []
     },
     {
       "name": "960-dark-expanded-settings-preference",
@@ -1141,25 +1787,28 @@
       "mainScroll": 752,
       "pageOverflow": false,
       "nestedButtons": false,
-      "layers": []
+      "layers": [],
+      "styleIssues": []
     },
     {
       "name": "960-dark-expanded-settings-category",
       "title": "分类管理",
-      "mainWidth": 760,
-      "mainScroll": 760,
+      "mainWidth": 752,
+      "mainScroll": 752,
       "pageOverflow": false,
       "nestedButtons": false,
-      "layers": []
+      "layers": [],
+      "styleIssues": []
     },
     {
       "name": "960-dark-expanded-settings-tag",
       "title": "标签管理",
-      "mainWidth": 760,
-      "mainScroll": 760,
+      "mainWidth": 752,
+      "mainScroll": 752,
       "pageOverflow": false,
       "nestedButtons": false,
-      "layers": []
+      "layers": [],
+      "styleIssues": []
     },
     {
       "name": "960-dark-expanded-settings-data",
@@ -1168,7 +1817,8 @@
       "mainScroll": 752,
       "pageOverflow": false,
       "nestedButtons": false,
-      "layers": []
+      "layers": [],
+      "styleIssues": []
     },
     {
       "name": "960-dark-expanded-settings-help",
@@ -1177,16 +1827,18 @@
       "mainScroll": 752,
       "pageOverflow": false,
       "nestedButtons": false,
-      "layers": []
+      "layers": [],
+      "styleIssues": []
     },
     {
       "name": "960-dark-expanded-settings-about",
       "title": "关于",
-      "mainWidth": 760,
-      "mainScroll": 760,
+      "mainWidth": 752,
+      "mainScroll": 752,
       "pageOverflow": false,
       "nestedButtons": false,
-      "layers": []
+      "layers": [],
+      "styleIssues": []
     },
     {
       "name": "960-dark-collapsed-dashboard",
@@ -1195,16 +1847,18 @@
       "mainScroll": 888,
       "pageOverflow": false,
       "nestedButtons": false,
-      "layers": []
+      "layers": [],
+      "styleIssues": []
     },
     {
       "name": "960-dark-collapsed-account",
       "title": "账户",
-      "mainWidth": 896,
-      "mainScroll": 896,
+      "mainWidth": 888,
+      "mainScroll": 888,
       "pageOverflow": false,
       "nestedButtons": false,
-      "layers": []
+      "layers": [],
+      "styleIssues": []
     },
     {
       "name": "960-dark-collapsed-transaction",
@@ -1213,7 +1867,8 @@
       "mainScroll": 888,
       "pageOverflow": false,
       "nestedButtons": false,
-      "layers": []
+      "layers": [],
+      "styleIssues": []
     },
     {
       "name": "960-dark-collapsed-budget",
@@ -1222,7 +1877,8 @@
       "mainScroll": 888,
       "pageOverflow": false,
       "nestedButtons": false,
-      "layers": []
+      "layers": [],
+      "styleIssues": []
     },
     {
       "name": "960-dark-collapsed-report",
@@ -1231,7 +1887,8 @@
       "mainScroll": 888,
       "pageOverflow": false,
       "nestedButtons": false,
-      "layers": []
+      "layers": [],
+      "styleIssues": []
     },
     {
       "name": "960-dark-collapsed-level",
@@ -1240,7 +1897,8 @@
       "mainScroll": 888,
       "pageOverflow": false,
       "nestedButtons": false,
-      "layers": []
+      "layers": [],
+      "styleIssues": []
     },
     {
       "name": "960-dark-collapsed-settings-preference",
@@ -1249,25 +1907,28 @@
       "mainScroll": 888,
       "pageOverflow": false,
       "nestedButtons": false,
-      "layers": []
+      "layers": [],
+      "styleIssues": []
     },
     {
       "name": "960-dark-collapsed-settings-category",
       "title": "分类管理",
-      "mainWidth": 896,
-      "mainScroll": 896,
+      "mainWidth": 888,
+      "mainScroll": 888,
       "pageOverflow": false,
       "nestedButtons": false,
-      "layers": []
+      "layers": [],
+      "styleIssues": []
     },
     {
       "name": "960-dark-collapsed-settings-tag",
       "title": "标签管理",
-      "mainWidth": 896,
-      "mainScroll": 896,
+      "mainWidth": 888,
+      "mainScroll": 888,
       "pageOverflow": false,
       "nestedButtons": false,
-      "layers": []
+      "layers": [],
+      "styleIssues": []
     },
     {
       "name": "960-dark-collapsed-settings-data",
@@ -1276,7 +1937,8 @@
       "mainScroll": 888,
       "pageOverflow": false,
       "nestedButtons": false,
-      "layers": []
+      "layers": [],
+      "styleIssues": []
     },
     {
       "name": "960-dark-collapsed-settings-help",
@@ -1285,16 +1947,18 @@
       "mainScroll": 888,
       "pageOverflow": false,
       "nestedButtons": false,
-      "layers": []
+      "layers": [],
+      "styleIssues": []
     },
     {
       "name": "960-dark-collapsed-settings-about",
       "title": "关于",
-      "mainWidth": 896,
-      "mainScroll": 896,
+      "mainWidth": 888,
+      "mainScroll": 888,
       "pageOverflow": false,
       "nestedButtons": false,
-      "layers": []
+      "layers": [],
+      "styleIssues": []
     },
     {
       "name": "quick-dark",
@@ -1310,7 +1974,8 @@
           "within": true,
           "footerVisible": true
         }
-      ]
+      ],
+      "styleIssues": []
     },
     {
       "name": "quick-validation",
@@ -1326,7 +1991,8 @@
           "within": true,
           "footerVisible": true
         }
-      ]
+      ],
+      "styleIssues": []
     },
     {
       "name": "quick-income",
@@ -1342,7 +2008,8 @@
           "within": true,
           "footerVisible": true
         }
-      ]
+      ],
+      "styleIssues": []
     },
     {
       "name": "quick-transfer",
@@ -1358,7 +2025,8 @@
           "within": true,
           "footerVisible": true
         }
-      ]
+      ],
+      "styleIssues": []
     },
     {
       "name": "transaction-edit",
@@ -1374,7 +2042,8 @@
           "within": true,
           "footerVisible": true
         }
-      ]
+      ],
+      "styleIssues": []
     },
     {
       "name": "transaction-copy",
@@ -1390,29 +2059,31 @@
           "within": true,
           "footerVisible": true
         }
-      ]
+      ],
+      "styleIssues": []
     },
     {
       "name": "account-dialog",
       "title": "账户",
-      "mainWidth": 896,
-      "mainScroll": 896,
+      "mainWidth": 888,
+      "mainScroll": 888,
       "pageOverflow": false,
       "nestedButtons": false,
       "layers": [
         {
           "width": 460,
-          "height": 556.3984375,
+          "height": 568.3984375,
           "within": true,
           "footerVisible": true
         }
-      ]
+      ],
+      "styleIssues": []
     },
     {
       "name": "category-dialog",
       "title": "分类管理",
-      "mainWidth": 896,
-      "mainScroll": 896,
+      "mainWidth": 888,
+      "mainScroll": 888,
       "pageOverflow": false,
       "nestedButtons": false,
       "layers": [
@@ -1422,29 +2093,31 @@
           "within": true,
           "footerVisible": true
         }
-      ]
+      ],
+      "styleIssues": []
     },
     {
       "name": "tag-dialog",
       "title": "标签管理",
-      "mainWidth": 896,
-      "mainScroll": 896,
+      "mainWidth": 888,
+      "mainScroll": 888,
       "pageOverflow": false,
       "nestedButtons": false,
       "layers": [
         {
           "width": 440,
-          "height": 424.3984375,
+          "height": 428.3984375,
           "within": true,
           "footerVisible": true
         }
-      ]
+      ],
+      "styleIssues": []
     },
     {
       "name": "messages-dark",
       "title": "标签管理",
-      "mainWidth": 896,
-      "mainScroll": 896,
+      "mainWidth": 888,
+      "mainScroll": 888,
       "pageOverflow": false,
       "nestedButtons": false,
       "layers": [
@@ -1454,13 +2127,14 @@
           "within": true,
           "footerVisible": true
         }
-      ]
+      ],
+      "styleIssues": []
     },
     {
       "name": "message-detail",
       "title": "标签管理",
-      "mainWidth": 896,
-      "mainScroll": 896,
+      "mainWidth": 888,
+      "mainScroll": 888,
       "pageOverflow": false,
       "nestedButtons": false,
       "layers": [
@@ -1476,13 +2150,14 @@
           "within": true,
           "footerVisible": true
         }
-      ]
+      ],
+      "styleIssues": []
     },
     {
       "name": "greeting-dark",
       "title": "标签管理",
-      "mainWidth": 896,
-      "mainScroll": 896,
+      "mainWidth": 888,
+      "mainScroll": 888,
       "pageOverflow": false,
       "nestedButtons": false,
       "layers": [
@@ -1498,13 +2173,14 @@
           "within": true,
           "footerVisible": true
         }
-      ]
+      ],
+      "styleIssues": []
     },
     {
       "name": "weather-dark",
       "title": "标签管理",
-      "mainWidth": 896,
-      "mainScroll": 896,
+      "mainWidth": 888,
+      "mainScroll": 888,
       "pageOverflow": false,
       "nestedButtons": false,
       "layers": [
@@ -1520,13 +2196,14 @@
           "within": true,
           "footerVisible": true
         }
-      ]
+      ],
+      "styleIssues": []
     },
     {
       "name": "help-drawer",
       "title": "标签管理",
-      "mainWidth": 896,
-      "mainScroll": 896,
+      "mainWidth": 888,
+      "mainScroll": 888,
       "pageOverflow": false,
       "nestedButtons": false,
       "layers": [
@@ -1536,13 +2213,14 @@
           "within": true,
           "footerVisible": true
         }
-      ]
+      ],
+      "styleIssues": []
     },
     {
       "name": "help-search",
       "title": "标签管理",
-      "mainWidth": 896,
-      "mainScroll": 896,
+      "mainWidth": 888,
+      "mainScroll": 888,
       "pageOverflow": false,
       "nestedButtons": false,
       "layers": [
@@ -1552,7 +2230,8 @@
           "within": true,
           "footerVisible": true
         }
-      ]
+      ],
+      "styleIssues": []
     },
     {
       "name": "report-print",
@@ -1561,7 +2240,8 @@
       "mainScroll": 952,
       "pageOverflow": false,
       "nestedButtons": false,
-      "layers": []
+      "layers": [],
+      "styleIssues": []
     },
     {
       "name": "quick-light",
@@ -1577,7 +2257,8 @@
           "within": true,
           "footerVisible": true
         }
-      ]
+      ],
+      "styleIssues": []
     },
     {
       "name": "transfer-ready",
@@ -1593,7 +2274,8 @@
           "within": true,
           "footerVisible": true
         }
-      ]
+      ],
+      "styleIssues": []
     },
     {
       "name": "batch-category",
@@ -1605,11 +2287,12 @@
       "layers": [
         {
           "width": 440,
-          "height": 277.1953125,
+          "height": 281.1953125,
           "within": true,
           "footerVisible": true
         }
-      ]
+      ],
+      "styleIssues": []
     },
     {
       "name": "budget-edit",
@@ -1621,11 +2304,12 @@
       "layers": [
         {
           "width": 460,
-          "height": 410.3984375,
+          "height": 416.3984375,
           "within": true,
           "footerVisible": true
         }
-      ]
+      ],
+      "styleIssues": []
     },
     {
       "name": "csv-pick",
@@ -1637,11 +2321,12 @@
       "layers": [
         {
           "width": 760,
-          "height": 475.3984375,
+          "height": 479.3984375,
           "within": true,
           "footerVisible": true
         }
-      ]
+      ],
+      "styleIssues": []
     },
     {
       "name": "csv-preview",
@@ -1653,11 +2338,12 @@
       "layers": [
         {
           "width": 760,
-          "height": 644.796875,
+          "height": 659.796875,
           "within": true,
           "footerVisible": true
         }
-      ]
+      ],
+      "styleIssues": []
     },
     {
       "name": "csv-invalid",
@@ -1669,11 +2355,12 @@
       "layers": [
         {
           "width": 760,
-          "height": 644.796875,
+          "height": 659.796875,
           "within": true,
           "footerVisible": true
         }
-      ]
+      ],
+      "styleIssues": []
     },
     {
       "name": "csv-result",
@@ -1685,11 +2372,12 @@
       "layers": [
         {
           "width": 760,
-          "height": 520.5859375,
+          "height": 524.5859375,
           "within": true,
           "footerVisible": true
         }
-      ]
+      ],
+      "styleIssues": []
     },
     {
       "name": "custom-background-dark",
@@ -1698,7 +2386,8 @@
       "mainScroll": 752,
       "pageOverflow": false,
       "nestedButtons": false,
-      "layers": []
+      "layers": [],
+      "styleIssues": []
     },
     {
       "name": "custom-background-light",
@@ -1707,7 +2396,8 @@
       "mainScroll": 752,
       "pageOverflow": false,
       "nestedButtons": false,
-      "layers": []
+      "layers": [],
+      "styleIssues": []
     },
     {
       "name": "guide-界面总览-1",
@@ -1723,7 +2413,8 @@
           "within": true,
           "footerVisible": true
         }
-      ]
+      ],
+      "styleIssues": []
     },
     {
       "name": "guide-界面总览-2",
@@ -1739,7 +2430,8 @@
           "within": true,
           "footerVisible": true
         }
-      ]
+      ],
+      "styleIssues": []
     },
     {
       "name": "guide-界面总览-3",
@@ -1755,7 +2447,8 @@
           "within": true,
           "footerVisible": true
         }
-      ]
+      ],
+      "styleIssues": []
     },
     {
       "name": "guide-界面总览-4",
@@ -1771,7 +2464,8 @@
           "within": true,
           "footerVisible": true
         }
-      ]
+      ],
+      "styleIssues": []
     },
     {
       "name": "guide-界面总览-5",
@@ -1787,7 +2481,8 @@
           "within": true,
           "footerVisible": true
         }
-      ]
+      ],
+      "styleIssues": []
     },
     {
       "name": "guide-界面总览-6",
@@ -1803,7 +2498,8 @@
           "within": true,
           "footerVisible": true
         }
-      ]
+      ],
+      "styleIssues": []
     },
     {
       "name": "guide-界面总览-7",
@@ -1819,7 +2515,8 @@
           "within": true,
           "footerVisible": true
         }
-      ]
+      ],
+      "styleIssues": []
     },
     {
       "name": "guide-总览页-1",
@@ -1835,7 +2532,8 @@
           "within": true,
           "footerVisible": true
         }
-      ]
+      ],
+      "styleIssues": []
     },
     {
       "name": "guide-总览页-2",
@@ -1851,7 +2549,8 @@
           "within": true,
           "footerVisible": true
         }
-      ]
+      ],
+      "styleIssues": []
     },
     {
       "name": "guide-总览页-3",
@@ -1867,7 +2566,8 @@
           "within": true,
           "footerVisible": true
         }
-      ]
+      ],
+      "styleIssues": []
     },
     {
       "name": "guide-总览页-4",
@@ -1883,7 +2583,8 @@
           "within": true,
           "footerVisible": true
         }
-      ]
+      ],
+      "styleIssues": []
     },
     {
       "name": "guide-总览页-5",
@@ -1899,13 +2600,14 @@
           "within": true,
           "footerVisible": true
         }
-      ]
+      ],
+      "styleIssues": []
     },
     {
       "name": "guide-账户页-1",
       "title": "账户",
-      "mainWidth": 760,
-      "mainScroll": 760,
+      "mainWidth": 752,
+      "mainScroll": 752,
       "pageOverflow": false,
       "nestedButtons": false,
       "layers": [
@@ -1915,13 +2617,14 @@
           "within": true,
           "footerVisible": true
         }
-      ]
+      ],
+      "styleIssues": []
     },
     {
       "name": "guide-账户页-2",
       "title": "账户",
-      "mainWidth": 760,
-      "mainScroll": 760,
+      "mainWidth": 752,
+      "mainScroll": 752,
       "pageOverflow": false,
       "nestedButtons": false,
       "layers": [
@@ -1931,13 +2634,14 @@
           "within": true,
           "footerVisible": true
         }
-      ]
+      ],
+      "styleIssues": []
     },
     {
       "name": "guide-账户页-3",
       "title": "账户",
-      "mainWidth": 760,
-      "mainScroll": 760,
+      "mainWidth": 752,
+      "mainScroll": 752,
       "pageOverflow": false,
       "nestedButtons": false,
       "layers": [
@@ -1947,7 +2651,8 @@
           "within": true,
           "footerVisible": true
         }
-      ]
+      ],
+      "styleIssues": []
     },
     {
       "name": "guide-流水页-1",
@@ -1963,7 +2668,8 @@
           "within": true,
           "footerVisible": true
         }
-      ]
+      ],
+      "styleIssues": []
     },
     {
       "name": "guide-流水页-2",
@@ -1979,7 +2685,8 @@
           "within": true,
           "footerVisible": true
         }
-      ]
+      ],
+      "styleIssues": []
     },
     {
       "name": "guide-流水页-3",
@@ -1995,7 +2702,8 @@
           "within": true,
           "footerVisible": true
         }
-      ]
+      ],
+      "styleIssues": []
     },
     {
       "name": "guide-流水页-4",
@@ -2011,7 +2719,8 @@
           "within": true,
           "footerVisible": true
         }
-      ]
+      ],
+      "styleIssues": []
     },
     {
       "name": "guide-报表页-1",
@@ -2027,7 +2736,8 @@
           "within": true,
           "footerVisible": true
         }
-      ]
+      ],
+      "styleIssues": []
     },
     {
       "name": "guide-报表页-2",
@@ -2043,7 +2753,8 @@
           "within": true,
           "footerVisible": true
         }
-      ]
+      ],
+      "styleIssues": []
     },
     {
       "name": "guide-报表页-3",
@@ -2059,7 +2770,8 @@
           "within": true,
           "footerVisible": true
         }
-      ]
+      ],
+      "styleIssues": []
     },
     {
       "name": "guide-报表页-4",
@@ -2075,7 +2787,8 @@
           "within": true,
           "footerVisible": true
         }
-      ]
+      ],
+      "styleIssues": []
     },
     {
       "name": "guide-报表页-5",
@@ -2091,7 +2804,8 @@
           "within": true,
           "footerVisible": true
         }
-      ]
+      ],
+      "styleIssues": []
     },
     {
       "name": "guide-预算页-1",
@@ -2107,7 +2821,8 @@
           "within": true,
           "footerVisible": true
         }
-      ]
+      ],
+      "styleIssues": []
     },
     {
       "name": "guide-预算页-2",
@@ -2123,7 +2838,8 @@
           "within": true,
           "footerVisible": true
         }
-      ]
+      ],
+      "styleIssues": []
     },
     {
       "name": "guide-预算页-3",
@@ -2139,7 +2855,8 @@
           "within": true,
           "footerVisible": true
         }
-      ]
+      ],
+      "styleIssues": []
     },
     {
       "name": "guide-预算页-4",
@@ -2155,7 +2872,8 @@
           "within": true,
           "footerVisible": true
         }
-      ]
+      ],
+      "styleIssues": []
     },
     {
       "name": "guide-等级页-1",
@@ -2171,7 +2889,8 @@
           "within": true,
           "footerVisible": true
         }
-      ]
+      ],
+      "styleIssues": []
     },
     {
       "name": "guide-等级页-2",
@@ -2187,7 +2906,8 @@
           "within": true,
           "footerVisible": true
         }
-      ]
+      ],
+      "styleIssues": []
     },
     {
       "name": "guide-等级页-3",
@@ -2203,7 +2923,8 @@
           "within": true,
           "footerVisible": true
         }
-      ]
+      ],
+      "styleIssues": []
     },
     {
       "name": "guide-等级页-4",
@@ -2219,7 +2940,8 @@
           "within": true,
           "footerVisible": true
         }
-      ]
+      ],
+      "styleIssues": []
     },
     {
       "name": "guide-设置页-1",
@@ -2235,7 +2957,8 @@
           "within": true,
           "footerVisible": true
         }
-      ]
+      ],
+      "styleIssues": []
     },
     {
       "name": "guide-设置页-2",
@@ -2251,7 +2974,8 @@
           "within": true,
           "footerVisible": true
         }
-      ]
+      ],
+      "styleIssues": []
     },
     {
       "name": "guide-设置页-3",
@@ -2267,7 +2991,8 @@
           "within": true,
           "footerVisible": true
         }
-      ]
+      ],
+      "styleIssues": []
     },
     {
       "name": "guide-设置页-4",
@@ -2283,7 +3008,8 @@
           "within": true,
           "footerVisible": true
         }
-      ]
+      ],
+      "styleIssues": []
     },
     {
       "name": "screensaver",
@@ -2299,7 +3025,8 @@
           "within": true,
           "footerVisible": true
         }
-      ]
+      ],
+      "styleIssues": []
     },
     {
       "name": "empty-dashboard",
@@ -2308,7 +3035,8 @@
       "mainScroll": 752,
       "pageOverflow": false,
       "nestedButtons": false,
-      "layers": []
+      "layers": [],
+      "styleIssues": []
     },
     {
       "name": "empty-transactions",
@@ -2317,16 +3045,18 @@
       "mainScroll": 752,
       "pageOverflow": false,
       "nestedButtons": false,
-      "layers": []
+      "layers": [],
+      "styleIssues": []
     },
     {
       "name": "level-unavailable",
       "title": "等级",
-      "mainWidth": 760,
-      "mainScroll": 760,
+      "mainWidth": 752,
+      "mainScroll": 752,
       "pageOverflow": false,
       "nestedButtons": false,
-      "layers": []
+      "layers": [],
+      "styleIssues": []
     },
     {
       "name": "loading-state",
@@ -2335,12 +3065,49 @@
       "mainScroll": 752,
       "pageOverflow": false,
       "nestedButtons": false,
-      "layers": []
+      "layers": [],
+      "styleIssues": []
     }
   ],
   "interactions": [
     {
       "name": "模拟账本已载入",
+      "passed": true
+    },
+    {
+      "name": "数据目录完整展示 light",
+      "passed": true
+    },
+    {
+      "name": "数据目录完整展示 dark",
+      "passed": true
+    },
+    {
+      "name": "复制完整路径（隔离剪贴板）",
+      "passed": true
+    },
+    {
+      "name": "复制失败提供手动复制提示",
+      "passed": true
+    },
+    {
+      "name": "路径读取失败不展示猜测路径",
+      "passed": true
+    },
+    {
+      "name": "路径读取失败后可重试",
+      "passed": true
+    },
+    {
+      "name": "空路径响应显示重试入口",
+      "passed": true
+    },
+    {
+      "name": "读取期间禁用复制并提示加载",
+      "passed": true
+    },
+    {
+      "name": "加载后恢复路径展示",
       "passed": true
     },
     {
@@ -2543,6 +3310,98 @@
       "body": ""
     },
     {
+      "path": "/transaction/selectAll",
+      "body": ""
+    },
+    {
+      "path": "/level/currentLevel",
+      "body": ""
+    },
+    {
+      "path": "/backup/storagePath",
+      "body": ""
+    },
+    {
+      "path": "/backup/storagePath",
+      "body": ""
+    },
+    {
+      "path": "/backup/storagePath",
+      "body": ""
+    },
+    {
+      "path": "/backup/storagePath",
+      "body": ""
+    },
+    {
+      "path": "/backup/storagePath",
+      "body": ""
+    },
+    {
+      "path": "/backup/storagePath",
+      "body": ""
+    },
+    {
+      "path": "/backup/storagePath",
+      "body": ""
+    },
+    {
+      "path": "/account/selectAll",
+      "body": ""
+    },
+    {
+      "path": "/category/selectAll",
+      "body": ""
+    },
+    {
+      "path": "/tag/selectAll",
+      "body": ""
+    },
+    {
+      "path": "/message/unreadCount",
+      "body": ""
+    },
+    {
+      "path": "/transaction/selectAll",
+      "body": ""
+    },
+    {
+      "path": "/budget/searchBudget",
+      "body": ""
+    },
+    {
+      "path": "/transaction/stats/summary",
+      "body": "{\"start\":\"2026-09-01T00:00:00\",\"end\":\"2026-09-30T23:59:59\"}"
+    },
+    {
+      "path": "/transaction/stats/trend",
+      "body": "{\"start\":\"2026-09-01T00:00:00\",\"end\":\"2026-09-30T23:59:59\",\"granularity\":\"day\"}"
+    },
+    {
+      "path": "/transaction/stats/category",
+      "body": "{\"start\":\"2026-09-01T00:00:00\",\"end\":\"2026-09-30T23:59:59\",\"type\":\"expense\",\"groupBy\":\"root\"}"
+    },
+    {
+      "path": "/transaction/stats/monthly",
+      "body": "{\"start\":\"2026-04-01\",\"end\":\"2026-09-30\"}"
+    },
+    {
+      "path": "/level/currentLevel",
+      "body": ""
+    },
+    {
+      "path": "/check_in/selectAll",
+      "body": ""
+    },
+    {
+      "path": "/budget/searchBudget",
+      "body": ""
+    },
+    {
+      "path": "/transaction/recent",
+      "body": ""
+    },
+    {
       "path": "/account/selectAll",
       "body": ""
     },
@@ -2580,19 +3439,19 @@
     },
     {
       "path": "/transaction/stats/summary",
-      "body": "{\"start\":\"2026-01-01T00:00:00\",\"end\":\"2026-09-17T23:59:59\"}"
+      "body": "{\"start\":\"2026-01-01T00:00:00\",\"end\":\"2026-09-18T23:59:59\"}"
     },
     {
       "path": "/transaction/stats/trend",
-      "body": "{\"start\":\"2026-01-01T00:00:00\",\"end\":\"2026-09-17T23:59:59\",\"granularity\":\"month\"}"
+      "body": "{\"start\":\"2026-01-01T00:00:00\",\"end\":\"2026-09-18T23:59:59\",\"granularity\":\"month\"}"
     },
     {
       "path": "/transaction/stats/category",
-      "body": "{\"start\":\"2026-01-01T00:00:00\",\"end\":\"2026-09-17T23:59:59\",\"type\":\"expense\",\"groupBy\":\"root\"}"
+      "body": "{\"start\":\"2026-01-01T00:00:00\",\"end\":\"2026-09-18T23:59:59\",\"type\":\"expense\",\"groupBy\":\"root\"}"
     },
     {
       "path": "/transaction/stats/monthly",
-      "body": "{\"start\":\"2026-01-01\",\"end\":\"2026-09-17\"}"
+      "body": "{\"start\":\"2026-01-01\",\"end\":\"2026-09-18\"}"
     },
     {
       "path": "/level/currentLevel",
@@ -2615,6 +3474,10 @@
       "body": ""
     },
     {
+      "path": "/backup/storagePath",
+      "body": ""
+    },
+    {
       "path": "/transaction/selectAll",
       "body": ""
     },
@@ -2680,19 +3543,19 @@
     },
     {
       "path": "/transaction/stats/summary",
-      "body": "{\"start\":\"2026-01-01T00:00:00\",\"end\":\"2026-09-17T23:59:59\"}"
+      "body": "{\"start\":\"2026-01-01T00:00:00\",\"end\":\"2026-09-18T23:59:59\"}"
     },
     {
       "path": "/transaction/stats/trend",
-      "body": "{\"start\":\"2026-01-01T00:00:00\",\"end\":\"2026-09-17T23:59:59\",\"granularity\":\"month\"}"
+      "body": "{\"start\":\"2026-01-01T00:00:00\",\"end\":\"2026-09-18T23:59:59\",\"granularity\":\"month\"}"
     },
     {
       "path": "/transaction/stats/category",
-      "body": "{\"start\":\"2026-01-01T00:00:00\",\"end\":\"2026-09-17T23:59:59\",\"type\":\"expense\",\"groupBy\":\"root\"}"
+      "body": "{\"start\":\"2026-01-01T00:00:00\",\"end\":\"2026-09-18T23:59:59\",\"type\":\"expense\",\"groupBy\":\"root\"}"
     },
     {
       "path": "/transaction/stats/monthly",
-      "body": "{\"start\":\"2026-01-01\",\"end\":\"2026-09-17\"}"
+      "body": "{\"start\":\"2026-01-01\",\"end\":\"2026-09-18\"}"
     },
     {
       "path": "/transaction/selectAll",
@@ -2703,6 +3566,10 @@
       "body": ""
     },
     {
+      "path": "/backup/storagePath",
+      "body": ""
+    },
+    {
       "path": "/transaction/selectAll",
       "body": ""
     },
@@ -2768,19 +3635,19 @@
     },
     {
       "path": "/transaction/stats/summary",
-      "body": "{\"start\":\"2026-01-01T00:00:00\",\"end\":\"2026-09-17T23:59:59\"}"
+      "body": "{\"start\":\"2026-01-01T00:00:00\",\"end\":\"2026-09-18T23:59:59\"}"
     },
     {
       "path": "/transaction/stats/trend",
-      "body": "{\"start\":\"2026-01-01T00:00:00\",\"end\":\"2026-09-17T23:59:59\",\"granularity\":\"month\"}"
+      "body": "{\"start\":\"2026-01-01T00:00:00\",\"end\":\"2026-09-18T23:59:59\",\"granularity\":\"month\"}"
     },
     {
       "path": "/transaction/stats/category",
-      "body": "{\"start\":\"2026-01-01T00:00:00\",\"end\":\"2026-09-17T23:59:59\",\"type\":\"expense\",\"groupBy\":\"root\"}"
+      "body": "{\"start\":\"2026-01-01T00:00:00\",\"end\":\"2026-09-18T23:59:59\",\"type\":\"expense\",\"groupBy\":\"root\"}"
     },
     {
       "path": "/transaction/stats/monthly",
-      "body": "{\"start\":\"2026-01-01\",\"end\":\"2026-09-17\"}"
+      "body": "{\"start\":\"2026-01-01\",\"end\":\"2026-09-18\"}"
     },
     {
       "path": "/transaction/selectAll",
@@ -2791,6 +3658,10 @@
       "body": ""
     },
     {
+      "path": "/backup/storagePath",
+      "body": ""
+    },
+    {
       "path": "/transaction/selectAll",
       "body": ""
     },
@@ -2856,19 +3727,19 @@
     },
     {
       "path": "/transaction/stats/summary",
-      "body": "{\"start\":\"2026-01-01T00:00:00\",\"end\":\"2026-09-17T23:59:59\"}"
+      "body": "{\"start\":\"2026-01-01T00:00:00\",\"end\":\"2026-09-18T23:59:59\"}"
     },
     {
       "path": "/transaction/stats/trend",
-      "body": "{\"start\":\"2026-01-01T00:00:00\",\"end\":\"2026-09-17T23:59:59\",\"granularity\":\"month\"}"
+      "body": "{\"start\":\"2026-01-01T00:00:00\",\"end\":\"2026-09-18T23:59:59\",\"granularity\":\"month\"}"
     },
     {
       "path": "/transaction/stats/category",
-      "body": "{\"start\":\"2026-01-01T00:00:00\",\"end\":\"2026-09-17T23:59:59\",\"type\":\"expense\",\"groupBy\":\"root\"}"
+      "body": "{\"start\":\"2026-01-01T00:00:00\",\"end\":\"2026-09-18T23:59:59\",\"type\":\"expense\",\"groupBy\":\"root\"}"
     },
     {
       "path": "/transaction/stats/monthly",
-      "body": "{\"start\":\"2026-01-01\",\"end\":\"2026-09-17\"}"
+      "body": "{\"start\":\"2026-01-01\",\"end\":\"2026-09-18\"}"
     },
     {
       "path": "/transaction/selectAll",
@@ -2879,6 +3750,10 @@
       "body": ""
     },
     {
+      "path": "/backup/storagePath",
+      "body": ""
+    },
+    {
       "path": "/transaction/selectAll",
       "body": ""
     },
@@ -2944,19 +3819,19 @@
     },
     {
       "path": "/transaction/stats/summary",
-      "body": "{\"start\":\"2026-01-01T00:00:00\",\"end\":\"2026-09-17T23:59:59\"}"
+      "body": "{\"start\":\"2026-01-01T00:00:00\",\"end\":\"2026-09-18T23:59:59\"}"
     },
     {
       "path": "/transaction/stats/trend",
-      "body": "{\"start\":\"2026-01-01T00:00:00\",\"end\":\"2026-09-17T23:59:59\",\"granularity\":\"month\"}"
+      "body": "{\"start\":\"2026-01-01T00:00:00\",\"end\":\"2026-09-18T23:59:59\",\"granularity\":\"month\"}"
     },
     {
       "path": "/transaction/stats/category",
-      "body": "{\"start\":\"2026-01-01T00:00:00\",\"end\":\"2026-09-17T23:59:59\",\"type\":\"expense\",\"groupBy\":\"root\"}"
+      "body": "{\"start\":\"2026-01-01T00:00:00\",\"end\":\"2026-09-18T23:59:59\",\"type\":\"expense\",\"groupBy\":\"root\"}"
     },
     {
       "path": "/transaction/stats/monthly",
-      "body": "{\"start\":\"2026-01-01\",\"end\":\"2026-09-17\"}"
+      "body": "{\"start\":\"2026-01-01\",\"end\":\"2026-09-18\"}"
     },
     {
       "path": "/transaction/selectAll",
@@ -2967,6 +3842,10 @@
       "body": ""
     },
     {
+      "path": "/backup/storagePath",
+      "body": ""
+    },
+    {
       "path": "/transaction/selectAll",
       "body": ""
     },
@@ -3032,19 +3911,19 @@
     },
     {
       "path": "/transaction/stats/summary",
-      "body": "{\"start\":\"2026-01-01T00:00:00\",\"end\":\"2026-09-17T23:59:59\"}"
+      "body": "{\"start\":\"2026-01-01T00:00:00\",\"end\":\"2026-09-18T23:59:59\"}"
     },
     {
       "path": "/transaction/stats/trend",
-      "body": "{\"start\":\"2026-01-01T00:00:00\",\"end\":\"2026-09-17T23:59:59\",\"granularity\":\"month\"}"
+      "body": "{\"start\":\"2026-01-01T00:00:00\",\"end\":\"2026-09-18T23:59:59\",\"granularity\":\"month\"}"
     },
     {
       "path": "/transaction/stats/category",
-      "body": "{\"start\":\"2026-01-01T00:00:00\",\"end\":\"2026-09-17T23:59:59\",\"type\":\"expense\",\"groupBy\":\"root\"}"
+      "body": "{\"start\":\"2026-01-01T00:00:00\",\"end\":\"2026-09-18T23:59:59\",\"type\":\"expense\",\"groupBy\":\"root\"}"
     },
     {
       "path": "/transaction/stats/monthly",
-      "body": "{\"start\":\"2026-01-01\",\"end\":\"2026-09-17\"}"
+      "body": "{\"start\":\"2026-01-01\",\"end\":\"2026-09-18\"}"
     },
     {
       "path": "/transaction/selectAll",
@@ -3055,6 +3934,10 @@
       "body": ""
     },
     {
+      "path": "/backup/storagePath",
+      "body": ""
+    },
+    {
       "path": "/transaction/selectAll",
       "body": ""
     },
@@ -3120,19 +4003,19 @@
     },
     {
       "path": "/transaction/stats/summary",
-      "body": "{\"start\":\"2026-01-01T00:00:00\",\"end\":\"2026-09-17T23:59:59\"}"
+      "body": "{\"start\":\"2026-01-01T00:00:00\",\"end\":\"2026-09-18T23:59:59\"}"
     },
     {
       "path": "/transaction/stats/trend",
-      "body": "{\"start\":\"2026-01-01T00:00:00\",\"end\":\"2026-09-17T23:59:59\",\"granularity\":\"month\"}"
+      "body": "{\"start\":\"2026-01-01T00:00:00\",\"end\":\"2026-09-18T23:59:59\",\"granularity\":\"month\"}"
     },
     {
       "path": "/transaction/stats/category",
-      "body": "{\"start\":\"2026-01-01T00:00:00\",\"end\":\"2026-09-17T23:59:59\",\"type\":\"expense\",\"groupBy\":\"root\"}"
+      "body": "{\"start\":\"2026-01-01T00:00:00\",\"end\":\"2026-09-18T23:59:59\",\"type\":\"expense\",\"groupBy\":\"root\"}"
     },
     {
       "path": "/transaction/stats/monthly",
-      "body": "{\"start\":\"2026-01-01\",\"end\":\"2026-09-17\"}"
+      "body": "{\"start\":\"2026-01-01\",\"end\":\"2026-09-18\"}"
     },
     {
       "path": "/transaction/selectAll",
@@ -3143,6 +4026,10 @@
       "body": ""
     },
     {
+      "path": "/backup/storagePath",
+      "body": ""
+    },
+    {
       "path": "/transaction/selectAll",
       "body": ""
     },
@@ -3208,19 +4095,19 @@
     },
     {
       "path": "/transaction/stats/summary",
-      "body": "{\"start\":\"2026-01-01T00:00:00\",\"end\":\"2026-09-17T23:59:59\"}"
+      "body": "{\"start\":\"2026-01-01T00:00:00\",\"end\":\"2026-09-18T23:59:59\"}"
     },
     {
       "path": "/transaction/stats/trend",
-      "body": "{\"start\":\"2026-01-01T00:00:00\",\"end\":\"2026-09-17T23:59:59\",\"granularity\":\"month\"}"
+      "body": "{\"start\":\"2026-01-01T00:00:00\",\"end\":\"2026-09-18T23:59:59\",\"granularity\":\"month\"}"
     },
     {
       "path": "/transaction/stats/category",
-      "body": "{\"start\":\"2026-01-01T00:00:00\",\"end\":\"2026-09-17T23:59:59\",\"type\":\"expense\",\"groupBy\":\"root\"}"
+      "body": "{\"start\":\"2026-01-01T00:00:00\",\"end\":\"2026-09-18T23:59:59\",\"type\":\"expense\",\"groupBy\":\"root\"}"
     },
     {
       "path": "/transaction/stats/monthly",
-      "body": "{\"start\":\"2026-01-01\",\"end\":\"2026-09-17\"}"
+      "body": "{\"start\":\"2026-01-01\",\"end\":\"2026-09-18\"}"
     },
     {
       "path": "/transaction/selectAll",
@@ -3229,97 +4116,13 @@
     {
       "path": "/level/currentLevel",
       "body": ""
-    },
-    {
-      "path": "/transaction/selectAll",
-      "body": ""
-    },
-    {
-      "path": "/budget/searchBudget",
-      "body": ""
-    },
-    {
-      "path": "/transaction/stats/summary",
-      "body": "{\"start\":\"2026-09-01T00:00:00\",\"end\":\"2026-09-30T23:59:59\"}"
-    },
-    {
-      "path": "/transaction/stats/trend",
-      "body": "{\"start\":\"2026-09-01T00:00:00\",\"end\":\"2026-09-30T23:59:59\",\"granularity\":\"day\"}"
-    },
-    {
-      "path": "/transaction/stats/category",
-      "body": "{\"start\":\"2026-09-01T00:00:00\",\"end\":\"2026-09-30T23:59:59\",\"type\":\"expense\",\"groupBy\":\"root\"}"
-    },
-    {
-      "path": "/transaction/stats/monthly",
-      "body": "{\"start\":\"2026-04-01\",\"end\":\"2026-09-30\"}"
-    },
-    {
-      "path": "/transaction/recent",
-      "body": ""
-    },
-    {
-      "path": "/account/selectAll",
-      "body": ""
-    },
-    {
-      "path": "/transaction/page",
-      "body": "{\"pageNum\":1,\"pageSize\":20,\"queryList\":[]}"
     },
     {
       "path": "/message/unreadCount",
       "body": ""
     },
     {
-      "path": "/budget/searchBudget",
-      "body": ""
-    },
-    {
-      "path": "/budget/searchBudget",
-      "body": ""
-    },
-    {
-      "path": "/budget/searchBudget",
-      "body": ""
-    },
-    {
-      "path": "/budget/searchBudget",
-      "body": ""
-    },
-    {
-      "path": "/budget/searchBudget",
-      "body": ""
-    },
-    {
-      "path": "/budget/searchBudget",
-      "body": ""
-    },
-    {
-      "path": "/transaction/selectAll",
-      "body": ""
-    },
-    {
-      "path": "/transaction/stats/summary",
-      "body": "{\"start\":\"2026-01-01T00:00:00\",\"end\":\"2026-09-17T23:59:59\"}"
-    },
-    {
-      "path": "/transaction/stats/trend",
-      "body": "{\"start\":\"2026-01-01T00:00:00\",\"end\":\"2026-09-17T23:59:59\",\"granularity\":\"month\"}"
-    },
-    {
-      "path": "/transaction/stats/category",
-      "body": "{\"start\":\"2026-01-01T00:00:00\",\"end\":\"2026-09-17T23:59:59\",\"type\":\"expense\",\"groupBy\":\"root\"}"
-    },
-    {
-      "path": "/transaction/stats/monthly",
-      "body": "{\"start\":\"2026-01-01\",\"end\":\"2026-09-17\"}"
-    },
-    {
-      "path": "/transaction/selectAll",
-      "body": ""
-    },
-    {
-      "path": "/level/currentLevel",
+      "path": "/backup/storagePath",
       "body": ""
     },
     {
@@ -3388,19 +4191,19 @@
     },
     {
       "path": "/transaction/stats/summary",
-      "body": "{\"start\":\"2026-01-01T00:00:00\",\"end\":\"2026-09-17T23:59:59\"}"
+      "body": "{\"start\":\"2026-01-01T00:00:00\",\"end\":\"2026-09-18T23:59:59\"}"
     },
     {
       "path": "/transaction/stats/trend",
-      "body": "{\"start\":\"2026-01-01T00:00:00\",\"end\":\"2026-09-17T23:59:59\",\"granularity\":\"month\"}"
+      "body": "{\"start\":\"2026-01-01T00:00:00\",\"end\":\"2026-09-18T23:59:59\",\"granularity\":\"month\"}"
     },
     {
       "path": "/transaction/stats/category",
-      "body": "{\"start\":\"2026-01-01T00:00:00\",\"end\":\"2026-09-17T23:59:59\",\"type\":\"expense\",\"groupBy\":\"root\"}"
+      "body": "{\"start\":\"2026-01-01T00:00:00\",\"end\":\"2026-09-18T23:59:59\",\"type\":\"expense\",\"groupBy\":\"root\"}"
     },
     {
       "path": "/transaction/stats/monthly",
-      "body": "{\"start\":\"2026-01-01\",\"end\":\"2026-09-17\"}"
+      "body": "{\"start\":\"2026-01-01\",\"end\":\"2026-09-18\"}"
     },
     {
       "path": "/transaction/selectAll",
@@ -3408,6 +4211,10 @@
     },
     {
       "path": "/level/currentLevel",
+      "body": ""
+    },
+    {
+      "path": "/backup/storagePath",
       "body": ""
     },
     {
@@ -3476,19 +4283,19 @@
     },
     {
       "path": "/transaction/stats/summary",
-      "body": "{\"start\":\"2026-01-01T00:00:00\",\"end\":\"2026-09-17T23:59:59\"}"
+      "body": "{\"start\":\"2026-01-01T00:00:00\",\"end\":\"2026-09-18T23:59:59\"}"
     },
     {
       "path": "/transaction/stats/trend",
-      "body": "{\"start\":\"2026-01-01T00:00:00\",\"end\":\"2026-09-17T23:59:59\",\"granularity\":\"month\"}"
+      "body": "{\"start\":\"2026-01-01T00:00:00\",\"end\":\"2026-09-18T23:59:59\",\"granularity\":\"month\"}"
     },
     {
       "path": "/transaction/stats/category",
-      "body": "{\"start\":\"2026-01-01T00:00:00\",\"end\":\"2026-09-17T23:59:59\",\"type\":\"expense\",\"groupBy\":\"root\"}"
+      "body": "{\"start\":\"2026-01-01T00:00:00\",\"end\":\"2026-09-18T23:59:59\",\"type\":\"expense\",\"groupBy\":\"root\"}"
     },
     {
       "path": "/transaction/stats/monthly",
-      "body": "{\"start\":\"2026-01-01\",\"end\":\"2026-09-17\"}"
+      "body": "{\"start\":\"2026-01-01\",\"end\":\"2026-09-18\"}"
     },
     {
       "path": "/transaction/selectAll",
@@ -3496,6 +4303,10 @@
     },
     {
       "path": "/level/currentLevel",
+      "body": ""
+    },
+    {
+      "path": "/backup/storagePath",
       "body": ""
     },
     {
@@ -3564,19 +4375,19 @@
     },
     {
       "path": "/transaction/stats/summary",
-      "body": "{\"start\":\"2026-01-01T00:00:00\",\"end\":\"2026-09-17T23:59:59\"}"
+      "body": "{\"start\":\"2026-01-01T00:00:00\",\"end\":\"2026-09-18T23:59:59\"}"
     },
     {
       "path": "/transaction/stats/trend",
-      "body": "{\"start\":\"2026-01-01T00:00:00\",\"end\":\"2026-09-17T23:59:59\",\"granularity\":\"month\"}"
+      "body": "{\"start\":\"2026-01-01T00:00:00\",\"end\":\"2026-09-18T23:59:59\",\"granularity\":\"month\"}"
     },
     {
       "path": "/transaction/stats/category",
-      "body": "{\"start\":\"2026-01-01T00:00:00\",\"end\":\"2026-09-17T23:59:59\",\"type\":\"expense\",\"groupBy\":\"root\"}"
+      "body": "{\"start\":\"2026-01-01T00:00:00\",\"end\":\"2026-09-18T23:59:59\",\"type\":\"expense\",\"groupBy\":\"root\"}"
     },
     {
       "path": "/transaction/stats/monthly",
-      "body": "{\"start\":\"2026-01-01\",\"end\":\"2026-09-17\"}"
+      "body": "{\"start\":\"2026-01-01\",\"end\":\"2026-09-18\"}"
     },
     {
       "path": "/transaction/selectAll",
@@ -3584,6 +4395,474 @@
     },
     {
       "path": "/level/currentLevel",
+      "body": ""
+    },
+    {
+      "path": "/backup/storagePath",
+      "body": ""
+    },
+    {
+      "path": "/transaction/selectAll",
+      "body": ""
+    },
+    {
+      "path": "/budget/searchBudget",
+      "body": ""
+    },
+    {
+      "path": "/transaction/stats/summary",
+      "body": "{\"start\":\"2026-09-01T00:00:00\",\"end\":\"2026-09-30T23:59:59\"}"
+    },
+    {
+      "path": "/transaction/stats/trend",
+      "body": "{\"start\":\"2026-09-01T00:00:00\",\"end\":\"2026-09-30T23:59:59\",\"granularity\":\"day\"}"
+    },
+    {
+      "path": "/transaction/stats/category",
+      "body": "{\"start\":\"2026-09-01T00:00:00\",\"end\":\"2026-09-30T23:59:59\",\"type\":\"expense\",\"groupBy\":\"root\"}"
+    },
+    {
+      "path": "/transaction/stats/monthly",
+      "body": "{\"start\":\"2026-04-01\",\"end\":\"2026-09-30\"}"
+    },
+    {
+      "path": "/transaction/recent",
+      "body": ""
+    },
+    {
+      "path": "/account/selectAll",
+      "body": ""
+    },
+    {
+      "path": "/transaction/page",
+      "body": "{\"pageNum\":1,\"pageSize\":20,\"queryList\":[]}"
+    },
+    {
+      "path": "/budget/searchBudget",
+      "body": ""
+    },
+    {
+      "path": "/budget/searchBudget",
+      "body": ""
+    },
+    {
+      "path": "/budget/searchBudget",
+      "body": ""
+    },
+    {
+      "path": "/budget/searchBudget",
+      "body": ""
+    },
+    {
+      "path": "/budget/searchBudget",
+      "body": ""
+    },
+    {
+      "path": "/budget/searchBudget",
+      "body": ""
+    },
+    {
+      "path": "/transaction/selectAll",
+      "body": ""
+    },
+    {
+      "path": "/transaction/stats/summary",
+      "body": "{\"start\":\"2026-01-01T00:00:00\",\"end\":\"2026-09-18T23:59:59\"}"
+    },
+    {
+      "path": "/transaction/stats/trend",
+      "body": "{\"start\":\"2026-01-01T00:00:00\",\"end\":\"2026-09-18T23:59:59\",\"granularity\":\"month\"}"
+    },
+    {
+      "path": "/transaction/stats/category",
+      "body": "{\"start\":\"2026-01-01T00:00:00\",\"end\":\"2026-09-18T23:59:59\",\"type\":\"expense\",\"groupBy\":\"root\"}"
+    },
+    {
+      "path": "/transaction/stats/monthly",
+      "body": "{\"start\":\"2026-01-01\",\"end\":\"2026-09-18\"}"
+    },
+    {
+      "path": "/transaction/selectAll",
+      "body": ""
+    },
+    {
+      "path": "/level/currentLevel",
+      "body": ""
+    },
+    {
+      "path": "/backup/storagePath",
+      "body": ""
+    },
+    {
+      "path": "/transaction/selectAll",
+      "body": ""
+    },
+    {
+      "path": "/budget/searchBudget",
+      "body": ""
+    },
+    {
+      "path": "/transaction/stats/summary",
+      "body": "{\"start\":\"2026-09-01T00:00:00\",\"end\":\"2026-09-30T23:59:59\"}"
+    },
+    {
+      "path": "/transaction/stats/trend",
+      "body": "{\"start\":\"2026-09-01T00:00:00\",\"end\":\"2026-09-30T23:59:59\",\"granularity\":\"day\"}"
+    },
+    {
+      "path": "/transaction/stats/category",
+      "body": "{\"start\":\"2026-09-01T00:00:00\",\"end\":\"2026-09-30T23:59:59\",\"type\":\"expense\",\"groupBy\":\"root\"}"
+    },
+    {
+      "path": "/transaction/stats/monthly",
+      "body": "{\"start\":\"2026-04-01\",\"end\":\"2026-09-30\"}"
+    },
+    {
+      "path": "/transaction/recent",
+      "body": ""
+    },
+    {
+      "path": "/account/selectAll",
+      "body": ""
+    },
+    {
+      "path": "/transaction/page",
+      "body": "{\"pageNum\":1,\"pageSize\":20,\"queryList\":[]}"
+    },
+    {
+      "path": "/budget/searchBudget",
+      "body": ""
+    },
+    {
+      "path": "/budget/searchBudget",
+      "body": ""
+    },
+    {
+      "path": "/budget/searchBudget",
+      "body": ""
+    },
+    {
+      "path": "/budget/searchBudget",
+      "body": ""
+    },
+    {
+      "path": "/budget/searchBudget",
+      "body": ""
+    },
+    {
+      "path": "/budget/searchBudget",
+      "body": ""
+    },
+    {
+      "path": "/transaction/selectAll",
+      "body": ""
+    },
+    {
+      "path": "/transaction/stats/summary",
+      "body": "{\"start\":\"2026-01-01T00:00:00\",\"end\":\"2026-09-18T23:59:59\"}"
+    },
+    {
+      "path": "/transaction/stats/trend",
+      "body": "{\"start\":\"2026-01-01T00:00:00\",\"end\":\"2026-09-18T23:59:59\",\"granularity\":\"month\"}"
+    },
+    {
+      "path": "/transaction/stats/category",
+      "body": "{\"start\":\"2026-01-01T00:00:00\",\"end\":\"2026-09-18T23:59:59\",\"type\":\"expense\",\"groupBy\":\"root\"}"
+    },
+    {
+      "path": "/transaction/stats/monthly",
+      "body": "{\"start\":\"2026-01-01\",\"end\":\"2026-09-18\"}"
+    },
+    {
+      "path": "/transaction/selectAll",
+      "body": ""
+    },
+    {
+      "path": "/level/currentLevel",
+      "body": ""
+    },
+    {
+      "path": "/backup/storagePath",
+      "body": ""
+    },
+    {
+      "path": "/transaction/selectAll",
+      "body": ""
+    },
+    {
+      "path": "/budget/searchBudget",
+      "body": ""
+    },
+    {
+      "path": "/transaction/stats/summary",
+      "body": "{\"start\":\"2026-09-01T00:00:00\",\"end\":\"2026-09-30T23:59:59\"}"
+    },
+    {
+      "path": "/transaction/stats/trend",
+      "body": "{\"start\":\"2026-09-01T00:00:00\",\"end\":\"2026-09-30T23:59:59\",\"granularity\":\"day\"}"
+    },
+    {
+      "path": "/transaction/stats/category",
+      "body": "{\"start\":\"2026-09-01T00:00:00\",\"end\":\"2026-09-30T23:59:59\",\"type\":\"expense\",\"groupBy\":\"root\"}"
+    },
+    {
+      "path": "/transaction/stats/monthly",
+      "body": "{\"start\":\"2026-04-01\",\"end\":\"2026-09-30\"}"
+    },
+    {
+      "path": "/transaction/recent",
+      "body": ""
+    },
+    {
+      "path": "/account/selectAll",
+      "body": ""
+    },
+    {
+      "path": "/transaction/page",
+      "body": "{\"pageNum\":1,\"pageSize\":20,\"queryList\":[]}"
+    },
+    {
+      "path": "/budget/searchBudget",
+      "body": ""
+    },
+    {
+      "path": "/budget/searchBudget",
+      "body": ""
+    },
+    {
+      "path": "/budget/searchBudget",
+      "body": ""
+    },
+    {
+      "path": "/budget/searchBudget",
+      "body": ""
+    },
+    {
+      "path": "/budget/searchBudget",
+      "body": ""
+    },
+    {
+      "path": "/budget/searchBudget",
+      "body": ""
+    },
+    {
+      "path": "/transaction/selectAll",
+      "body": ""
+    },
+    {
+      "path": "/transaction/stats/summary",
+      "body": "{\"start\":\"2026-01-01T00:00:00\",\"end\":\"2026-09-18T23:59:59\"}"
+    },
+    {
+      "path": "/transaction/stats/trend",
+      "body": "{\"start\":\"2026-01-01T00:00:00\",\"end\":\"2026-09-18T23:59:59\",\"granularity\":\"month\"}"
+    },
+    {
+      "path": "/transaction/stats/category",
+      "body": "{\"start\":\"2026-01-01T00:00:00\",\"end\":\"2026-09-18T23:59:59\",\"type\":\"expense\",\"groupBy\":\"root\"}"
+    },
+    {
+      "path": "/transaction/stats/monthly",
+      "body": "{\"start\":\"2026-01-01\",\"end\":\"2026-09-18\"}"
+    },
+    {
+      "path": "/transaction/selectAll",
+      "body": ""
+    },
+    {
+      "path": "/level/currentLevel",
+      "body": ""
+    },
+    {
+      "path": "/backup/storagePath",
+      "body": ""
+    },
+    {
+      "path": "/transaction/selectAll",
+      "body": ""
+    },
+    {
+      "path": "/budget/searchBudget",
+      "body": ""
+    },
+    {
+      "path": "/transaction/stats/summary",
+      "body": "{\"start\":\"2026-09-01T00:00:00\",\"end\":\"2026-09-30T23:59:59\"}"
+    },
+    {
+      "path": "/transaction/stats/trend",
+      "body": "{\"start\":\"2026-09-01T00:00:00\",\"end\":\"2026-09-30T23:59:59\",\"granularity\":\"day\"}"
+    },
+    {
+      "path": "/transaction/stats/category",
+      "body": "{\"start\":\"2026-09-01T00:00:00\",\"end\":\"2026-09-30T23:59:59\",\"type\":\"expense\",\"groupBy\":\"root\"}"
+    },
+    {
+      "path": "/transaction/stats/monthly",
+      "body": "{\"start\":\"2026-04-01\",\"end\":\"2026-09-30\"}"
+    },
+    {
+      "path": "/transaction/recent",
+      "body": ""
+    },
+    {
+      "path": "/account/selectAll",
+      "body": ""
+    },
+    {
+      "path": "/transaction/page",
+      "body": "{\"pageNum\":1,\"pageSize\":20,\"queryList\":[]}"
+    },
+    {
+      "path": "/budget/searchBudget",
+      "body": ""
+    },
+    {
+      "path": "/budget/searchBudget",
+      "body": ""
+    },
+    {
+      "path": "/budget/searchBudget",
+      "body": ""
+    },
+    {
+      "path": "/budget/searchBudget",
+      "body": ""
+    },
+    {
+      "path": "/budget/searchBudget",
+      "body": ""
+    },
+    {
+      "path": "/budget/searchBudget",
+      "body": ""
+    },
+    {
+      "path": "/transaction/selectAll",
+      "body": ""
+    },
+    {
+      "path": "/transaction/stats/summary",
+      "body": "{\"start\":\"2026-01-01T00:00:00\",\"end\":\"2026-09-18T23:59:59\"}"
+    },
+    {
+      "path": "/transaction/stats/trend",
+      "body": "{\"start\":\"2026-01-01T00:00:00\",\"end\":\"2026-09-18T23:59:59\",\"granularity\":\"month\"}"
+    },
+    {
+      "path": "/transaction/stats/category",
+      "body": "{\"start\":\"2026-01-01T00:00:00\",\"end\":\"2026-09-18T23:59:59\",\"type\":\"expense\",\"groupBy\":\"root\"}"
+    },
+    {
+      "path": "/transaction/stats/monthly",
+      "body": "{\"start\":\"2026-01-01\",\"end\":\"2026-09-18\"}"
+    },
+    {
+      "path": "/transaction/selectAll",
+      "body": ""
+    },
+    {
+      "path": "/level/currentLevel",
+      "body": ""
+    },
+    {
+      "path": "/backup/storagePath",
+      "body": ""
+    },
+    {
+      "path": "/transaction/selectAll",
+      "body": ""
+    },
+    {
+      "path": "/budget/searchBudget",
+      "body": ""
+    },
+    {
+      "path": "/transaction/stats/summary",
+      "body": "{\"start\":\"2026-09-01T00:00:00\",\"end\":\"2026-09-30T23:59:59\"}"
+    },
+    {
+      "path": "/transaction/stats/trend",
+      "body": "{\"start\":\"2026-09-01T00:00:00\",\"end\":\"2026-09-30T23:59:59\",\"granularity\":\"day\"}"
+    },
+    {
+      "path": "/transaction/stats/category",
+      "body": "{\"start\":\"2026-09-01T00:00:00\",\"end\":\"2026-09-30T23:59:59\",\"type\":\"expense\",\"groupBy\":\"root\"}"
+    },
+    {
+      "path": "/transaction/stats/monthly",
+      "body": "{\"start\":\"2026-04-01\",\"end\":\"2026-09-30\"}"
+    },
+    {
+      "path": "/transaction/recent",
+      "body": ""
+    },
+    {
+      "path": "/account/selectAll",
+      "body": ""
+    },
+    {
+      "path": "/transaction/page",
+      "body": "{\"pageNum\":1,\"pageSize\":20,\"queryList\":[]}"
+    },
+    {
+      "path": "/budget/searchBudget",
+      "body": ""
+    },
+    {
+      "path": "/budget/searchBudget",
+      "body": ""
+    },
+    {
+      "path": "/budget/searchBudget",
+      "body": ""
+    },
+    {
+      "path": "/budget/searchBudget",
+      "body": ""
+    },
+    {
+      "path": "/budget/searchBudget",
+      "body": ""
+    },
+    {
+      "path": "/budget/searchBudget",
+      "body": ""
+    },
+    {
+      "path": "/transaction/selectAll",
+      "body": ""
+    },
+    {
+      "path": "/transaction/stats/summary",
+      "body": "{\"start\":\"2026-01-01T00:00:00\",\"end\":\"2026-09-18T23:59:59\"}"
+    },
+    {
+      "path": "/transaction/stats/trend",
+      "body": "{\"start\":\"2026-01-01T00:00:00\",\"end\":\"2026-09-18T23:59:59\",\"granularity\":\"month\"}"
+    },
+    {
+      "path": "/transaction/stats/category",
+      "body": "{\"start\":\"2026-01-01T00:00:00\",\"end\":\"2026-09-18T23:59:59\",\"type\":\"expense\",\"groupBy\":\"root\"}"
+    },
+    {
+      "path": "/transaction/stats/monthly",
+      "body": "{\"start\":\"2026-01-01\",\"end\":\"2026-09-18\"}"
+    },
+    {
+      "path": "/message/unreadCount",
+      "body": ""
+    },
+    {
+      "path": "/transaction/selectAll",
+      "body": ""
+    },
+    {
+      "path": "/level/currentLevel",
+      "body": ""
+    },
+    {
+      "path": "/backup/storagePath",
       "body": ""
     },
     {
@@ -3664,19 +4943,19 @@
     },
     {
       "path": "/transaction/stats/summary",
-      "body": "{\"start\":\"2026-01-01T00:00:00\",\"end\":\"2026-09-17T23:59:59\"}"
+      "body": "{\"start\":\"2026-01-01T00:00:00\",\"end\":\"2026-09-18T23:59:59\"}"
     },
     {
       "path": "/transaction/stats/trend",
-      "body": "{\"start\":\"2026-01-01T00:00:00\",\"end\":\"2026-09-17T23:59:59\",\"granularity\":\"month\"}"
+      "body": "{\"start\":\"2026-01-01T00:00:00\",\"end\":\"2026-09-18T23:59:59\",\"granularity\":\"month\"}"
     },
     {
       "path": "/transaction/stats/category",
-      "body": "{\"start\":\"2026-01-01T00:00:00\",\"end\":\"2026-09-17T23:59:59\",\"type\":\"expense\",\"groupBy\":\"root\"}"
+      "body": "{\"start\":\"2026-01-01T00:00:00\",\"end\":\"2026-09-18T23:59:59\",\"type\":\"expense\",\"groupBy\":\"root\"}"
     },
     {
       "path": "/transaction/stats/monthly",
-      "body": "{\"start\":\"2026-01-01\",\"end\":\"2026-09-17\"}"
+      "body": "{\"start\":\"2026-01-01\",\"end\":\"2026-09-18\"}"
     },
     {
       "path": "/account/selectAll",
@@ -3736,7 +5015,7 @@
     },
     {
       "path": "/transaction/saveWithReward",
-      "body": "{\"type\":\"expense\",\"amount\":36.5,\"fee\":0,\"accountId\":1,\"toAccountId\":null,\"categoryId\":3,\"transactionDate\":\"2026-09-17T13:03:32\",\"note\":\"\",\"tags\":\"[]\"}"
+      "body": "{\"type\":\"expense\",\"amount\":36.5,\"fee\":0,\"accountId\":1,\"toAccountId\":null,\"categoryId\":3,\"transactionDate\":\"2026-09-18T12:34:04\",\"note\":\"\",\"tags\":\"[]\"}"
     },
     {
       "path": "/transaction/selectAll",
@@ -3756,7 +5035,7 @@
     },
     {
       "path": "/transaction/saveWithReward",
-      "body": "{\"type\":\"income\",\"amount\":1200,\"fee\":0,\"accountId\":1,\"toAccountId\":null,\"categoryId\":5,\"transactionDate\":\"2026-09-17T13:03:35\",\"note\":\"\",\"tags\":\"[]\"}"
+      "body": "{\"type\":\"income\",\"amount\":1200,\"fee\":0,\"accountId\":1,\"toAccountId\":null,\"categoryId\":5,\"transactionDate\":\"2026-09-18T12:34:06\",\"note\":\"\",\"tags\":\"[]\"}"
     },
     {
       "path": "/transaction/selectAll",
@@ -3776,7 +5055,7 @@
     },
     {
       "path": "/transaction/saveWithReward",
-      "body": "{\"type\":\"transfer\",\"amount\":100,\"fee\":0,\"accountId\":1,\"toAccountId\":2,\"categoryId\":null,\"transactionDate\":\"2026-09-17T13:03:36\",\"note\":\"\",\"tags\":\"[]\"}"
+      "body": "{\"type\":\"transfer\",\"amount\":100,\"fee\":0,\"accountId\":1,\"toAccountId\":2,\"categoryId\":null,\"transactionDate\":\"2026-09-18T12:34:08\",\"note\":\"\",\"tags\":\"[]\"}"
     },
     {
       "path": "/transaction/selectAll",
@@ -3871,6 +5150,10 @@
       "body": ""
     },
     {
+      "path": "/backup/storagePath",
+      "body": ""
+    },
+    {
       "path": "/transaction/selectAll",
       "body": ""
     },
@@ -3880,11 +5163,11 @@
     },
     {
       "path": "/backup/csv/transactions/preview",
-      "body": "------WebKitFormBoundarypY37VzOacdpSdfwp\r\nContent-Disposition: form-data; name=\"file\"; filename=\"隔离测试.csv\"\r\nContent-Type: text/csv\r\n\r\n日期,类型,金额\n2026-01-01,支出,10\r\n------WebKitFormBoundarypY37VzOacdpSdfwp--\r\n"
+      "body": "------WebKitFormBoundaryYhEC6PkqpFw3vQlm\r\nContent-Disposition: form-data; name=\"file\"; filename=\"隔离测试.csv\"\r\nContent-Type: text/csv\r\n\r\n日期,类型,金额\n2026-01-01,支出,10\r\n------WebKitFormBoundaryYhEC6PkqpFw3vQlm--\r\n"
     },
     {
       "path": "/backup/csv/transactions",
-      "body": "------WebKitFormBoundaryv5QbEI4Mhn6fjQzZ\r\nContent-Disposition: form-data; name=\"file\"; filename=\"隔离测试.csv\"\r\nContent-Type: text/csv\r\n\r\n日期,类型,金额\n2026-01-01,支出,10\r\n------WebKitFormBoundaryv5QbEI4Mhn6fjQzZ--\r\n"
+      "body": "------WebKitFormBoundaryQmUT98Ic7jrBnUAb\r\nContent-Disposition: form-data; name=\"file\"; filename=\"隔离测试.csv\"\r\nContent-Type: text/csv\r\n\r\n日期,类型,金额\n2026-01-01,支出,10\r\n------WebKitFormBoundaryQmUT98Ic7jrBnUAb--\r\n"
     },
     {
       "path": "/transaction/selectAll",
@@ -3960,23 +5243,23 @@
     },
     {
       "path": "/transaction/stats/summary",
-      "body": "{\"start\":\"2026-01-01T00:00:00\",\"end\":\"2026-09-17T23:59:59\"}"
+      "body": "{\"start\":\"2026-01-01T00:00:00\",\"end\":\"2026-09-18T23:59:59\"}"
     },
     {
       "path": "/transaction/stats/trend",
-      "body": "{\"start\":\"2026-01-01T00:00:00\",\"end\":\"2026-09-17T23:59:59\",\"granularity\":\"month\"}"
+      "body": "{\"start\":\"2026-01-01T00:00:00\",\"end\":\"2026-09-18T23:59:59\",\"granularity\":\"month\"}"
     },
     {
       "path": "/transaction/stats/category",
-      "body": "{\"start\":\"2026-01-01T00:00:00\",\"end\":\"2026-09-17T23:59:59\",\"type\":\"expense\",\"groupBy\":\"root\"}"
+      "body": "{\"start\":\"2026-01-01T00:00:00\",\"end\":\"2026-09-18T23:59:59\",\"type\":\"expense\",\"groupBy\":\"root\"}"
     },
     {
       "path": "/transaction/stats/monthly",
-      "body": "{\"start\":\"2026-01-01\",\"end\":\"2026-09-17\"}"
+      "body": "{\"start\":\"2026-01-01\",\"end\":\"2026-09-18\"}"
     },
     {
       "path": "/transaction/page",
-      "body": "{\"pageNum\":1,\"pageSize\":20,\"queryList\":[{\"key\":\"categoryId\",\"value\":[4],\"query\":\"in\"},{\"key\":\"date\",\"value\":\"2026-01-01T00:00:00\",\"query\":\"ge\"},{\"key\":\"date\",\"value\":\"2026-09-17T23:59:59\",\"query\":\"le\"}]}"
+      "body": "{\"pageNum\":1,\"pageSize\":20,\"queryList\":[{\"key\":\"categoryId\",\"value\":[4],\"query\":\"in\"},{\"key\":\"date\",\"value\":\"2026-01-01T00:00:00\",\"query\":\"ge\"},{\"key\":\"date\",\"value\":\"2026-09-18T23:59:59\",\"query\":\"le\"}]}"
     },
     {
       "path": "/account/selectAll",
@@ -4023,11 +5306,11 @@
       "body": ""
     },
     {
-      "path": "/check_in/selectAll",
+      "path": "/budget/searchBudget",
       "body": ""
     },
     {
-      "path": "/budget/searchBudget",
+      "path": "/check_in/selectAll",
       "body": ""
     },
     {
@@ -4048,19 +5331,19 @@
     },
     {
       "path": "/transaction/stats/summary",
-      "body": "{\"start\":\"2026-01-01T00:00:00\",\"end\":\"2026-09-17T23:59:59\"}"
+      "body": "{\"start\":\"2026-01-01T00:00:00\",\"end\":\"2026-09-18T23:59:59\"}"
     },
     {
       "path": "/transaction/stats/trend",
-      "body": "{\"start\":\"2026-01-01T00:00:00\",\"end\":\"2026-09-17T23:59:59\",\"granularity\":\"month\"}"
+      "body": "{\"start\":\"2026-01-01T00:00:00\",\"end\":\"2026-09-18T23:59:59\",\"granularity\":\"month\"}"
     },
     {
       "path": "/transaction/stats/category",
-      "body": "{\"start\":\"2026-01-01T00:00:00\",\"end\":\"2026-09-17T23:59:59\",\"type\":\"expense\",\"groupBy\":\"root\"}"
+      "body": "{\"start\":\"2026-01-01T00:00:00\",\"end\":\"2026-09-18T23:59:59\",\"type\":\"expense\",\"groupBy\":\"root\"}"
     },
     {
       "path": "/transaction/stats/monthly",
-      "body": "{\"start\":\"2026-01-01\",\"end\":\"2026-09-17\"}"
+      "body": "{\"start\":\"2026-01-01\",\"end\":\"2026-09-18\"}"
     },
     {
       "path": "/budget/searchBudget",
@@ -4267,11 +5550,11 @@
       "body": ""
     },
     {
-      "path": "/budget/searchBudget",
+      "path": "/check_in/selectAll",
       "body": ""
     },
     {
-      "path": "/check_in/selectAll",
+      "path": "/budget/searchBudget",
       "body": ""
     },
     {

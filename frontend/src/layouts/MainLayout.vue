@@ -524,6 +524,7 @@ onUnmounted(() => {
   background: transparent;
   padding: 12px 24px 24px;
   overflow-y: auto;
+  scrollbar-gutter: stable;
   container: content / inline-size;
 }
 

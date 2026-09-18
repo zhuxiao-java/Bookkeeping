@@ -1,6 +1,7 @@
 package com.bookkeeping.service.impl;
 
 import com.bookkeeping.constant.TransactionType;
+import com.bookkeeping.controller.BackupController;
 import com.bookkeeping.dao.dto.AccountDTO;
 import com.bookkeeping.dao.dto.CategoryDTO;
 import com.bookkeeping.dao.dto.TransactionDTO;
@@ -11,20 +12,28 @@ import com.bookkeeping.service.CategoryService;
 import com.bookkeeping.service.TransactionService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import org.mockito.ArgumentCaptor;
 import org.springframework.test.util.ReflectionTestUtils;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import java.math.BigDecimal;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
  * 覆盖 P3-1 的 CSV 导入导出：按账户名/分类名解析、仅新增、逐行容错跳过非法行；
@@ -46,6 +55,37 @@ class BackupServiceImplTest {
         ReflectionTestUtils.setField(service, "transactionService", transactionService);
         ReflectionTestUtils.setField(service, "accountService", accountService);
         ReflectionTestUtils.setField(service, "categoryService", categoryService);
+    }
+
+    @Test
+    void storagePath_resolvesRelativeDirectory() {
+        ReflectionTestUtils.setField(service, "bookkeepingDir", "./data");
+
+        String result = service.storagePath();
+
+        assertTrue(Path.of(result).isAbsolute());
+        assertEquals(Path.of("").toAbsolutePath().resolve("data").toString(), result);
+    }
+
+    @Test
+    void storagePath_normalizesCustomDirectoryWithoutCreatingIt(@TempDir Path tempDir) {
+        Path expected = tempDir.resolve("账本 数据");
+        Path configured = tempDir.resolve("旧目录").resolve("..").resolve("账本 数据");
+        ReflectionTestUtils.setField(service, "bookkeepingDir", configured.toString());
+
+        assertEquals(expected.toString(), service.storagePath());
+        assertFalse(Files.exists(expected));
+    }
+
+    @Test
+    void storagePath_endpointReturnsConfiguredDirectory(@TempDir Path tempDir) throws Exception {
+        ReflectionTestUtils.setField(service, "bookkeepingDir", tempDir.toString());
+
+        MockMvcBuilders.standaloneSetup(new BackupController(service)).build()
+                .perform(get("/backup/storagePath"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value("S0806"))
+                .andExpect(jsonPath("$.data").value(tempDir.toString()));
     }
 
     private static AccountDTO account(Integer id, String name) {

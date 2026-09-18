@@ -36,6 +36,12 @@ public class BackupController {
         this.backupService = backupService;
     }
 
+    /** 展示后端当前使用的数据目录，兼容开发环境与桌面安装环境。 */
+    @GetMapping("storagePath")
+    public DataResponse<String> storagePath() {
+        return DataResponse.of(backupService.storagePath());
+    }
+
     /**
      * 导出整库快照（.db，SQLite VACUUM INTO 一致性快照）供下载。
      */

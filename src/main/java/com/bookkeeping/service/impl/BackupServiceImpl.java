@@ -96,6 +96,11 @@ public class BackupServiceImpl implements BackupService {
     // ---------------------------------------------------------------- 备份 / 恢复
 
     @Override
+    public String storagePath() {
+        return Path.of(bookkeepingDir).toAbsolutePath().normalize().toString();
+    }
+
+    @Override
     public byte[] createSnapshot() {
         Path tmp = null;
         try {

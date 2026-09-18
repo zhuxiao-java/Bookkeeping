@@ -139,7 +139,7 @@ function monthLabel(row: ExperienceLog): string {
             <div class="card-head">
               <h2 class="card-head__title">月度经验明细</h2>
               <div class="card-head__ctrls">
-                <el-button link type="primary" @click="load(true)">刷新</el-button>
+                <el-button text type="primary" @click="load(true)">刷新</el-button>
               </div>
             </div>
           </template>
@@ -225,8 +225,8 @@ function monthLabel(row: ExperienceLog): string {
 }
 
 .lv-head__progress {
-  margin-top: 22px;
-  padding-top: 20px;
+  margin-top: var(--bk-row-padding);
+  padding-top: var(--bk-row-padding);
   border-top: 1px solid var(--bk-border-light);
 }
 
@@ -267,7 +267,7 @@ function monthLabel(row: ExperienceLog): string {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 14px 10px;
+  padding: var(--bk-row-padding) 10px;
   border-bottom: 1px solid var(--bk-border-light);
   border-radius: var(--bk-radius-sm);
   font-size: 13px;
@@ -308,13 +308,13 @@ function monthLabel(row: ExperienceLog): string {
   font-size: 13px;
   margin-bottom: 12px;
 }
-@container content (max-width: 1040px) {
+@container page (max-width: 880px) {
   .lv-cols {
     grid-template-columns: minmax(0, 1fr);
   }
 }
 
-@container content (max-width: 800px) {
+@container page (max-width: 800px) {
   .lv-head__stats {
     width: 100%;
     justify-content: space-between;
@@ -323,7 +323,7 @@ function monthLabel(row: ExperienceLog): string {
     margin-left: 0;
   }
 }
-@container content (max-width: 520px) {
+@container page (max-width: 520px) {
   .ladder { grid-template-columns: 1fr; }
   .lv-head__ptext { align-items: flex-start; }
 }
