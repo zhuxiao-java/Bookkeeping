@@ -10,7 +10,9 @@
  * Java 后端产物约定：打包时放置于 resources/java/ 下（见 electron-builder.yml
  * 的 extraResources），运行时通过 process.resourcesPath 定位。
  */
-const { app, BrowserWindow, Menu, Tray, dialog, globalShortcut, ipcMain, Notification } = require('electron')
+const { app, BrowserWindow, Menu, Tray, dialog, globalShortcut, ipcMain, Notification, safeStorage } = require('electron')
+const { randomBytes } = require('node:crypto')
+const { registerAiReports } = require('./ai-reports.cjs')
 const { spawn } = require('child_process')
 const fs = require('fs')
 const path = require('path')
@@ -31,6 +33,8 @@ const QUICK_RECORD_ACCELERATOR = 'CommandOrControl+Shift+B'
 let currentQuickRecordAccelerator = QUICK_RECORD_ACCELERATOR
 
 const isDev = !app.isPackaged
+const aiSession = isDev ? (process.env.BOOKKEEPING_AI_SESSION || '') : randomBytes(32).toString('hex')
+let monthlyAI = null
 
 /** @type {BrowserWindow | null} */
 let mainWindow = null
@@ -135,7 +139,8 @@ function findFreePort(preferred) {
 function startBackend() {
   const entry = resolveBackendEntry()
   // 通过启动参数把探测到的端口传给 Spring Boot（--server.port，OPT-08）
-  javaProcess = spawn(entry, [`--server.port=${backendPort}`], {
+  javaProcess = spawn(entry, [`--server.port=${backendPort}`, '--server.address=127.0.0.1'], {
+    env: { ...process.env, BOOKKEEPING_AI_SESSION: aiSession },
     cwd: resolveBackendCwd(),
     stdio: ['ignore', 'pipe', 'pipe'],
     windowsHide: true
@@ -149,6 +154,7 @@ function startBackend() {
   })
   javaProcess.on('exit', (code) => {
     console.warn(`[backend] Java 进程退出，code=${code}`)
+    monthlyAI?.cancel()
     javaProcess = null
     if (!quitting && !manualRestart && mainWindow && !mainWindow.isDestroyed()) {
       // 后端异常退出：提示用户并自动重启（最多 3 次）
@@ -215,6 +221,7 @@ function isHealthUp(raw) {
 async function restartBackend() {
   if (isDev) return { ok: false, reason: 'dev' }
   manualRestart = true
+  monthlyAI?.stop()
   try {
     if (javaProcess) {
       const proc = javaProcess
@@ -228,6 +235,7 @@ async function restartBackend() {
     restartCount = 0
     startBackend()
     await waitBackendReady()
+    monthlyAI?.start()
     return { ok: true }
   } catch (err) {
     return { ok: false, reason: err && err.message ? err.message : String(err) }
@@ -494,6 +502,9 @@ function registerShortcuts() {
 }
 
 async function bootstrap() {
+  if (!monthlyAI) monthlyAI = registerAiReports({ app, safeStorage, ipcMain,
+    getWindow: () => mainWindow, getPort: () => backendPort, session: aiSession,
+    devUrl: isDev ? DEV_SERVER_URL : null })
   // 先弹闪屏给出即时反馈
   createSplashWindow()
   // 生产环境在创建窗口前探测空闲端口（OPT-08）：端口经 additionalArguments 注入渲染进程，
@@ -513,6 +524,7 @@ async function bootstrap() {
     }
     updateSplashStatus('正在检查服务状态')
     await waitBackendReady()
+    monthlyAI.start()
     updateSplashStatus('服务已就绪，正在打开主界面')
     if (mainWindow) mainWindow.show()
     closeSplashWindow()
@@ -563,6 +575,7 @@ app.on('activate', () => {
 })
 
 app.on('before-quit', () => {
+  monthlyAI?.stop()
   quitting = true
   saveBounds()
 })

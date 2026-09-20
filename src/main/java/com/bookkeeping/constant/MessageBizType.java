@@ -9,7 +9,8 @@ import lombok.AllArgsConstructor;
 public enum MessageBizType implements IEnum<String> {
     TRANSACTION("transaction"),
     BUDGET("budget"),
-    LEVEL("level")
+    LEVEL("level"),
+    MONTHLY_REPORT("monthly_report")
     ;
     @JsonValue
     private final String type;

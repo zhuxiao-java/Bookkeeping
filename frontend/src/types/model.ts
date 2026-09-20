@@ -281,10 +281,10 @@ export interface CheckIn extends BaseEntity {
 // —— 站内信（契约详见 docs/frontend-requirements.md 第 13 章） ——
 
 /** 站内信消息类型（后端 MessageType 枚举值；weather 为每日天气，content 存的是 Weather JSON） */
-export type MessageType = 'system' | 'budget' | 'level' | 'check_in' | 'greeting' | 'weather'
+export type MessageType = 'system' | 'budget' | 'level' | 'check_in' | 'greeting' | 'weather' | 'monthly_report'
 
 /** 关联业务类型（后端 MessageBizType 枚举值，用于消息跳转） */
-export type MessageBizType = 'transaction' | 'budget' | 'level'
+export type MessageBizType = 'transaction' | 'budget' | 'level' | 'monthly_report'
 
 /** 消息状态：0 未读 / 1 已读（DTO 属性 status → 列 f_status） */
 export type MessageStatus = 0 | 1

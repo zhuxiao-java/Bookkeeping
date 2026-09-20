@@ -9,6 +9,7 @@
     "dev:electron": "concurrently -k \"vite\" \"wait-on tcp:5173 && electron .\"",
     "type-check": "vue-tsc --noEmit",
     "test": "vitest run",
+    "test:electron": "node --test electron/*.test.cjs",
     "test:watch": "vitest",
     "build": "vite build",
     "preview": "vite preview",

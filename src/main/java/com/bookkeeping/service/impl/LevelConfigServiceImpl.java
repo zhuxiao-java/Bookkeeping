@@ -43,7 +43,7 @@ public class LevelConfigServiceImpl extends IBaseCrudServiceImpl<LevelConfigDTO,
         int experience = Math.min(newExperience, MAX_LEVEL_EXP_THRESHOLD);
         QueryWrapper<LevelConfigEntity> qw = new QueryWrapper<>();
         qw.between("f_exp_threshold", MIN_LEVEL_EXP_THRESHOLD, experience);
-        qw.orderByAsc("f_level");
+        qw.orderByDesc("f_level");
         qw.last("limit 1");
         return mapping.toDto(getOne(qw));
     }

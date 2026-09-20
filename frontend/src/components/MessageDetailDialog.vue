@@ -68,14 +68,15 @@ const weather = computed(() => (current.value?.type === 'weather' ? parseWeather
 const JUMP_TARGET: Record<MessageBizType, { path: string; label: string }> = {
   transaction: { path: '/transaction', label: '交易流水' },
   budget: { path: '/budget', label: '预算管理' },
-  level: { path: '/level', label: '等级页面' }
+  level: { path: '/level', label: '等级页面' },
+  monthly_report: { path: '/monthly-report', label: '月报' }
 }
 
 /**
  * 支持按 bizId 定位到具体记录的目标页；
  * level 只做页面级跳转（bizId 为经验日志 id，定位价值低），不往 URL 上挂无人消费的参数。
  */
-const LOCATABLE: MessageBizType[] = ['transaction', 'budget']
+const LOCATABLE: MessageBizType[] = ['transaction', 'budget', 'monthly_report']
 
 const jumpTarget = computed(() => {
   const bizType = current.value?.bizType

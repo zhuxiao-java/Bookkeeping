@@ -4,6 +4,8 @@ import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Search, Edit, DocumentCopy, Delete, Wallet, Plus } from '@element-plus/icons-vue'
 import { transactionApi, ApiError } from '@/api'
+import { monthlyReportApi, type MonthlyRangeTransaction } from '@/api/monthlyReport'
+import { cents, currencyName, lastClosedMonth, monthRange } from '@/utils/monthlyReport'
 import { useDictStore } from '@/stores/dict'
 import { useSettingsStore } from '@/stores/settings'
 import { parseTagIds, type SearchQuery, type Transaction } from '@/types/model'
@@ -32,6 +34,7 @@ const decimals = computed(() => settings.decimalPlaces)
 const loading = ref(false)
 const list = ref<Transaction[]>([])
 const total = ref(0)
+const currencyTotal = ref('0.00')
 
 const pageNum = ref(1)
 const pageSize = ref(20)
@@ -51,6 +54,7 @@ let rangePageOk: boolean | null = null
 
 const filters = reactive({
   type: '' as '' | Transaction['type'],
+  currency: '',
   accountId: undefined as number | undefined,
   categoryId: undefined as number | undefined,
   /** 标签筛选：tags 为 JSON 数组字符串，后端 page 无法可靠 in/like 数组元素，故走本地过滤 */
@@ -66,6 +70,7 @@ const filters = reactive({
 const hasActiveFilter = computed(
   () =>
     filters.type !== '' ||
+    filters.currency !== '' ||
     filters.accountId != null ||
     filters.categoryId != null ||
     filters.tagId != null ||
@@ -124,11 +129,11 @@ function hasAmountFilter(): boolean {
  * 关键字多字段搜索（备注/分类名/账户名/标签名的 OR 语义后端 page 无法表达）任一命中即本地过滤。
  */
 function needLocalFilter(): boolean {
-  return hasAmountFilter() || filters.tagId != null || filters.keyword.trim() !== ''
+  return (focusId.value == null && !!filters.currency) || hasAmountFilter() || filters.tagId != null || filters.keyword.trim() !== ''
 }
 
 /** 关键字多字段匹配：备注 / 分类名 / 账户名（含转入）/ 标签名，任一命中即匹配（kw 需已 trim+小写） */
-function matchesKeyword(t: Transaction, kw: string): boolean {
+function matchesKeyword(t: Transaction | MonthlyRangeTransaction, kw: string): boolean {
   if ((t.note ?? '').toLowerCase().includes(kw)) return true
   const cat = dict.categoryById(t.categoryId)
   if (cat && cat.name.toLowerCase().includes(kw)) return true
@@ -145,7 +150,15 @@ function matchesKeyword(t: Transaction, kw: string): boolean {
 
 /** 本地过滤 + 本地分页：用于后端区间未就绪，或金额区间筛选（NEW-06） */
 async function loadByLocalFilter() {
-  const all = await transactionApi.selectAll()
+  if (filters.currency && focusId.value == null && !filters.dateRange) {
+    ElMessage.warning('币种筛选需要选择日期范围（最长一年）')
+    list.value = []; total.value = 0; currencyTotal.value = '0.00'
+    return
+  }
+  const scoped = !!filters.currency && focusId.value == null
+  const all = scoped
+    ? await monthlyReportApi.transactions(filters.dateRange![0], filters.dateRange![1], filters.currency)
+    : await transactionApi.selectAll()
   const range = filters.dateRange
   const minAmt = filters.amountMin.trim() === '' ? null : Number(filters.amountMin)
   const maxAmt = filters.amountMax.trim() === '' ? null : Number(filters.amountMax)
@@ -157,7 +170,10 @@ async function loadByLocalFilter() {
     if (filters.type && t.type !== filters.type) return false
     if (filters.accountId != null && t.accountId !== filters.accountId) return false
     const catIds = categoryIdsWithChildren()
-    if (catIds.length && (t.categoryId == null || !catIds.includes(t.categoryId))) return false
+    if (scoped && 'monthlyRootId' in t) {
+      if (filters.categoryId === 0 && t.monthlyRootId !== 0) return false
+      if (filters.categoryId != null && filters.categoryId > 0 && (t.monthlyRootId === 0 || !t.categoryPath.includes(filters.categoryId))) return false
+    } else if (catIds.length && (t.categoryId == null || !catIds.includes(t.categoryId))) return false
     if (tagId != null && !parseTagIds(t.tags).includes(tagId)) return false
     if (kw && !matchesKeyword(t, kw)) return false
     const amt = Number(t.amount)
@@ -166,8 +182,12 @@ async function loadByLocalFilter() {
     return true
   })
   total.value = filtered.length
+  if (scoped) {
+    const sum = filtered.reduce((value, t) => value + cents(String(t.amount)), 0n)
+    currencyTotal.value = `${sum / 100n}.${String(sum % 100n).padStart(2, '0')}`
+  }
   const startIdx = (pageNum.value - 1) * pageSize.value
-  list.value = filtered.slice(startIdx, startIdx + pageSize.value)
+  list.value = filtered.slice(startIdx, startIdx + pageSize.value).map(t => ({ ...t, amount: Number(t.amount), fee: Number(t.fee) }))
 }
 
 async function load() {
@@ -212,6 +232,7 @@ function search() {
 function resetFilters() {
   focusId.value = null
   filters.type = ''
+  filters.currency = ''
   filters.accountId = undefined
   filters.categoryId = undefined
   filters.tagId = undefined
@@ -432,14 +453,21 @@ function applyFiltersFromRoute(): boolean {
   const end = typeof q.end === 'string' ? q.end : ''
   const catRaw = q.categoryId
   const catId = Number(Array.isArray(catRaw) ? catRaw[0] : catRaw)
-  const hasCat = catRaw != null && Number.isFinite(catId) && catId > 0
+  const hasCat = catRaw != null && Number.isFinite(catId) && catId >= 0
   if (!start && !end && !hasCat) return false
+  focusId.value = null
+  filters.currency = typeof q.currency === 'string' ? q.currency : ''
+  filters.type = q.type === 'expense' || q.type === 'income' || q.type === 'transfer' ? q.type : ''
+  filters.accountId = undefined; filters.tagId = undefined; filters.keyword = ''
+  filters.amountMin = ''; filters.amountMax = ''; filters.categoryId = undefined
   if (start && end) filters.dateRange = [start, end]
   if (hasCat) filters.categoryId = catId
   const rest = { ...q }
   delete rest.start
   delete rest.end
   delete rest.categoryId
+  delete rest.currency
+  delete rest.type
   router.replace({ query: rest })
   pageNum.value = 1
   return true
@@ -491,6 +519,7 @@ onBeforeUnmount(() => {
       </div>
     </header>
 
+    <el-alert v-if="filters.currency && focusId == null" :title="`${currencyName(filters.currency)} · 当前筛选 ${total} 笔，金额合计 ${currencyTotal}。仅查询所选日期范围；若账单有更新，可能与月报快照不同。`" type="info" :closable="false" />
     <!-- 筛选栏（轻量工具条；保留 filter-card 类供打印样式钩子） -->
     <div class="surface filter-card quiet-controls bk-enter" data-guide="tx-filters">
       <!-- 分组一：筛选维度（类型 / 账户 / 分类 / 标签 / 日期 + 快捷区间） -->
@@ -503,6 +532,10 @@ onBeforeUnmount(() => {
             <el-option label="转账" value="transfer" />
           </el-select>
 
+          <el-select v-model="filters.currency" aria-label="币种" placeholder="全部币种" clearable style="width: 130px" @change="() => { if (filters.currency && !filters.dateRange) filters.dateRange = monthRange(lastClosedMonth()); if (!filters.currency && filters.categoryId === 0) filters.categoryId = undefined; search() }">
+            <el-option label="人民币" value="CNY" /><el-option label="美元" value="DOLLAR" /><el-option label="币种未知" value="UNKNOWN" />
+          </el-select>
+          <el-tag v-if="filters.categoryId === 0" closable @close="filters.categoryId = undefined; search()">未分类/分类异常</el-tag>
           <el-select v-model="filters.accountId" aria-label="账户" placeholder="全部账户" clearable style="width: 160px" @change="search">
             <el-option v-for="a in dict.accounts" :key="a.id" :label="a.name" :value="a.id">
               <AccountOption :account="a" />

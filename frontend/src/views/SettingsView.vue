@@ -11,6 +11,7 @@ import { imageApi, levelApi, backupApi, ApiError } from '@/api'
 import { bus, TRANSACTION_CHANGED, ACCOUNT_CHANGED } from '@/utils/bus'
 import CategoryManage from './settings/CategoryManage.vue'
 import TagManage from './settings/TagManage.vue'
+import AiReportSettings from './settings/AiReportSettings.vue'
 import HelpPanel from '@/components/HelpPanel.vue'
 import CsvImportDialog from '@/components/CsvImportDialog.vue'
 import type { CsvImportResult } from '@/api'
@@ -23,8 +24,8 @@ const themeOptions: { value: ThemeMode; label: string }[] = [
   { value: 'auto', label: '跟随系统' }
 ]
 
-type MenuKey = 'preference' | 'category' | 'tag' | 'data' | 'help' | 'about'
-const MENU_KEYS: MenuKey[] = ['preference', 'category', 'tag', 'data', 'help', 'about']
+type MenuKey = 'preference' | 'category' | 'tag' | 'data' | 'help' | 'about' | 'ai'
+const MENU_KEYS: MenuKey[] = ['preference', 'category', 'tag', 'data', 'help', 'about', 'ai']
 
 const route = useRoute()
 /** 支持 ?menu=xxx 直达（记账弹窗空分类引导、使用说明跳转用） */
@@ -46,6 +47,7 @@ const menus: { key: MenuKey; label: string; icon: typeof Setting }[] = [
   { key: 'category', label: '分类管理', icon: PriceTag },
   { key: 'tag', label: '标签管理', icon: Coin },
   { key: 'data', label: '数据管理', icon: DataAnalysis },
+  { key: 'ai', label: 'AI 月报', icon: Reading },
   { key: 'help', label: '使用说明', icon: Reading },
   { key: 'about', label: '关于', icon: Wallet }
 ]
@@ -348,6 +350,7 @@ function onCsvImported(res: CsvImportResult) {
     <div class="settings__body">
       <CategoryManage v-show="activeMenu === 'category'" />
       <TagManage v-show="activeMenu === 'tag'" />
+      <AiReportSettings v-if="activeMenu === 'ai'" />
 
       <div v-show="activeMenu === 'preference'" class="page page--comfortable page--settings quiet-controls preferences">
         <header class="page-head">

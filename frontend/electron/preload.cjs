@@ -22,6 +22,21 @@ function resolveApiBase() {
 
 contextBridge.exposeInMainWorld('electronAPI', {
   isElectron: true,
+  monthlyAI: {
+    settings: () => ipcRenderer.invoke('monthly-ai-settings'),
+    save: config => ipcRenderer.invoke('monthly-ai-save', config),
+    authorize: consent => ipcRenderer.invoke('monthly-ai-authorize', consent),
+    revoke: () => ipcRenderer.invoke('monthly-ai-revoke'),
+    clear: () => ipcRenderer.invoke('monthly-ai-clear'),
+    test: () => ipcRenderer.invoke('monthly-ai-test'),
+    preview: reportId => ipcRenderer.invoke('monthly-ai-preview', { reportId }),
+    generate: request => ipcRenderer.invoke('monthly-ai-generate', request),
+    onUpdated(callback) {
+      const listener = (_event, id) => callback(id)
+      ipcRenderer.on('monthly-ai-updated', listener)
+      return () => ipcRenderer.removeListener('monthly-ai-updated', listener)
+    }
+  },
   platform: process.platform,
   /** 后端 API 基础地址（动态端口降级时随之调整，OPT-08） */
   apiBase: resolveApiBase(),
