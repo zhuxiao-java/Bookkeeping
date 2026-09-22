@@ -62,6 +62,13 @@
 
 > **修复状态（2026-09-15）**：✅ **已修复**。① 常量已改对（`DEDUCT = -200`、`INCREASE = 500`），`monthlyLevelChange` 方向正确；② `gainExperience()` `else` 分支改为 `setDecrBy("f_experience", -experience)`（传正数），判定改为 `experience >= 0`，超支路径不再二次反转符号；③ `f_total_earned` 仅 `experience>0` 累加，口径一致。单测 `UserLevelServiceImplTest`（2 例：超支 -200 扣经验不累加 total_earned / 节省 +500 加经验且累加 total_earned）通过。
 
+> **补充修复（2026-09-20）· 等级错误赋值**：符号问题之外，`gainExperience()` 还存在**等级与经验不同源**的赋值缺陷 —— 原实现先 `detail()` 取快照、在内存里用 `快照经验 + experience` 预判等级并写入 `f_level`，而 `f_experience` 却走数据库原子增减（`setIncrBy/setDecrBy`）。两条路径不一致时等级就被赋错，具体三类：
+> 1. **并发/重入偏差**：原子增减以库中当前值为准，等级却按进入函数时的旧快照算出 → 升级后读到旧值会**重复推同一条升级消息**、降级时写入偏低等级，`f_level` 与 `f_experience` 不匹配。
+> 2. **满级边界**：`newExperience > MAX` 分支用 `>`（严格大于），恰好等于 19000 时不写死；而 `promotionLevel()` 内部用 `Math.min(exp, MAX)` 兜底，两者判定式不一致。
+> 3. **经验下溢**：扣减超过当前经验时 `newExperience < 0`，`promotionLevel()` 的 `between(f_exp_threshold, 0, 负数)` 查不到行 → 返回 null → `configDTO.getLevel()` 直接 NPE（月末超支扣 200 在低经验时触发）。
+>
+> **改法**：拆为两段更新 —— 先只做经验的原子增减/封顶（保留并发安全），再 `detail()` **重读落库后的真实经验**判定等级，等级变化才单独写 `f_level`；同时补 `newExperience < MIN` 的下溢保护（扣到 0 为止），满级判定统一为 `>= MAX`，并在 `configDTO`/`level` 为 null 时跳过写级。单测 `UserLevelServiceImplTest` 扩至 10 例（新增：等级以重读经验为准而非旧快照 / 预估会误升级时不写级 / 扣减压到 0 下限 / 接近满级写封顶值且保持满级）通过，全量 55 例无回归。
+
 **现状证据**（[UserLevelServiceImpl.java](file:///Users/zhuxiao/Desktop/fxXml/workSpace/Bookkeeping/src/main/java/com/bookkeeping/service/impl/UserLevelServiceImpl.java)）
 ```java
 private static final int DEDUCT = 200;     // 注释"超支时扣除200经验值"，但值为正

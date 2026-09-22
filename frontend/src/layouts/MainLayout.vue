@@ -27,7 +27,7 @@ import HelpDrawer from '@/components/HelpDrawer.vue'
 import ScreenSaver from '@/components/ScreenSaver.vue'
 import GuideTour from '@/components/GuideTour.vue'
 import { resolveBackgroundUrl } from '@/utils/background'
-import { bus, OPEN_QUICK_RECORD } from '@/utils/bus'
+import { bus, OPEN_QUICK_RECORD, TRANSACTION_CHANGED } from '@/utils/bus'
 import { SCOPE_LABEL, scopeOfPath } from '@/utils/guideSteps'
 import { useGuideStore } from '@/stores/guide'
 import { useBudgetAlert } from '@/composables/useBudgetAlert'
@@ -78,6 +78,11 @@ const menus = [
   { path: '/level', title: '等级', icon: Medal },
   { path: '/settings', title: '设置', icon: Setting }
 ]
+
+function refreshLevel() {
+  if (route.path === '/level') void level.loadAll(true)
+  else void level.loadCurrent(true)
+}
 
 function onQuickSaved() {
   // 快速记账保存成功：各页面通过路由 keep-alive / 自身刷新逻辑处理数据更新
@@ -159,6 +164,8 @@ watch(() => route.path, (path) => promptPageGuide(path))
 
 onMounted(() => {
   window.addEventListener('keydown', onKeydown)
+  window.addEventListener('focus', refreshLevel)
+  bus.on(TRANSACTION_CHANGED, refreshLevel)
   // Electron 环境：订阅主进程事件（托盘菜单 / 全局快捷键 Cmd/Ctrl+Shift+B）
   unsubscribeQuickRecord = window.electronAPI?.onOpenQuickRecord(openQuickRecord)
   // 应用用户自定义的全局快捷键（EL-06）：主进程 bootstrap 注册的是默认值，这里覆盖为已存设置
@@ -184,6 +191,8 @@ onMounted(() => {
 
 onUnmounted(() => {
   window.removeEventListener('keydown', onKeydown)
+  window.removeEventListener('focus', refreshLevel)
+  bus.off(TRANSACTION_CHANGED, refreshLevel)
   bus.off(OPEN_QUICK_RECORD, openQuickRecord)
   unsubscribeQuickRecord?.()
   unsubscribeQuickRecord = undefined

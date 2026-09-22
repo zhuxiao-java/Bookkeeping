@@ -48,6 +48,8 @@ public class ExperienceLogServiceImpl extends IBaseCrudServiceImpl<ExperienceLog
         logEntity.setActualAmount(actualAmount);
         logEntity.setDiffAmount(budgetAmount.subtract(actualAmount));
         logEntity.setExpChange(expChange);
-        super.save(logEntity);
+        if (!super.save(logEntity)) {
+            throw new IllegalStateException("月结日志保存失败");
+        }
     }
 }

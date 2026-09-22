@@ -3,7 +3,7 @@ const http = require('node:http')
 const fs = require('node:fs/promises')
 const path = require('node:path')
 const root = path.resolve(__dirname, '../dist')
-const output = path.join(__dirname, 'ui-validation')
+const output = process.env.UI_OUTPUT_DIR || path.join(require('node:os').tmpdir(), 'bookkeeping-ui-validation-output-' + Date.now())
 const profile = path.join(require('node:os').tmpdir(), 'bookkeeping-ui-validation-' + Date.now())
 require('node:fs').mkdirSync(profile, { recursive: true })
 app.setPath('userData', profile)
@@ -90,7 +90,7 @@ async function scrollShot(selector,name){
  await js(`one(${JSON.stringify(selector)}).scrollIntoView({block:'center'})`);await sleep(200);await snapshot(name)
 }
 async function snapshot(name){
- await js(`all('.el-notification__closeBtn').forEach(e=>e.click())`);await sleep(250)
+ await js(`all('.el-notification__closeBtn').forEach(e=>e.click())`);await sleep(450)
  const image=await win.webContents.capturePage();await fs.writeFile(path.join(output,name+'.png'),image.resize({width:win.getContentSize()[0]}).toPNG())
 }
 async function audit(name,shot=false){
@@ -164,6 +164,13 @@ async function run(){
  await setup()
  await assertUI('模拟账本已载入',`return one('.checkin-card') && !document.body.textContent.includes('无法连接后端')`)
  if(!requests.some(r=>r.path==='/account/selectAll'))throw Error('模拟 API 未接入')
+ await dashboardChecks()
+ if(process.env.UI_DASHBOARD_ONLY){
+  const failures=checks.filter(c=>c.pageOverflow||c.nestedButtons||c.styleIssues.length||c.layers.some(x=>!x.within||!x.footerVisible))
+  console.log('总览验证完成',{checks:checks.length,interactions:interactions.length,failures:failures.length,errors,output})
+  if(failures.length||errors.length)throw Error('总览界面验证未通过')
+  return
+ }
  await storageChecks()
  const routes=['dashboard','account','transaction','budget','report','level',...['preference','category','tag','data','help','about'].map(m=>'settings?menu='+m)]
  for(const [width,height]of (process.env.UI_QUICK ? [] : [[1920,1080],[1440,900],[1180,800],[960,720]])){
@@ -202,8 +209,69 @@ async function run(){
  delay=1500;await setup('light');await audit('loading-state',true);delay=0
  const layoutFailures=checks.filter(c=>c.pageOverflow||c.nestedButtons||c.layers.some(x=>!x.within||!x.footerVisible)).length
  const styleFailures=checks.filter(c=>c.styleIssues.length).length
- console.log('验证完成',{checks:checks.length,interactions:interactions.length,layoutFailures,styleFailures,errors,warnings,knownIssues})
+ console.log('验证完成',{checks:checks.length,interactions:interactions.length,layoutFailures,styleFailures,errors,warnings,knownIssues,output})
  if(layoutFailures||styleFailures||errors.length)process.exitCode=1
+}
+async function dashboardChecks(){
+ const originalRecord={...transactions[1]},originalBudget={...budgets[0]},originalArchived=accounts[2].archived
+ try{
+  accounts[2].archived=0
+  Object.assign(transactions[1],{type:'transfer',categoryId:null,toAccountId:2,amount:1234567890.12,note:'账户之间的资金转移，不应作为支出显示负号'})
+  for(const [width,height]of (process.env.UI_DASHBOARD_INTERACTIONS ? [] : [[1440,900],[960,720],[720,800]])){
+   win.setContentSize(width,height)
+   for(const theme of ['light','dark']){
+    await setup(theme)
+    for(const collapsed of [false,true]){
+     if(await js(`return one('.aside-footer').getAttribute('aria-expanded')==='false'`)!==collapsed)await click('.aside-footer')
+     const name=`dashboard-polish-${width}-${theme}-${collapsed?'collapsed':'expanded'}`
+     await audit(name,true)
+     await assertUI(name+'金额与图例不溢出',`return all('.hero,.tile,.recent-row,.expense-legend button,.budget-overview').every(e=>e.scrollWidth<=e.clientWidth+1)`)
+     await assertUI(name+'币种分列',`return all('.tile__currency').length===2&&!one('.tile__value').textContent.includes(' + ')`)
+     await assertUI(name+'转账语义',`const row=all('.recent-row').find(e=>e.querySelector('.recent-row__type')?.textContent==='转账');const amount=row?.querySelector('.recent-row__amount')?.textContent.trim();return row?.tagName==='A'&&row.textContent.includes('→')&&amount==='¥1,234,567,890.12'`)
+     await assertUI(name+'预算超支金额',`return one('.budget-balance')?.textContent==='¥800.00'&&one('.budget-badge')?.textContent==='已超支'&&one('.budget-usage strong')?.textContent==='116%'&&one('.budget-overview .el-progress')?.getAttribute('aria-valuenow')==='100'`)
+     await scrollShot('.chart-row',name+'-charts')
+     await scrollShot('.bottom-row',name+'-records')
+     await js(`one('.main-layout__main').scrollTop=0`)
+    }
+   }
+  }
+  win.setContentSize(1440,900);await setup('light')
+  await assertUI('父分类图例显示聚合名',`return all('.expense-legend__name').some(e=>e.textContent==='餐饮与生活日常消费')`)
+  await click('.expense-card .el-radio-button','子分类')
+  await assertUI('子分类切换后同步图例',`return all('.expense-legend__name').some(e=>e.textContent==='家庭聚餐')&&!all('.expense-legend__name').some(e=>e.textContent==='餐饮与生活日常消费')`)
+  const before=requests.length
+  await js(`const e=one('.expense-legend button:not(:disabled)');e.focus();`)
+  await assertUI('分类图例可获取键盘焦点',`return document.activeElement?.matches('.expense-legend button')`)
+  win.webContents.debugger.attach('1.3')
+  try{
+   await win.webContents.debugger.sendCommand('Emulation.setFocusEmulationEnabled',{enabled:true})
+   await win.webContents.debugger.sendCommand('Input.dispatchKeyEvent',{type:'keyDown',key:'Enter',code:'Enter',windowsVirtualKeyCode:13,text:'\r',unmodifiedText:'\r'})
+   await win.webContents.debugger.sendCommand('Input.dispatchKeyEvent',{type:'keyUp',key:'Enter',code:'Enter',windowsVirtualKeyCode:13})
+  }finally{win.webContents.debugger.detach()}
+  await sleep(650)
+  await assertUI('键盘进入分类流水',`return location.hash.startsWith('#/transaction')`)
+  const queries=requests.slice(before).filter(r=>r.path==='/transaction/page').flatMap(r=>JSON.parse(r.body).queryList||[])
+  if(!queries.some(q=>q.key==='type'&&q.value==='expense')||!queries.some(q=>q.key==='categoryId')||!queries.some(q=>q.key==='date'))throw Error('图例跳转缺少收支类型、分类或日期筛选')
+  await navigate('dashboard');const recentBefore=requests.length;await click('.recent-row')
+  const recentQueries=requests.slice(recentBefore).filter(r=>r.path==='/transaction/page').flatMap(r=>JSON.parse(r.body).queryList||[])
+  if(!recentQueries.some(q=>q.key==='id'&&q.value===transactions[0].id))throw Error('最近流水没有按 ID 定位')
+  await assertUI('最近流水进入定位页',`return location.hash.startsWith('#/transaction')`)
+  for(const [used,label,amount]of [[1000,'预算充足','¥4,000.00'],[4200,'临近上限','¥800.00'],[4999.99,'临近上限','¥0.01'],[5000,'已用完','¥0.00'],[5800,'已超支','¥800.00']]){
+   budgets[0].amountUsed=used;await setup('light')
+   await assertUI('预算边界 '+used,`return one('.budget-badge')?.textContent===${JSON.stringify(label)}&&one('.budget-balance')?.textContent===${JSON.stringify(amount)}`)
+  }
+  budgets[0].amount=0;budgets[0].amountUsed=0;await setup('dark')
+  await assertUI('零预算无无效百分比',`return one('.budget-usage strong')?.textContent==='—'&&!one('.budget-overview').textContent.includes('NaN')&&one('.budget-overview .el-progress')?.getAttribute('aria-valuenow')==='0'`)
+  empty=true;await setup('dark')
+  await assertUI('空账本隐藏图例与预算金额',`return !one('.expense-breakdown')&&!one('.budget-overview')&&one('.tile__value')?.textContent.trim()==='¥0.00'`)
+  await audit('dashboard-polish-empty',true)
+  empty=false;Object.assign(budgets[0],originalBudget);delay=1600;await setup('light')
+  await assertUI('慢请求显示流水与预算骨架',`return all('.bottom-card .el-skeleton').length===2`)
+  await audit('dashboard-polish-loading',true);await sleep(1700)
+ }finally{
+  delay=0;empty=false;Object.assign(transactions[1],originalRecord);Object.assign(budgets[0],originalBudget);accounts[2].archived=originalArchived
+  win.setContentSize(1440,900);await setup('light')
+ }
 }
 async function storageChecks(){
  if(requests.some(r=>r.path==='/backup/storagePath'))throw Error('进入数据管理前不应查询存储路径')

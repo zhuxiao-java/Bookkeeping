@@ -121,9 +121,12 @@ public class TransactionServiceImpl extends IBaseCrudServiceImpl<TransactionDTO,
     @Override
     public BigDecimal selectBeforeExpenseAmount(LocalDate before) {
         QueryWrapper<TransactionEntity> qw = new QueryWrapper<>();
-        // 左闭右开覆盖当天：ge 含 00:00:00 零点流水，lt 排除次日零点（NEW-02）
-        qw.ge("f_date", before.atStartOfDay())
-                .lt("f_date", before.plusDays(1).atStartOfDay());
+        LocalDate first = before.withDayOfMonth(1);
+        // 月结统计整月支出，排除收入、转账与下月零点。
+        // 日期前缀边界同时兼容 SQLite 中以空格或 T 分隔的时间字符串。
+        qw.ge("f_date", first.toString())
+                .lt("f_date", first.plusMonths(1).toString())
+                .eq("f_type", TransactionType.EXPENSE.getValue());
         List<TransactionEntity> entityList = list(qw);
         return StreamUtil.sum(entityList, TransactionEntity::getAmount);
     }

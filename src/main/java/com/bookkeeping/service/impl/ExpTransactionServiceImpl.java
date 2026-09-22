@@ -32,7 +32,9 @@ public class ExpTransactionServiceImpl extends IBaseCrudServiceImpl<ExpTransacti
         dto.setExpChange(experience);
         dto.setBeforeExperience(beforeExperience);
         dto.setSource(type);
-        super.insert(dto);
+        if (!super.insert(dto)) {
+            throw new IllegalStateException("经验流水保存失败");
+        }
     }
 
     @Override
@@ -41,8 +43,8 @@ public class ExpTransactionServiceImpl extends IBaseCrudServiceImpl<ExpTransacti
         QueryWrapper<ExpTransactionEntity> qw = new QueryWrapper<>();
         // f_create_time 由 SelfMetaObjectHandler 以系统默认时区的 LocalDateTime 填充，按当日本地边界过滤可靠
         qw.eq("f_source", type.getValue())
-                .ge("f_create_time", today.atStartOfDay())
-                .lt("f_create_time", today.plusDays(1).atStartOfDay());
+                .ge("f_create_time", today.toString())
+                .lt("f_create_time", today.plusDays(1).toString());
         return super.list(qw).stream().mapToInt(ExpTransactionEntity::getExpChange).sum();
     }
 }

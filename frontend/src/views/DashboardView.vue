@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
+import { Calendar, Wallet, Tickets, TrendCharts, PieChart, Switch, ArrowRight } from '@element-plus/icons-vue'
 import { budgetApi, transactionApi } from '@/api'
 import { useDictStore } from '@/stores/dict'
 import { useSettingsStore } from '@/stores/settings'
@@ -198,8 +199,30 @@ const recentTransactions = computed(
 /** 当月总预算及使用 */
 const monthTotalBudget = computed(() => budgets.value.find((b) => b.categoryId == null) ?? null)
 const budgetPct = computed(() => {
-  if (!monthTotalBudget.value) return 0
-  return Math.round((Number(monthTotalBudget.value.amountUsed) / Number(monthTotalBudget.value.amount)) * 100)
+  const b = monthTotalBudget.value
+  if (!b || Number(b.amount) <= 0) return 0
+  return Math.max(0, Math.round((Number(b.amountUsed) / Number(b.amount)) * 100))
+})
+const budgetDifference = computed(() => {
+  const b = monthTotalBudget.value
+  return b ? fenToYuan(toFen(b.amount) - toFen(b.amountUsed)) : null
+})
+const budgetExceeded = computed(() => (budgetDifference.value ?? 0) < 0)
+const budgetLabel = computed(() => {
+  if (!monthTotalBudget.value) return '未设置预算'
+  if (budgetExceeded.value) return '已超支'
+  if (budgetDifference.value === 0) return '已用完'
+  return budgetPct.value >= 80 ? '临近上限' : '预算充足'
+})
+const budgetTone = computed(() => {
+  if (budgetExceeded.value) return 'exception'
+  return budgetDifference.value === 0 || budgetPct.value >= 80 ? 'warning' : 'success'
+})
+const budgetHint = computed(() => {
+  if (budgetExceeded.value) return '支出已超过本月计划，留意接下来的每一笔。'
+  if (budgetDifference.value === 0) return '本月预算已用完，暂未超支。'
+  if (budgetPct.value >= 80) return '预算即将用完，为接下来的生活留一些余地。'
+  return '支出仍在计划内，按自己的节奏记录生活。'
 })
 
 /** 本月记账笔数（Hero 已展示收入/支出/结余，此处补充不重复的量化指标） */
@@ -216,14 +239,8 @@ const savingRate = computed(() => {
 const budgetRemaining = computed(() => {
   const b = monthTotalBudget.value
   if (!b) return null
-  return Math.max(0, Number(b.amount) - Number(b.amountUsed))
+  return Math.max(0, budgetDifference.value ?? 0)
 })
-
-function budgetStatus(pct: number): 'success' | 'warning' | 'exception' {
-  if (pct >= 100) return 'exception'
-  if (pct >= 80) return 'warning'
-  return 'success'
-}
 
 function renderCharts() {
   renderTrend()
@@ -261,14 +278,14 @@ function renderPie() {
   const p = chartPalette()
   const items = expenseAgg.value
   // 渲染期去重分配：优先沿用分类存库色，撞色/近似色自动换色，保证每个扇区可区分
-  const colors = resolveDistinctColors(items)
+  const colors = expenseColors.value
   const data = items.map((c, i) => ({ name: c.name, value: Number(c.amount), itemStyle: { color: colors[i] } }))
   pie.render({
     tooltip: { trigger: 'item', formatter: '{b}: ¥{c}（{d}%）' },
     series: [
       {
         type: 'pie',
-        radius: ['42%', '60%'],
+        radius: ['54%', '74%'],
         center: ['50%', '50%'],
         // 百分比直标作为颜色的冗余编码（色弱友好）；过小扇区自动隐藏标签避免拥挤
         label: { show: true, formatter: '{d}%', fontSize: 10, color: p.axisText },
@@ -340,6 +357,16 @@ const expenseAgg = computed(
     aggregateByCategory(monthTransactions.value, dict.categories, 'expense', pieGroupBy.value)
 )
 const expenseTotal = computed(() => monthSummary.value.expense)
+// 图例与扇区共用颜色分配，父子分类切换时同步更新。
+const expenseColors = computed(() => resolveDistinctColors(expenseAgg.value))
+const expenseLegend = computed(() => {
+  const total = expenseAgg.value.reduce((sum, item) => sum + toFen(item.amount), 0)
+  return expenseAgg.value.slice(0, 3).map((item, index) => ({
+    ...item,
+    color: expenseColors.value[index],
+    percent: total > 0 ? Math.round(toFen(item.amount) / total * 100) : 0
+  }))
+})
 
 // 切换父/子分类聚合口径：影响后端 category 口径，需重拉统计（降级时本地聚合亦随之重算）
 watch(pieGroupBy, () => refreshStats())
@@ -389,6 +416,11 @@ function rowTags(row: Transaction) {
     .filter((t): t is NonNullable<typeof t> => !!t)
 }
 
+function rowCurrency(row: Transaction) {
+  const account = dict.accountById(row.accountId)
+  return account ? CURRENCY_SYMBOL[account.currency] ?? '' : ''
+}
+
 function onChanged() {
   load()
 }
@@ -413,28 +445,39 @@ onBeforeUnmount(() => {
 
 <template>
   <div class="page page--comfortable quiet-controls dash" v-loading="loading && transactions.length > 0">
-    <header class="page-head">
-      <h1 class="page-head__title">总览</h1>
-      <p class="page-head__sub">从今天的小记录，看见生活与收支的变化。</p>
+    <header class="page-head page-head--actions">
+      <div>
+        <h1 class="page-head__title">总览</h1>
+        <p class="page-head__sub">从今天的小记录，看见生活与收支的变化。</p>
+      </div>
+      <span class="month-stamp"><el-icon aria-hidden="true"><Calendar /></el-icon>{{ monthLabel }}</span>
     </header>
     <!-- Hero：本月结余大数字 + 环比 + 等级 chip（叙事化首屏，弱化后台看板感） -->
     <section class="hero bk-enter">
       <div class="hero__main">
-        <h2 class="hero__label">{{ monthLabel }} · 本月结余</h2>
+        <h2 class="hero__label">本月结余</h2>
         <div class="hero__balance" :class="heroBalance >= 0 ? 'amount-income' : 'amount-expense'">
           {{ heroBalance >= 0 ? '' : '-' }}¥{{ formatAmount(Math.abs(heroBalanceAnim), decimals) }}
         </div>
         <div class="hero__meta">
-          <span class="hero__chip hero__chip--income">收入 ¥{{ formatAmount(monthSummary.income, decimals) }}</span>
-          <span class="hero__chip hero__chip--expense">支出 ¥{{ formatAmount(monthSummary.expense, decimals) }}</span>
           <span
             v-if="heroDelta != null"
             class="hero__delta"
             :class="heroDelta > 0 ? 'is-up' : heroDelta < 0 ? 'is-down' : ''"
           >
-            环比 {{ heroDelta > 0 ? '↑' : heroDelta < 0 ? '↓' : '·' }}
+            较上月 {{ heroDelta > 0 ? '↑' : heroDelta < 0 ? '↓' : '·' }}
             ¥{{ formatAmount(Math.abs(heroDelta), decimals) }}
           </span>
+        </div>
+        <div class="hero__flows">
+          <div class="hero__flow">
+            <span><i class="flow-dot flow-dot--income" aria-hidden="true" />本月收入</span>
+            <strong class="amount-income">¥{{ formatAmount(monthSummary.income, decimals) }}</strong>
+          </div>
+          <div class="hero__flow">
+            <span><i class="flow-dot flow-dot--expense" aria-hidden="true" />本月支出</span>
+            <strong class="amount-expense">¥{{ formatAmount(monthSummary.expense, decimals) }}</strong>
+          </div>
         </div>
       </div>
 
@@ -463,35 +506,36 @@ onBeforeUnmount(() => {
       <h2 id="dashboard-summary-heading" class="section-heading">本月概况</h2>
       <div class="stat-grid" data-guide="stat-cards">
         <div class="tile bk-enter">
-          <div class="tile__label">总资产</div>
+          <div class="tile__label">总资产<el-icon aria-hidden="true"><Wallet /></el-icon></div>
           <div class="tile__value">
             <template v-if="totalAssetByCurrency.length">
-              <span v-for="([currency, total], i) in totalAssetByCurrency" :key="currency">
-                {{ i > 0 ? ' + ' : '' }}{{ CURRENCY_SYMBOL[currency as 'CNY' | 'DOLLAR'] }}{{ formatAmount(total, decimals) }}
+              <span v-for="[currency, total] in totalAssetByCurrency" :key="currency" class="tile__currency">
+                {{ CURRENCY_SYMBOL[currency as 'CNY' | 'DOLLAR'] }}{{ formatAmount(total, decimals) }}
               </span>
             </template>
-            <template v-else>¥0.00</template>
+            <template v-else>¥{{ formatAmount(0, decimals) }}</template>
           </div>
-          <div v-if="totalAssetByCurrency.length > 1" class="tile__sub">按币种分列，未做汇率换算</div>
+          <div class="tile__sub">{{ totalAssetByCurrency.length > 1 ? '按币种分列，未做汇率换算' : '当前启用账户的余额合计' }}</div>
         </div>
         <div class="tile bk-enter">
-          <div class="tile__label">本月记账</div>
+          <div class="tile__label">本月记账<el-icon aria-hidden="true"><Tickets /></el-icon></div>
           <div class="tile__value">{{ monthTxCount }}<span class="tile__unit">笔</span></div>
+          <div class="tile__sub">每一笔，都是生活的足迹</div>
         </div>
         <div class="tile bk-enter">
-          <div class="tile__label">储蓄率</div>
+          <div class="tile__label">储蓄率<el-icon aria-hidden="true"><TrendCharts /></el-icon></div>
           <div
             class="tile__value"
             :class="savingRate == null ? '' : savingRate < 0 ? 'amount-expense' : 'amount-income'"
           >{{ savingRate == null ? '—' : savingRate + '%' }}</div>
-          <div class="tile__sub">本月结余 / 收入</div>
+          <div class="tile__sub">{{ savingRate == null ? '本月暂无收入，暂不计算' : '本月结余 / 收入' }}</div>
         </div>
         <div class="tile bk-enter">
-          <div class="tile__label">预算剩余</div>
-          <div class="tile__value" :class="budgetRemaining == null ? '' : 'amount-strong'">
-            {{ budgetRemaining == null ? '—' : '¥' + formatAmount(budgetRemaining, decimals) }}
+          <div class="tile__label">{{ budgetExceeded ? '预算超支' : '预算剩余' }}<el-icon aria-hidden="true"><PieChart /></el-icon></div>
+          <div class="tile__value" :class="{ 'amount-expense': budgetExceeded }">
+            {{ budgetRemaining == null ? '—' : '¥' + formatAmount(Math.abs(budgetDifference ?? 0), decimals) }}
           </div>
-          <div class="tile__sub">{{ monthTotalBudget ? '本月总预算可用' : '本月未设置预算' }}</div>
+          <div class="tile__sub" :class="{ 'amount-expense': budgetExceeded }">{{ budgetLabel }}</div>
         </div>
       </div>
     </section>
@@ -500,7 +544,7 @@ onBeforeUnmount(() => {
     <section class="page-section" aria-labelledby="dashboard-analysis-heading">
       <h2 id="dashboard-analysis-heading" class="section-heading">收支分析</h2>
     <div class="chart-row">
-      <el-card shadow="never" class="chart-card" data-guide="trend">
+      <el-card shadow="never" class="chart-card trend-card" data-guide="trend">
         <template #header>
           <div class="card-head">
             <h2 class="card-head__title">{{ monthLabel }} 收支趋势</h2>
@@ -514,7 +558,7 @@ onBeforeUnmount(() => {
         </div>
       </el-card>
 
-      <el-card shadow="never" class="chart-card" data-guide="pie">
+      <el-card shadow="never" class="chart-card expense-card" data-guide="pie">
         <template #header>
           <div class="card-head">
             <h2 class="card-head__title">支出分类占比</h2>
@@ -529,9 +573,25 @@ onBeforeUnmount(() => {
           <el-skeleton v-if="loading && !expenseAgg.length" class="chart-skel" animated :rows="5" />
           <EmptyState v-else-if="!expenseAgg.length" description="本月暂无支出" :size="80" class="chart-empty" />
           <div v-else class="pie-center">
-            <div class="pie-center__value">¥{{ formatAmount(expenseTotal, decimals) }}</div>
-            <div class="pie-center__label">本月支出</div>
+            <div class="pie-center__value">{{ expenseAgg.length }}</div>
+            <div class="pie-center__label">个支出分类</div>
           </div>
+        </div>
+        <div v-if="expenseAgg.length" class="expense-breakdown">
+          <div class="expense-total"><span>本月支出</span><strong>¥{{ formatAmount(expenseTotal, decimals) }}</strong></div>
+          <ul class="expense-legend" aria-label="支出金额最高的三个分类">
+            <li v-for="item in expenseLegend" :key="item.categoryId">
+              <button type="button" :disabled="!item.categoryId" @click="drillToTransaction({ type: 'expense', categoryId: item.categoryId, start: monthStart, end: monthEnd })">
+                <i class="flow-dot" :style="{ background: item.color }" aria-hidden="true" />
+                <span class="expense-legend__name">{{ item.name }}</span>
+                <span class="expense-legend__amount">¥{{ formatAmount(item.amount, decimals) }}</span>
+                <span class="expense-legend__percent">{{ item.percent }}%</span>
+              </button>
+            </li>
+          </ul>
+          <el-button text type="primary" class="expense-more" @click="drillToTransaction({ type: 'expense', start: monthStart, end: monthEnd })">
+            查看全部支出<el-icon aria-hidden="true"><ArrowRight /></el-icon>
+          </el-button>
         </div>
       </el-card>
     </div>
@@ -575,30 +635,38 @@ onBeforeUnmount(() => {
           </div>
         </template>
         <template v-if="recentTransactions.length">
-          <div v-for="row in recentTransactions" :key="row.id" class="recent-row">
+          <router-link v-for="row in recentTransactions" :key="row.id" :to="{ path: '/transaction', query: { bizId: row.id } }" class="recent-row">
             <CategoryDot
-              v-if="dict.categoryById(row.categoryId)"
+              v-if="row.type !== 'transfer' && dict.categoryById(row.categoryId)"
               :name="dict.categoryById(row.categoryId)!.name"
               :icon="dict.categoryById(row.categoryId)!.icon"
               :color="dict.categoryById(row.categoryId)!.color"
               :size="30"
             />
-            <span v-else class="recent-row__dot-placeholder" />
+            <span v-else class="recent-row__dot-placeholder" :class="TRANSACTION_TYPE_COLOR_CLASS[row.type]" aria-hidden="true">
+              <el-icon><Switch v-if="row.type === 'transfer'" /><Tickets v-else /></el-icon>
+            </span>
             <div class="recent-row__meta">
               <div class="recent-row__note">{{ row.note || transactionTypeLabel(row.type) }}</div>
-              <div class="recent-row__sub">
-                {{ formatDateTime(row.transactionDate) }}
-                <template v-if="rowTags(row).length">
-                  · <span v-for="tag in rowTags(row)" :key="tag.id" class="recent-row__tag" :style="{ color: tag.color }">{{ tag.name }}</span>
-                </template>
+              <div class="recent-row__account">
+                {{ dict.accountById(row.accountId)?.name || '未知账户' }}
+                <template v-if="row.type === 'transfer'"> → {{ dict.accountById(row.toAccountId)?.name || '未知账户' }}</template>
+              </div>
+              <div class="recent-row__sub"><time :datetime="row.transactionDate">{{ formatDateTime(row.transactionDate) }}</time></div>
+              <div v-if="rowTags(row).length" class="recent-row__tags">
+                <span v-for="tag in rowTags(row)" :key="tag.id" class="recent-row__tag">{{ tag.name }}</span>
               </div>
             </div>
-            <div class="recent-row__amount amount-strong" :class="TRANSACTION_TYPE_COLOR_CLASS[row.type]">
-              {{ row.type === 'income' ? '+' : '-' }}{{ formatAmount(row.amount, decimals) }}
+            <div class="recent-row__money">
+              <span class="recent-row__type">{{ transactionTypeLabel(row.type) }}</span>
+              <span class="recent-row__amount amount-strong" :class="TRANSACTION_TYPE_COLOR_CLASS[row.type]">
+                {{ row.type === 'income' ? '+' : row.type === 'expense' ? '−' : '' }}{{ rowCurrency(row) }}{{ formatAmount(row.amount, decimals) }}
+              </span>
             </div>
-          </div>
+          </router-link>
         </template>
-        <EmptyState v-else-if="!loading" description="还没有记录，点击顶栏「记一笔」开始记账" />
+        <el-skeleton v-else-if="loading" animated :rows="5" />
+        <EmptyState v-else description="还没有记录，点击顶栏「记一笔」开始记账" />
       </el-card>
 
       <el-card shadow="never" class="bottom-card">
@@ -609,31 +677,26 @@ onBeforeUnmount(() => {
           </div>
         </template>
         <template v-if="monthTotalBudget">
-          <div class="budget-line">
-            <span class="budget-line__label">月度总预算</span>
-            <span>
-              ¥{{ formatAmount(Number(monthTotalBudget.amountUsed), decimals) }} / ¥{{ formatAmount(monthTotalBudget.amount, decimals) }}
-            </span>
+          <div class="budget-overview" :class="`is-${budgetTone}`">
+            <div class="budget-line">
+              <span class="budget-line__label">{{ budgetExceeded ? '超出预算' : '本月还可用' }}</span>
+              <span class="budget-badge">{{ budgetLabel }}</span>
+            </div>
+            <div class="budget-balance" :class="{ 'amount-expense': budgetExceeded }">¥{{ formatAmount(Math.abs(budgetDifference ?? 0), decimals) }}</div>
+            <div class="budget-line budget-usage">
+              <span>预算使用情况</span>
+              <strong>{{ Number(monthTotalBudget.amount) > 0 ? budgetPct + '%' : '—' }}</strong>
+            </div>
+            <el-progress :percentage="budgetExceeded ? 100 : Math.min(100, budgetPct)" :status="budgetTone" :show-text="false" :stroke-width="8" aria-label="本月预算使用情况" />
+            <dl class="budget-details">
+              <div><dt>已支出</dt><dd>¥{{ formatAmount(monthTotalBudget.amountUsed, decimals) }}</dd></div>
+              <div><dt>总预算</dt><dd>¥{{ formatAmount(monthTotalBudget.amount, decimals) }}</dd></div>
+            </dl>
+            <p class="budget-hint">{{ budgetHint }}</p>
           </div>
-          <el-progress :percentage="budgetPct" :status="budgetStatus(budgetPct)" :stroke-width="14" />
-          <el-alert
-            v-if="budgetPct >= 100"
-            title="总预算已超支，请注意控制支出"
-            type="error"
-            :closable="false"
-            show-icon
-            class="budget-alert"
-          />
-          <el-alert
-            v-else-if="budgetPct >= 80"
-            title="总预算即将用完，请留意支出"
-            type="warning"
-            :closable="false"
-            show-icon
-            class="budget-alert"
-          />
         </template>
-        <EmptyState v-else-if="!loading" description="本月未设置预算">
+        <el-skeleton v-else-if="loading" animated :rows="4" />
+        <EmptyState v-else description="本月未设置预算">
           <el-button type="primary" @click="router.push('/budget')">去设置预算</el-button>
         </EmptyState>
       </el-card>
@@ -643,6 +706,18 @@ onBeforeUnmount(() => {
 </template>
 
 <style scoped>
+.month-stamp {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  border-radius: var(--bk-radius-pill);
+  background: var(--bk-surface-2);
+  color: var(--bk-text-secondary);
+  font-size: 12px;
+  white-space: nowrap;
+}
+
 /* —— Hero 叙事首屏 —— */
 .hero {
   display: flex;
@@ -652,11 +727,12 @@ onBeforeUnmount(() => {
   flex-wrap: wrap;
   padding: var(--bk-row-padding) var(--bk-panel-padding);
   border-radius: var(--bk-radius-lg);
-  background: var(--bk-surface);
+  background: linear-gradient(110deg, color-mix(in srgb, var(--bk-primary-soft) 52%, var(--bk-surface)), var(--bk-surface));
   border: 0;
 }
 
 .hero__main {
+  flex: 1 1 340px;
   min-width: 0;
 }
 
@@ -668,7 +744,7 @@ onBeforeUnmount(() => {
 }
 
 .hero__balance {
-  font-size: clamp(28px, 3.2vw, 38px);
+  font-size: clamp(32px, 4.8cqi, 46px);
   overflow-wrap: anywhere;
   font-weight: 650;
   line-height: 1.1;
@@ -684,27 +760,20 @@ onBeforeUnmount(() => {
   gap: 10px;
 }
 
-.hero__chip {
-  display: inline-flex;
-  align-items: center;
-  padding: 4px 12px;
-  border-radius: var(--bk-radius-pill);
-  font-size: 13px;
-  font-weight: 500;
-  font-variant-numeric: tabular-nums;
-  background: var(--bk-surface-2);
-  color: var(--bk-text-regular);
+.hero__flows {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  max-width: 440px;
+  margin-top: 22px;
+  gap: 16px;
 }
-
-.hero__chip--income {
-  background: rgba(47, 181, 124, 0.12);
-  color: var(--bk-income-text);
-}
-
-.hero__chip--expense {
-  background: rgba(240, 98, 93, 0.12);
-  color: var(--bk-expense-text);
-}
+.hero__flow { min-width: 0; }
+.hero__flow + .hero__flow { border-left: 1px solid var(--bk-border); padding-left: 16px; }
+.hero__flow > span { display: flex; align-items: center; gap: 7px; color: var(--bk-text-secondary); font-size: 12px; }
+.hero__flow strong { display: block; margin-top: 4px; font-size: 20px; font-weight: 600; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.flow-dot { display: inline-block; width: 7px; height: 7px; flex: none; border-radius: 50%; }
+.flow-dot--income { background: var(--bk-income); }
+.flow-dot--expense { background: var(--bk-expense); }
 
 .hero__delta {
   display: inline-flex;
@@ -733,10 +802,10 @@ onBeforeUnmount(() => {
   display: flex;
   align-items: center;
   gap: 12px;
-  flex-shrink: 0;
-  padding: 14px 16px;
+  flex: 0 1 290px;
+  padding: 16px;
   border-radius: var(--bk-radius-lg);
-  background: var(--bk-surface-2);
+  background: color-mix(in srgb, var(--bk-primary-soft) 40%, var(--bk-surface));
   cursor: pointer;
   max-width: 100%;
   box-sizing: border-box;
@@ -809,9 +878,16 @@ onBeforeUnmount(() => {
 }
 
 .tile__label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
   color: var(--bk-text-secondary);
   font-size: 13px;
 }
+.tile__label .el-icon { font-size: 17px; color: var(--bk-button-primary); }
+.tile__currency { display: block; }
+.tile__sub.amount-expense { color: var(--bk-expense-text); }
 
 .tile__value {
   font-size: 26px;
@@ -845,6 +921,38 @@ onBeforeUnmount(() => {
   position: relative;
   min-width: 0;
 }
+.trend-card { display: flex; flex-direction: column; }
+.trend-card :deep(.el-card__body) { flex: 1; display: flex; }
+.trend-card .chart-slot { flex: 1; min-width: 0; min-height: 360px; }
+.trend-card .chart-box { position: absolute; inset: 0; height: 100%; }
+.expense-card .chart-box { height: 210px; }
+.expense-breakdown { display: flex; flex-direction: column; gap: 8px; }
+.expense-total { display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: 6px 12px; padding-bottom: 10px; border-bottom: 1px solid var(--bk-border-light); font-size: 12px; color: var(--bk-text-secondary); }
+.expense-total strong { font-size: 18px; font-variant-numeric: tabular-nums; color: var(--bk-text); overflow-wrap: anywhere; }
+.expense-legend { list-style: none; padding: 0; margin: 0; }
+.expense-legend button {
+  display: grid;
+  grid-template-columns: 7px minmax(0, 1fr) minmax(0, auto) 32px;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 40px;
+  padding: 8px 0;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--bk-text-regular);
+  font-size: 12px;
+  text-align: left;
+  cursor: pointer;
+}
+.expense-legend button:not(:disabled):hover { background: var(--bk-primary-soft); }
+.expense-legend button:disabled { cursor: default; }
+.expense-legend__name, .expense-legend__amount { overflow-wrap: anywhere; }
+.expense-legend__amount, .expense-legend__percent { text-align: right; font-variant-numeric: tabular-nums; }
+.expense-legend__percent { color: var(--bk-text-secondary); }
+.expense-more { align-self: flex-start; }
+.expense-more .el-icon { margin-left: 6px; }
 
 /* 图表与骨架/空态的定位容器：使覆盖层 inset:0 仅盖图表区，不再遮住卡片标题 */
 .chart-slot {
@@ -871,6 +979,7 @@ onBeforeUnmount(() => {
   position: absolute;
   inset: 0;
   padding: 28px 24px;
+  box-sizing: border-box;
   background: var(--bk-surface);
 }
 
@@ -879,13 +988,13 @@ onBeforeUnmount(() => {
   top: 50%;
   left: 0;
   right: 0;
-  transform: translateY(-60%);
+  transform: translateY(-50%);
   text-align: center;
   pointer-events: none;
 }
 
 .pie-center__value {
-  font-size: 18px;
+  font-size: 28px;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
 }
@@ -904,27 +1013,39 @@ onBeforeUnmount(() => {
 
 .bottom-row {
   display: grid;
+  align-items: start;
   grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
   gap: var(--bk-gap);
 }
 
 .bottom-card {
   min-width: 0;
+  container: dashboard-card / inline-size;
 }
 
 .recent-row {
-  display: flex;
-  align-items: center;
+  display: grid;
+  grid-template-columns: 30px minmax(0, 1fr) minmax(0, auto);
+  align-items: start;
   gap: 12px;
   padding: var(--bk-row-padding) 0;
   border-bottom: 1px solid var(--bk-border-light);
+  color: var(--bk-text);
+  text-decoration: none;
+  border-radius: 6px;
 }
+.recent-row:hover { background: color-mix(in srgb, var(--bk-primary-soft) 35%, var(--bk-surface)); }
+.recent-row:hover .recent-row__note { color: var(--bk-button-primary); }
+.recent-row:focus-visible { outline: 2px solid var(--bk-button-primary); outline-offset: 3px; }
 
 .recent-row:last-child {
   border-bottom: none;
 }
 
 .recent-row__dot-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   width: 30px;
   height: 30px;
   border-radius: 8px;
@@ -942,20 +1063,17 @@ onBeforeUnmount(() => {
   overflow-wrap: anywhere;
 }
 
-.recent-row__sub {
-  color: var(--el-text-color-secondary);
+.recent-row__account, .recent-row__sub {
+  color: var(--bk-text-secondary);
   font-size: 12px;
-  margin-top: 2px;
+  margin-top: 4px;
+  overflow-wrap: anywhere;
 }
-
-.recent-row__tag {
-  margin-right: 4px;
-}
-
-.recent-row__amount {
-  flex-shrink: 0;
-  font-size: 15px;
-}
+.recent-row__tags { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 8px; }
+.recent-row__tag { padding: 1px 6px; border-radius: 4px; background: var(--bk-surface-2); color: var(--bk-text-secondary); font-size: 11px; overflow-wrap: anywhere; }
+.recent-row__money { display: flex; flex-direction: column; gap: 3px; text-align: right; min-width: 0; }
+.recent-row__type { font-size: 11px; color: var(--bk-text-secondary); }
+.recent-row__amount { font-size: 15px; overflow-wrap: anywhere; }
 
 .budget-line {
   display: flex;
@@ -971,8 +1089,21 @@ onBeforeUnmount(() => {
   font-size: 13px;
 }
 
-.budget-alert {
-  margin-top: 12px;
+.budget-overview { --budget-tone: var(--bk-button-primary); }
+.budget-overview.is-warning { --budget-tone: var(--bk-button-warning); }
+.budget-overview.is-exception { --budget-tone: var(--bk-expense-text); }
+.budget-badge { padding: 3px 9px; border-radius: var(--bk-radius-pill); font-size: 12px; color: var(--budget-tone); background: color-mix(in srgb, var(--budget-tone) 10%, var(--bk-surface)); }
+.budget-balance { font-size: 32px; font-weight: 650; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.budget-usage { margin-top: 22px; margin-bottom: 10px; font-size: 12px; color: var(--bk-text-secondary); }
+.budget-usage strong { color: var(--budget-tone); font-variant-numeric: tabular-nums; }
+.budget-details { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin: 18px 0 0; }
+.budget-details dt { font-size: 12px; color: var(--bk-text-secondary); }
+.budget-details dd { margin: 4px 0 0; font-size: 14px; font-weight: 550; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.budget-hint { margin: 20px 0 0; padding-top: 16px; border-top: 1px solid var(--bk-border-light); font-size: 12px; color: var(--bk-text-secondary); }
+
+@container dashboard-card (max-width: 440px) {
+  .recent-row { grid-template-columns: 30px minmax(0, 1fr); }
+  .recent-row__money { grid-column: 2; flex-direction: row; align-items: baseline; justify-content: space-between; gap: 12px; }
 }
 
 /* 窄窗口自适应（桌面端窗口可自由缩放）：统计卡 4→2→1，图表/底部双栏→单栏 */
@@ -998,7 +1129,11 @@ onBeforeUnmount(() => {
 
   .hero {
     flex-direction: column;
-    align-items: flex-start;
+    align-items: stretch;
   }
+  .hero__main, .hero__level { flex-basis: auto; }
+  .hero__flows { max-width: none; }
+  .hero__level { width: 100%; }
+  .trend-card .chart-slot { min-height: 280px; }
 }
 </style>

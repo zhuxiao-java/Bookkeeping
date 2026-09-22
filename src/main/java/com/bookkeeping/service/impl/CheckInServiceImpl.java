@@ -1,6 +1,7 @@
 package com.bookkeeping.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.bookkeeping.constant.BookkeepingResp;
 import com.bookkeeping.constant.ExpTransactionType;
 import com.bookkeeping.constant.MessageBizType;
@@ -13,7 +14,6 @@ import com.bookkeeping.exception.BusinessException;
 import com.bookkeeping.service.CheckInService;
 import com.bookkeeping.service.MessageService;
 import com.bookkeeping.service.UserLevelService;
-import jakarta.annotation.PostConstruct;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.sf.service.impl.IBaseCrudServiceImpl;
@@ -65,6 +65,7 @@ public class CheckInServiceImpl extends IBaseCrudServiceImpl<CheckInDTO, CheckIn
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void dailyCheckIn() {
         LocalDate checkDate = LocalDate.now(ZoneId.systemDefault());
         QueryWrapper<CheckInEntity> qw = new QueryWrapper<>();
@@ -86,21 +87,22 @@ public class CheckInServiceImpl extends IBaseCrudServiceImpl<CheckInDTO, CheckIn
                 beforeQw = new QueryWrapper<>();
                 beforeQw.eq("f_check_date", checkDate);
                 CheckInEntity inEntity = super.getOne(beforeQw);
-                log.info("今日签到成功，获得{}经验", checkInDTO.getExpReward());
-                boolean hitMaxLevel = levelService.hitMaxLevel();
-                if (!hitMaxLevel) {
-                    levelService.gainExperience(ExpTransactionType.CHECK_IN, inEntity.getId(), DESCRIPTION, checkInDTO.getExpReward());
+                int actualReward = levelService.gainExperience(ExpTransactionType.CHECK_IN, inEntity.getId(), DESCRIPTION, checkInDTO.getExpReward());
+                if (actualReward != checkInDTO.getExpReward()) {
+                    int actualBase = Math.min(BASE_EXP, actualReward);
+                    UpdateWrapper<CheckInEntity> reward = new UpdateWrapper<>();
+                    reward.eq("f_id", inEntity.getId()).set("f_exp_reward", actualReward)
+                            .set("f_base_exp", actualBase).set("f_bonus_exp", actualReward - actualBase);
+                    if (!update(reward)) {
+                        throw new IllegalStateException("签到经验更新失败");
+                    }
                 }
+                log.info("今日签到成功，获得{}经验", actualReward);
                 String content = beforeCheckInOpt.isPresent() ? "您已连续签到" + checkInDTO.getStreakDays() + "天" : "您已签到";
-                String expMsg = hitMaxLevel ? "由于等级上限限制，您获得的经验值将不会增加等级" : "获得" + checkInDTO.getExpReward() + "经验,再接再厉呀";
+                String expMsg = actualReward == 0 ? "，已达等级上限，本次未增加经验" : "，获得" + actualReward + "经验，再接再厉呀";
                 messageService.pushMessage("每日签到", content + expMsg, inEntity.getId(), MessageType.CHECK_IN, MessageBizType.LEVEL);
             }
         }
     }
 
-    @PostConstruct
-    @Transactional(rollbackFor = Exception.class)
-    public void init() {
-        dailyCheckIn();
-    }
 }

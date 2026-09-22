@@ -3,8 +3,22 @@ import { levelApi } from '@/api'
 import type { ExperienceLog, LevelConfig, LevelInfo } from '@/types/model'
 
 /** 并发去重：侧边栏 / 总览 / 等级页同时触发加载时复用同一 promise */
-let currentPromise: Promise<void> | null = null
-let allPromise: Promise<void> | null = null
+interface Requests {
+  current: Promise<void> | null
+  all: Promise<void> | null
+  currentVersion: number
+  allVersion: number
+  pending: number
+}
+const requests = new WeakMap<object, Requests>()
+function requestsFor(store: object): Requests {
+  let state = requests.get(store)
+  if (!state) {
+    state = { current: null, all: null, currentVersion: 0, allVersion: 0, pending: 0 }
+    requests.set(store, state)
+  }
+  return state
+}
 
 /**
  * 用户等级 store。
@@ -24,7 +38,8 @@ export const useLevelStore = defineStore('level', {
     /** 当前等级区间内的升级进度百分比；满级为 100 */
     progress(): number {
       const info = this.info as LevelInfo | null
-      if (!info || info.nextThreshold == null) return 100
+      if (!info) return 0
+      if (info.nextThreshold == null) return 100
       const span = Number(info.nextThreshold) - Number(info.currentThreshold)
       if (span <= 0) return 100
       const done = Number(info.experience) - Number(info.currentThreshold)
@@ -41,55 +56,69 @@ export const useLevelStore = defineStore('level', {
   actions: {
     /** 仅拉当前等级（侧边栏 / 总览横幅用） */
     loadCurrent(force = false): Promise<void> {
-      if (!force && this.info) return Promise.resolve()
-      if (!currentPromise) {
-        currentPromise = this.fetchCurrent().finally(() => {
-          currentPromise = null
-        })
-      }
-      return currentPromise
+      const state = requestsFor(this)
+      if (!force && state.current) return state.current
+      if (!force && this.info && this.available) return Promise.resolve()
+      // 强制刷新必须在数据变更后重新发请求，不能复用变更前的旧请求。
+      const request = this.fetchCurrent().finally(() => {
+        if (state.current === request) state.current = null
+      })
+      state.current = request
+      return request
     },
 
     /** 等级页：当前状态 + 等级配置 + 月度经验日志 */
     loadAll(force = false): Promise<void> {
-      if (!force && this.configs.length) return Promise.resolve()
-      if (!allPromise) {
-        allPromise = this.fetchAll().finally(() => {
-          allPromise = null
-        })
-      }
-      return allPromise
+      const state = requestsFor(this)
+      if (!force && state.all) return state.all
+      const request = this.fetchAll(force).finally(() => {
+        if (state.all === request) state.all = null
+      })
+      state.all = request
+      return request
     },
 
     async fetchCurrent() {
+      const state = requestsFor(this)
+      const version = ++state.currentVersion
+      state.pending++
       this.loading = true
       try {
-        this.info = await levelApi.current()
-        this.available = true
+        const info = await levelApi.current()
+        if (version === state.currentVersion) {
+          this.info = info
+          this.available = true
+        }
       } catch {
         // 接口未就绪：降级隐藏
-        this.available = false
+        if (version === state.currentVersion) {
+          this.info = null
+          this.available = false
+        }
       } finally {
-        this.loading = false
+        this.loading = --state.pending > 0
       }
     },
 
-    async fetchAll() {
+    async fetchAll(force = false) {
+      const state = requestsFor(this)
+      const version = ++state.allVersion
+      state.pending++
       this.loading = true
       try {
-        const [info, configs, logs] = await Promise.all([
-          levelApi.current(),
-          levelApi.configs(),
+        const [, configs, logs] = await Promise.all([
+          this.loadCurrent(force || this.info !== null),
+          !force && this.configs.length ? Promise.resolve(this.configs) : levelApi.configs(),
           levelApi.logs()
         ])
-        this.info = info
-        this.configs = configs
-        this.logs = logs
-        this.available = true
+        if (version === state.allVersion) {
+          this.configs = [...configs].sort((a, b) => a.level - b.level)
+          this.logs = [...logs].sort((a, b) => b.year - a.year || b.month - a.month)
+        }
       } catch {
-        this.available = false
+        // 配置或历史日志暂不可用，不覆盖独立加载的当前等级状态；下次进入页面会重试。
       } finally {
-        this.loading = false
+        this.loading = --state.pending > 0
       }
     }
   }

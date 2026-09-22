@@ -12,7 +12,8 @@ public interface UserLevelService extends IBaseCrudService<UserLevelDTO> {
 
     UserLevelDTO selectUserLevel();
 
-    void gainExperience(ExpTransactionType type, int refId, String description, int experience);
+    /** @return 经过经验上下限裁剪后实际变动的经验值 */
+    int gainExperience(ExpTransactionType type, int refId, String description, int experience);
 
     /**
      * 记账经验奖励：今日首笔较大、后续每笔小额、单日封顶；满级不发。

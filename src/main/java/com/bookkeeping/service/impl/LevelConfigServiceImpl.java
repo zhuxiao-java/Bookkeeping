@@ -31,21 +31,28 @@ public class LevelConfigServiceImpl extends IBaseCrudServiceImpl<LevelConfigDTO,
         QueryWrapper<LevelConfigEntity> qw = new QueryWrapper<>();
         qw.in("f_level", level, nextLevel);
         List<LevelConfigEntity> list = super.list(qw);
-        if (Objects.equals(list.size(), 2)) {
-            return new LevelHolder(mapping.toDto(list.get(0)), mapping.toDto(list.get(1)));
-        } else {
-            return new LevelHolder(mapping.toDto(list.get(0)));
-        }
+        LevelConfigEntity current = list.stream().filter(item -> item.getLevel() == level)
+                .findFirst().orElseThrow(() -> new IllegalStateException("缺少等级配置：" + level));
+        LevelConfigEntity next = list.stream().filter(item -> item.getLevel() == nextLevel)
+                .findFirst().orElse(null);
+        return new LevelHolder(mapping.toDto(current), mapping.toDto(next));
     }
 
     @Override
     public LevelConfigDTO promotionLevel(Integer newExperience) {
-        int experience = Math.min(newExperience, MAX_LEVEL_EXP_THRESHOLD);
+        int experience = Math.max(MIN_LEVEL_EXP_THRESHOLD,
+                Math.min(Objects.requireNonNullElse(newExperience, 0), MAX_LEVEL_EXP_THRESHOLD));
         QueryWrapper<LevelConfigEntity> qw = new QueryWrapper<>();
-        qw.between("f_exp_threshold", MIN_LEVEL_EXP_THRESHOLD, experience);
+        // 兼容存量 SQLite 的 TEXT 门槛列，必须按数值比较。
+        qw.apply("CAST(f_exp_threshold AS INTEGER) BETWEEN {0} AND {1}", MIN_LEVEL_EXP_THRESHOLD, experience);
         qw.orderByDesc("f_level");
         qw.last("limit 1");
         return mapping.toDto(getOne(qw));
+    }
+
+    @Override
+    public List<LevelConfigDTO> selectAll() {
+        return mapping.toDtoList(list(new QueryWrapper<LevelConfigEntity>().orderByAsc("f_level")));
     }
 
     @Override
