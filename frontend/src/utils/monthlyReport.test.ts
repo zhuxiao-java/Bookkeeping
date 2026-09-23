@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { aiError, cents, comparison, currencyName, factEvidence, lastClosedMonth, monthRange, simulate, unwrapAi } from './monthlyReport'
+import { aiError, aiFail, cents, comparison, currencyName, factEvidence, lastClosedMonth, monthRange, simulate } from './monthlyReport'
 
 describe('月报自然月边界', () => {
   it('跨年默认上月、闰年及普通二月', () => {
@@ -38,13 +38,18 @@ describe('比较、币种与本地事实展示', () => {
     expect(currencyName('UNKNOWN')).toBe('币种未知')
     expect(currencyName('EUR')).toBe('EUR')
   })
-  it('依据取自本地数值，错误信息不回显供应商正文', async () => {
+  it('依据取自本地数值，错误信息不回显供应商正文', () => {
     expect(factEvidence({ id: 'f', kind: 'top', title: '分类', currency: 'CNY', categoryId: 1,
       values: { amount: '900.00', count: '30', previousAmount: null }, suggestion: '查看' }))
       .toBe('金额/预算：900.00 · 笔数：30 · 上月金额：暂无')
+    expect(aiFail({ isAxiosError: true, code: 'ERR_NETWORK' })).toContain('无法连接本地后端')
+    expect(aiFail({ isAxiosError: true, code: 'ECONNABORTED' })).toContain('勿重复发送')
+    expect(aiFail({ code: 'HTTP_401', message: '敏感正文' })).toContain('鉴权失败')
+    expect(aiError('UNAVAILABLE')).not.toContain('Electron')
     expect(aiError('TIMEOUT')).toContain('可能已计费')
     expect(aiError('私密错误正文')).not.toContain('私密错误正文')
-    await expect(unwrapAi(Promise.resolve({ ok: true, value: 1 }))).resolves.toBe(1)
-    await expect(unwrapAi(Promise.resolve({ ok: false, errorCode: 'INVALID_FACTS' }))).rejects.toThrow('无效的事实')
+    // 抛错改走 HTTP 后取后端中文 message；无有效 message 时回退安全默认文案
+    expect(aiFail(new Error('配置已变更，请重新确认后再试'))).toBe('配置已变更，请重新确认后再试')
+    expect(aiFail('非错误对象')).toContain('已有报告保持不变')
   })
 })

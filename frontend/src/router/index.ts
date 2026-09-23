@@ -37,7 +37,7 @@ const router = createRouter({
           path: 'monthly-report',
           name: 'monthly-report',
           component: () => import('@/views/MonthlyReportView.vue'),
-          meta: { title: '月报' }
+          meta: { title: 'AI 月报' }
         },
         {
           path: 'budget',

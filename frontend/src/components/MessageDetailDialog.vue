@@ -69,7 +69,7 @@ const JUMP_TARGET: Record<MessageBizType, { path: string; label: string }> = {
   transaction: { path: '/transaction', label: '交易流水' },
   budget: { path: '/budget', label: '预算管理' },
   level: { path: '/level', label: '等级页面' },
-  monthly_report: { path: '/monthly-report', label: '月报' }
+  monthly_report: { path: '/monthly-report', label: 'AI 月报' }
 }
 
 /**

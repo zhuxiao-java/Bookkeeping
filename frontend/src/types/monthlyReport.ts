@@ -26,24 +26,19 @@ export interface AiResult {
 }
 export interface MonthlyDetail {
   id: number; month: string; version: number; generatedAt: string; stale: boolean; snapshot: MonthlySnapshot
-  ai: null | { id: string; snapshotVersion: number; configVersion: string; attempt: number; status: string; createdAt: string; errorCode: string | null; result: AiResult | null }
-  successfulAi: MonthlyDetail['ai']
+  result: AiResult | null
 }
-export interface MonthEntry { month: string; id: number | null; version: number | null; generatedAt: string | null; status: string }
+export interface MonthEntry { month: string; id: number | null; version: number | null; generatedAt: string | null; hasReport: boolean }
 export interface AiConfig { baseUrl: string; model: string; includeNames: boolean; apiKey?: string }
-export interface AiSettings extends Omit<AiConfig, 'apiKey'> {
-  configVersion: string; automatic: boolean; hasKey: boolean; persistentKey: boolean; available: boolean
+/**
+ * 后端 AI 配置回显（AiConfigView）：绝不含明文密钥。
+ * hasKey 标识是否已配置密钥；available 表示后端是否具备发起单次调用的条件。
+ */
+export interface AiSettings {
+  baseUrl: string; model: string; includeNames: boolean
+  hasKey: boolean; available: boolean; configVersion: string
 }
-export interface AiPreview { id: number; snapshotVersion: number; stale: boolean; configVersion: string; summary: unknown }
-export type AiReply<T> = { ok: true; value: T } | { ok: false; errorCode: string }
-export interface MonthlyAiAPI {
-  settings(): Promise<AiReply<AiSettings>>
-  save(config: AiConfig): Promise<AiReply<AiSettings>>
-  authorize(consent: { configVersion: string; confirmed: true }): Promise<AiReply<AiSettings>>
-  revoke(): Promise<AiReply<AiSettings>>
-  clear(): Promise<AiReply<AiSettings>>
-  test(): Promise<AiReply<boolean>>
-  preview(reportId?: number): Promise<AiReply<AiPreview | null>>
-  generate(request: { reportId: number; snapshotVersion: number; configVersion: string; confirmed: true; retry: boolean }): Promise<AiReply<boolean>>
-  onUpdated(callback: (id: number) => void): () => void
-}
+/** 授权前预览：展示后端实际会发送给模型的（可含脱敏）摘要。 */
+export interface AiPreview { month: string; sourceHash: string; baseVersion: number; configVersion: string; baseUrl: string; model: string; includeNames: boolean; summary: unknown }
+/** 手动触发某月报 AI 解读的入参。 */
+export interface AiGenerateRequest { month: string; sourceHash: string; baseVersion: number; configVersion: string; confirmed: true }

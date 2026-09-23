@@ -3,7 +3,6 @@
  * 纯浏览器（npm run dev）环境下 window.electronAPI 不存在，使用时需判空。
  */
 interface ElectronAPI {
-  monthlyAI?: import('./types/monthlyReport').MonthlyAiAPI
   isElectron: boolean
   platform: string
   /**

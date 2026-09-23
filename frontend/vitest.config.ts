@@ -1,9 +1,10 @@
 import { fileURLToPath, URL } from 'node:url'
 import { defineConfig } from 'vitest/config'
+import vue from '@vitejs/plugin-vue'
 
-// 单测配置（NEW-13 / 前端细化 #14）：独立于 vite.config.ts，仅覆盖纯函数逻辑，
-// 用 node 环境即可（不加载 vue 插件、不依赖 DOM）。复用 '@' → src 别名。
+// 纯函数默认使用 node；组件测试通过文件注解启用 jsdom，不依赖真实后端。
 export default defineConfig({
+  plugins: [vue()],
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url))

@@ -64,7 +64,7 @@ export const MESSAGE_TYPE_OPTIONS: EnumOption<MessageType>[] = [
   { value: 'level', label: '等级' },
   { value: 'system', label: '系统' },
   { value: 'weather', label: '天气' },
-  { value: 'monthly_report', label: '月报' }
+  { value: 'monthly_report', label: 'AI 月报' }
 ]
 
 /**

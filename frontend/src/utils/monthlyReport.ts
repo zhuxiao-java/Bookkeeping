@@ -1,4 +1,4 @@
-import type { AiReply, MonthlyFact } from '@/types/monthlyReport'
+import type { MonthlyFact } from '@/types/monthlyReport'
 
 export function lastClosedMonth(now = new Date()): string {
   const date = new Date(now.getFullYear(), now.getMonth() - 1, 1)
@@ -39,21 +39,31 @@ export function factEvidence(fact: MonthlyFact): string {
 const errors: Record<string, string> = {
   INVALID_URL: '仅支持 HTTPS 服务根地址，不能含凭据、查询参数或片段。',
   INVALID_CONFIG: '请检查服务地址和模型配置。', INVALID_KEY: '请先输入有效的 API Key。',
-  STORAGE_FAILED: 'AI 设置保存失败，本次自动发送已关闭。请检查磁盘权限；旧授权可能仍在磁盘中，重启前请再次撤销并确认保存成功。',
-  CONFIG_CHANGED: '配置已变化，请重新检查并授权。', CONSENT_REQUIRED: '请先预览摘要并明确授权本次发送。',
-  UNAVAILABLE: 'AI 内部通道未启用，请在已配置内部通道的 Electron 中使用。', BUSY: '已有请求正在处理，请稍后再试。',
-  STALE: '统计已变化，请刷新本地月报后重新预览。', CANCELLED: '已停止后续发送；已发请求无法保证从服务商撤回。',
-  TIMEOUT: '请求超时，可能已计费；请核对后手动重试。', INTERRUPTED: '请求中断或结果不确定，可能已计费；请手动重试。',
-  NETWORK: '无法连接 AI 服务，请检查网络和服务地址。', BACKEND: '本地任务服务未就绪或凭据不匹配，请重启桌面应用后重试。',
+  STORAGE_FAILED: '本地 AI 数据读写失败，操作尚未确认成功；请检查磁盘状态并重新读取配置和已保存报告。',
+  CONFIG_CHANGED: '配置已变化，请重新预览并确认。', CONSENT_REQUIRED: '请先预览摘要并明确确认本次发送。',
+  UNAVAILABLE: 'AI 服务尚未配置，请检查连接设置。', BUSY: '已有请求正在处理，请稍后再试。',
+  STALE: '账单或报告已变化，请重新预览并确认。', CANCELLED: '已停止当前调用；已发请求无法保证从服务商撤回。',
+  NO_DATA: '本月没有可分析的流水，未调用 AI。',
+  TIMEOUT: '请求超时，可能已计费；请先重新读取已保存报告，再决定是否重试。',
+  NETWORK: '无法连接 AI 服务，请检查网络和服务地址。', BACKEND: '本地后端尚未就绪或正在恢复数据，请检查服务状态后重试。',
   HTTP_401: 'AI 服务鉴权失败，请检查 API Key。', HTTP_403: 'AI 服务拒绝访问，请检查密钥权限。',
   HTTP_429: 'AI 服务限额或频率受限，请检查额度后手动重试。',
-  INVALID_OUTPUT: 'AI 响应结构不符合约定，基础月报仍可使用。', INVALID_FACTS: 'AI 引用了无效的事实，已拒绝该解读。',
+  INVALID_OUTPUT: 'AI 响应不符合约定，未保存本次报告，已有报告保持不变。', INVALID_FACTS: 'AI 引用了无效的事实，已拒绝该解读。',
   INVALID_JSON: 'AI 未返回有效 JSON，请检查服务是否兼容。', REDIRECT_REJECTED: '服务返回了重定向，已阻止密钥转发，请检查根地址。',
-  SUMMARY_TOO_LARGE: '统计摘要过大，未发送；请使用本地月报。', OUTPUT_TOO_LARGE: 'AI 响应超过安全上限。'
+  SUMMARY_TOO_LARGE: '统计摘要超过安全上限，未发送。', OUTPUT_TOO_LARGE: 'AI 响应超过安全上限。'
 }
-export const aiError = (code?: string | null) => errors[code ?? ''] ?? 'AI 请求失败，基础月报仍可使用；请核对服务后手动重试。'
-export async function unwrapAi<T>(request: Promise<AiReply<T>>): Promise<T> {
-  const result = await request
-  if (!result.ok) throw new Error(aiError(result.errorCode))
-  return result.value
+export const aiError = (code?: string | null) => errors[code ?? ''] ?? 'AI 请求失败，已有报告保持不变；请核对服务后手动重试。'
+/**
+ * 从抛出的错误提取展示文案：AI 调用改走 HTTP 后，后端已将中文提示放入抛错（ApiError extends Error）的 message，
+ * 直接取用即可；不泄露供应商响应正文。
+ */
+export function aiFail(e: unknown, fallback = 'AI 请求失败，已有报告保持不变；请核对服务后手动重试。'): string {
+  if (e && typeof e === 'object') {
+    const error = e as { code?: string; isAxiosError?: boolean }
+    if (error.isAxiosError) return error.code === 'ECONNABORTED' || error.code === 'ETIMEDOUT'
+      ? '本地接口等待超时，报告可能已保存；请先重新读取已保存报告，勿重复发送。'
+      : '无法连接本地后端，请确认 Java 服务已启动，并检查开发代理地址。'
+    if (error.code && errors[error.code]) return errors[error.code]
+  }
+  return e instanceof Error && e.message ? e.message : fallback
 }

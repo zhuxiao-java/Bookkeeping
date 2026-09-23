@@ -271,7 +271,7 @@ async function runExport(flag: typeof backuping, fn: () => Promise<void>, okText
 }
 
 function onExportDb() {
-  return runExport(backuping, () => backupApi.exportDb(), '完整备份已导出')
+  return runExport(backuping, () => backupApi.exportDb(), '完整备份已导出（不含 AI 密钥，旧发送确认失效）')
 }
 function onExportTx() {
   return runExport(exportingTx, () => backupApi.exportTransactionsCsv(), '流水 CSV 已导出')
@@ -288,7 +288,7 @@ async function onPickDb(e: Event) {
   if (!file) return
   try {
     await ElMessageBox.confirm(
-      '恢复将用所选备份文件覆盖当前全部数据，完成后需重启后端加载新库。建议先导出当前数据作为备份。确定继续？',
+      '恢复将覆盖当前全部数据并停止当前 AI 调用，完成后需重启后端。AI 密钥会清除，旧发送确认失效，需重新配置。建议先导出当前数据作为备份。确定继续？',
       '确认恢复',
       { type: 'warning', confirmButtonText: '覆盖并恢复', cancelButtonText: '取消' }
     )
@@ -584,7 +584,7 @@ function onCsvImported(res: CsvImportResult) {
             <div class="split-row data-row">
               <div class="row-copy">
                 <h3 class="row-copy__title">完整备份</h3>
-                <p class="row-copy__desc">将全部账户、流水、分类和预算保存为 SQLite 快照（.db），用于换机迁移或数据恢复。</p>
+                <p class="row-copy__desc">将账户、流水、分类、预算和月报保存为 SQLite 快照（.db）。新导出与自动备份不含 AI 密钥，旧发送确认失效；历史备份可能仍含旧密钥，请勿外传，必要时到供应商轮换密钥。</p>
               </div>
               <el-button :loading="backuping" @click="onExportDb">导出完整备份</el-button>
             </div>
@@ -602,7 +602,7 @@ function onCsvImported(res: CsvImportResult) {
                 type="warning"
                 :closable="false"
                 show-icon
-                title="恢复会用备份文件覆盖当前全部数据，且需重启后端加载。操作前建议先导出一份当前备份。"
+                title="恢复会覆盖当前数据并停止当前 AI 调用，需重启后端、重新配置 AI 密钥。恢复前安全备份同样清除密钥并使旧发送确认失效；已生成报告会保留，已有历史备份不会自动清理。"
               />
             </div>
           </div>
