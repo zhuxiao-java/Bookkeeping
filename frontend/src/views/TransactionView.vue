@@ -82,7 +82,7 @@ const hasActiveFilter = computed(
 
 const formDialog = reactive({
   visible: false,
-  mode: 'create' as 'create' | 'edit' | 'copy',
+  mode: 'create' as 'create' | 'edit' | 'copy' | 'backfill',
   initial: null as Transaction | null
 })
 
@@ -263,6 +263,12 @@ function applyShortcut(kind: 'week' | 'month' | 'year') {
 
 function openCreate() {
   formDialog.mode = 'create'
+  formDialog.initial = null
+  formDialog.visible = true
+}
+
+function openBackfill() {
+  formDialog.mode = 'backfill'
   formDialog.initial = null
   formDialog.visible = true
 }
@@ -515,6 +521,7 @@ onBeforeUnmount(() => {
         <el-button :type="batchMode ? 'warning' : 'default'" text data-guide="tx-batch" @click="toggleBatchMode">
           {{ batchMode ? '退出批量' : '批量管理' }}
         </el-button>
+        <el-button data-guide="tx-backfill" @click="openBackfill">补流水</el-button>
         <el-button type="primary" :icon="Plus" data-guide="tx-create" @click="openCreate">新增记录</el-button>
       </div>
     </header>
@@ -768,7 +775,7 @@ onBeforeUnmount(() => {
       </div>
     </div>
 
-    <TransactionFormDialog v-model="formDialog.visible" :mode="formDialog.mode" :initial="formDialog.initial" @saved="load" />
+    <TransactionFormDialog v-model="formDialog.visible" :mode="formDialog.mode" :initial="formDialog.initial" />
 
     <!-- 批量修改分类对话框（NEW-06） -->
     <el-dialog v-model="batchCategoryDialog.visible" title="批量修改分类" width="440px" class="bk-dialog quiet-controls" append-to-body>

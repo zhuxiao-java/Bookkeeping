@@ -6,7 +6,7 @@ import { useRouter } from 'vue-router'
 import { transactionApi } from '@/api'
 import { useDictStore } from '@/stores/dict'
 import { parseTagIds, type Transaction, type TransactionType } from '@/types/model'
-import { isValidAmountInput, nowIso, sanitizeAmountInput } from '@/utils/format'
+import { addDays, isValidAmountInput, nowIso, sanitizeAmountInput } from '@/utils/format'
 import { bus, TRANSACTION_CHANGED } from '@/utils/bus'
 import AccountOption from '@/components/AccountOption.vue'
 
@@ -16,7 +16,7 @@ import AccountOption from '@/components/AccountOption.vue'
  */
 const props = defineProps<{
   modelValue: boolean
-  mode: 'create' | 'edit' | 'copy'
+  mode: 'create' | 'edit' | 'copy' | 'backfill'
   /** 编辑/复制时回显的交易 */
   initial?: Transaction | null
 }>()
@@ -31,11 +31,12 @@ const router = useRouter()
 
 const visible = computed({
   get: () => props.modelValue,
-  set: (v) => emit('update:modelValue', v)
+  set: (v) => { if (!saving.value) emit('update:modelValue', v) }
 })
 
+const isBackfill = computed(() => props.mode === 'backfill')
 const title = computed(() =>
-  props.mode === 'edit' ? '编辑记录' : props.mode === 'copy' ? '复制记录' : '新增记录'
+  isBackfill.value ? '补流水' : props.mode === 'edit' ? '编辑记录' : props.mode === 'copy' ? '复制记录' : '新增记录'
 )
 
 const typeTabs: { value: TransactionType; label: string }[] = [
@@ -57,7 +58,26 @@ const form = reactive({
 })
 
 const saving = ref(false)
+const initializing = ref(false)
 const formRef = ref<FormInstance>()
+const amountRef = ref<{ focus: () => void }>()
+
+function choosePastDay(days: number) {
+  if (saving.value) return
+  const now = nowIso()
+  form.transactionDate = `${addDays(now, -days)}T${(form.transactionDate || now).slice(11, 19)}`
+  fieldErrors.transactionDate = ''
+}
+
+function disableFutureDate(date: Date): boolean {
+  const today = new Date()
+  today.setHours(23, 59, 59, 999)
+  return date.getTime() > today.getTime()
+}
+
+function beforeClose(done: () => void) {
+  if (!saving.value) done()
+}
 
 /** 字段级内联错误：逐字段在下方展示红字，取代整表单单条 Toast */
 const fieldErrors = reactive({
@@ -91,6 +111,7 @@ function focusFirstError() {
 
 /** 类型 tabs 键盘操作：Enter / Space 选中（配合 role=tab / tabindex） */
 function onTabKey(e: KeyboardEvent, t: TransactionType) {
+  if (saving.value || initializing.value) return
   if (e.key === 'Enter' || e.key === ' ') {
     e.preventDefault()
     form.type = t
@@ -108,12 +129,16 @@ function goCreateCategory() {
   router.push(`/settings?menu=category&type=${form.type}`)
 }
 
-watch(visible, async (v) => {
+watch(visible, async (v, _, onCleanup) => {
   if (!v) return
+  let cancelled = false
+  onCleanup(() => { cancelled = true })
+  initializing.value = true
   clearErrors()
   // 启动时字典加载失败（如桌面端后端子进程尚未就绪）时，在打开弹窗时补救重试
   await dict.loadAll().catch(() => {})
-  if (props.initial && props.mode !== 'create') {
+  if (cancelled) return
+  if (props.initial && (props.mode === 'edit' || props.mode === 'copy')) {
     form.type = props.initial.type
     form.amount = String(props.initial.amount ?? '')
     form.fee = String(props.initial.fee ?? '')
@@ -133,18 +158,23 @@ watch(visible, async (v) => {
     form.transactionDate = nowIso()
     form.note = ''
     form.tagIds = []
+    if (isBackfill.value) choosePastDay(1)
   }
+  initializing.value = false
 })
 
 watch(
   () => form.type,
   () => {
+    if (initializing.value) return
     form.categoryId = undefined
     form.toAccountId = undefined
     fieldErrors.categoryId = ''
     fieldErrors.toAccountId = ''
     fieldErrors.fee = ''
-  }
+  },
+  // 同步处理用户切换，初始化期间跳过，避免稍后清空回填字段。
+  { flush: 'sync' }
 )
 
 function validate(): boolean {
@@ -177,16 +207,25 @@ function validate(): boolean {
   if (!form.transactionDate) {
     fieldErrors.transactionDate = '请选择日期'
     ok = false
+  } else if (isBackfill.value) {
+    const timestamp = new Date(form.transactionDate).getTime()
+    if (!Number.isFinite(timestamp) || timestamp > Date.now()) {
+      fieldErrors.transactionDate = '补录时间不能晚于当前时间，请选择已发生的时间'
+      ok = false
+    }
   }
   return ok
 }
 
-async function save() {
+async function save(continueRecording = false) {
+  if (saving.value || initializing.value) return
   if (!validate()) {
     focusFirstError()
     return
   }
   saving.value = true
+  const keepOpen = isBackfill.value && continueRecording
+  let succeeded = false
   try {
     const payload = {
       type: form.type,
@@ -204,15 +243,32 @@ async function save() {
       ElMessage.success('修改成功')
     } else {
       const exp = await transactionApi.saveWithReward(payload)
-      ElMessage.success(exp > 0 ? `记账成功，获得 ${exp} 点经验` : '保存成功')
+      ElMessage.success(isBackfill.value
+        ? `已补录 ${payload.transactionDate.slice(0, 10)} 的流水，本次获得 ${exp} 点经验`
+        : exp > 0 ? `记账成功，获得 ${exp} 点经验` : '保存成功')
     }
     bus.emit(TRANSACTION_CHANGED)
     emit('saved')
-    visible.value = false
+    succeeded = true
+    if (keepOpen) {
+      form.amount = ''
+      form.fee = ''
+      form.categoryId = undefined
+      form.note = ''
+      form.tagIds = []
+      clearErrors()
+      formRef.value?.clearValidate()
+    } else {
+      emit('update:modelValue', false)
+    }
   } catch {
     // 失败提示由响应拦截器统一处理
   } finally {
     saving.value = false
+  }
+  if (succeeded && keepOpen) {
+    await nextTick()
+    amountRef.value?.focus()
   }
 }
 </script>
@@ -224,6 +280,9 @@ async function save() {
     width="560px"
     class="bk-dialog quiet-controls"
     :close-on-click-modal="false"
+    :close-on-press-escape="!saving"
+    :show-close="!saving"
+    :before-close="beforeClose"
     append-to-body
   >
     <div class="record-tabs" role="tablist" aria-label="交易类型">
@@ -236,6 +295,7 @@ async function save() {
         role="tab"
         tabindex="0"
         :aria-selected="form.type === t.value"
+        :disabled="saving || initializing"
         @click="form.type = t.value"
         @keydown="onTabKey($event, t.value)"
       >
@@ -243,9 +303,27 @@ async function save() {
       </button>
     </div>
 
-    <el-form ref="formRef" label-position="top" @submit.prevent>
+    <el-form ref="formRef" label-position="top" :disabled="saving || initializing" :aria-busy="saving || initializing" @submit.prevent>
+      <template v-if="isBackfill">
+        <p class="tf-backfill-note">按发生日期计入账本；奖励计入今日额度，已完成的月结经验不重算。</p>
+        <el-form-item label="发生时间" required :error="fieldErrors.transactionDate" class="tf-backfill-date">
+          <el-date-picker
+            v-model="form.transactionDate"
+            type="datetime"
+            value-format="YYYY-MM-DDTHH:mm:ss"
+            placeholder="选择实际发生时间"
+            :disabled-date="disableFutureDate"
+            style="width: 100%"
+            @change="fieldErrors.transactionDate = ''"
+          />
+          <div class="tf-date-shortcuts">
+            <el-button @click="choosePastDay(1)">昨天</el-button>
+            <el-button @click="choosePastDay(2)">前天</el-button>
+          </div>
+        </el-form-item>
+      </template>
       <el-form-item label="金额" required :error="fieldErrors.amount" class="record-amount">
-        <el-input v-model="form.amount" placeholder="0.00" @input="form.amount = sanitizeAmountInput(form.amount); fieldErrors.amount = ''">
+        <el-input ref="amountRef" v-model="form.amount" placeholder="0.00" @input="form.amount = sanitizeAmountInput(form.amount); fieldErrors.amount = ''">
           <template #prepend>¥</template>
         </el-input>
       </el-form-item>
@@ -305,7 +383,7 @@ async function save() {
       </el-form-item>
 
       <h3 class="dialog-section__title">附加信息</h3>
-      <el-form-item label="日期" required :error="fieldErrors.transactionDate">
+      <el-form-item v-if="!isBackfill" label="日期" required :error="fieldErrors.transactionDate">
         <el-date-picker
           v-model="form.transactionDate"
           type="datetime"
@@ -329,14 +407,35 @@ async function save() {
 
     <template #footer>
       <div class="dialog-footer">
-        <el-button @click="visible = false">取消</el-button>
-        <el-button type="primary" :loading="saving" @click="save">保存</el-button>
+        <el-button :disabled="saving" @click="visible = false">取消</el-button>
+        <el-button :type="isBackfill ? 'default' : 'primary'" :loading="saving" :disabled="initializing" @click="save()">保存</el-button>
+        <el-button v-if="isBackfill" type="primary" :loading="saving" :disabled="initializing" @click="save(true)">保存并继续</el-button>
       </div>
     </template>
   </el-dialog>
 </template>
 
 <style scoped>
+.tf-backfill-note {
+  margin: 0 0 18px;
+  padding: 12px 14px;
+  border-radius: var(--bk-radius-sm);
+  background: var(--el-fill-color-light);
+  color: var(--bk-text-secondary);
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+.tf-date-shortcuts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--bk-action-gap);
+  margin-top: 8px;
+}
+
+.tf-date-shortcuts :deep(.el-button + .el-button) { margin-left: 0; }
+.record-tab:disabled { cursor: wait; opacity: .6; }
+
 .record-amount :deep(.el-input__inner) {
   height: 48px;
   font-size: 26px;

@@ -33,6 +33,7 @@ const messages=[
  {id:3,title:'今日天气',content:JSON.stringify({city:'杭州',description:'晴',tempC:'26',feelsLikeC:'27',minTempC:'22',maxTempC:'29',humidity:'65',windKmph:'12'}),type:'weather',status:1,createTime:`${day(1)}T07:00:00`}
 ]
 let empty=false,unavailable=false,delay=0
+let saveDelay=0,saveFailures=0,saveReward=5
 const storagePaths=['/Users/示例用户/Library/Application Support/记账本/data','C:\\Users\\示例用户\\AppData\\Roaming\\记账本\\'+'家庭长期账本目录'.repeat(16)+'\\data']
 let storageDirectory=storagePaths[0],storageUnavailable=false,storageEmpty=false,storageDelay=0
 const requests=[],checks=[],interactions=[],errors=[],warnings=[],knownIssues=[]
@@ -53,7 +54,10 @@ function api(url,body){
  else if(p.endsWith('/selectAll'))data=empty?[]:resources[p.split('/')[1]]||[]
  else if(p.endsWith('/page')){data=empty?[]:resources[p.split('/')[1]]||[];extra={total:data.length,pageNum:1,pageSize:20}}
  else if(p.includes('/detail/'))data=(resources[p.split('/')[1]]||[]).find(x=>x.id===Number(p.split('/').pop()))||null
- else if(p==='/transaction/saveWithReward')data=5
+ else if(p==='/transaction/saveWithReward'){
+  if(saveFailures>0){saveFailures--;return {code:'B_TEST_SAVE',msg:'模拟保存失败，请重试'}}
+  data=saveReward
+ }
  else if(p.endsWith('/preview'))data={total:3,validCount:1,duplicateCount:1,invalidCount:1,rows:['valid','duplicate','invalid'].map((status,i)=>({line:i+2,date:day(1),type:'支出',amount:'168.80',accountName:'随身现金',categoryName:'交通出行',status,reason:status==='invalid'?'未找到匹配分类':''}))}
  else if(p==='/backup/csv/transactions')data={total:3,imported:1,skipped:2,duplicates:1,failures:[{line:4,reason:'未找到匹配分类'}]}
  return {code:'S0806',msg:'隔离模拟',data,...extra}
@@ -62,7 +66,7 @@ const mime={'.html':'text/html','.js':'text/javascript','.css':'text/css','.svg'
 const server=http.createServer(async(req,res)=>{
  try{
   const url=new URL(req.url,'http://localhost')
-  if(url.pathname.startsWith('/api/')){let body='';for await(const chunk of req)body+=chunk;if(delay)await sleep(delay);if(url.pathname==='/api/backup/storagePath'&&storageDelay)await sleep(storageDelay);res.writeHead(200,{'Content-Type':'application/json'});res.end(JSON.stringify(api(url,body)));return}
+  if(url.pathname.startsWith('/api/')){let body='';for await(const chunk of req)body+=chunk;if(delay)await sleep(delay);if(url.pathname==='/api/transaction/saveWithReward'&&saveDelay)await sleep(saveDelay);if(url.pathname==='/api/backup/storagePath'&&storageDelay)await sleep(storageDelay);res.writeHead(200,{'Content-Type':'application/json'});res.end(JSON.stringify(api(url,body)));return}
   if(url.pathname==='/setup'){res.writeHead(200,{'Content-Type':'text/html'});res.end('<html><body>隔离验证</body></html>');return}
   const file=path.resolve(root,'.'+(url.pathname==='/'?'/index.html':decodeURIComponent(url.pathname)))
   if(!file.startsWith(root+'/'))throw Error('无效路径')
@@ -72,7 +76,7 @@ const server=http.createServer(async(req,res)=>{
  }catch{res.writeHead(404);res.end()}
 })
 let win,base
-const js=code=>win.webContents.executeJavaScript(`(()=>{const visible=e=>e&&!!(e.offsetWidth||e.offsetHeight||e.getClientRects().length)&&getComputedStyle(e).visibility!=='hidden';const all=s=>[...document.querySelectorAll(s)].filter(visible);const one=s=>all(s)[0];${code}})()`,true)
+const js=code=>win.webContents.executeJavaScript(`(()=>{const visible=e=>e&&!!(e.offsetWidth||e.offsetHeight||e.getClientRects().length)&&getComputedStyle(e).visibility!=='hidden';const all=s=>[...document.querySelectorAll(s)].filter(visible);const one=s=>all(s)[0];const field=label=>all('.bk-dialog .el-form-item').find(e=>e.querySelector('label')?.textContent.trim()===label);${code}})()`,true)
 async function click(selector,text){
  const ok=await js(`const e=${text?`all(${JSON.stringify(selector)}).find(e=>e.textContent.trim()===${JSON.stringify(text)})`:`one(${JSON.stringify(selector)})`};if(!e)return false;e.click();return true`)
  if(!ok)throw Error(`未找到控件 ${selector} ${text||''}`);await sleep(320)
@@ -143,7 +147,7 @@ async function audit(name,shot=false){
 }
 async function closeDialog(){await click('.el-dialog__headerbtn');await sleep(250)}
 async function assertUI(name,code){
- const passed=!!(await js(code));interactions.push({name,passed});if(!passed)throw Error('交互断言失败：'+name)
+ const passed=await js(`return !!(()=>{${code}})()`);interactions.push({name,passed});if(!passed)throw Error('交互断言失败：'+name)
  console.log('交互通过',name)
 }
 async function setup(theme='light',extra={}){
@@ -164,6 +168,13 @@ async function run(){
  await setup()
  await assertUI('模拟账本已载入',`return one('.checkin-card') && !document.body.textContent.includes('无法连接后端')`)
  if(!requests.some(r=>r.path==='/account/selectAll'))throw Error('模拟 API 未接入')
+ if(!process.env.UI_DASHBOARD_ONLY)await backfillChecks()
+ if(process.env.UI_BACKFILL_ONLY){
+  const failures=checks.filter(c=>c.pageOverflow||c.nestedButtons||c.styleIssues.length||c.layers.some(x=>!x.within||!x.footerVisible))
+  console.log('补流水验证完成',{checks:checks.length,interactions:interactions.length,failures:failures.length,errors,output})
+  if(failures.length||errors.length)throw Error('补流水界面验证未通过')
+  return
+ }
  await dashboardChecks()
  if(process.env.UI_DASHBOARD_ONLY){
   const failures=checks.filter(c=>c.pageOverflow||c.nestedButtons||c.styleIssues.length||c.layers.some(x=>!x.within||!x.footerVisible))
@@ -189,7 +200,7 @@ async function run(){
  await click('.el-dialog__footer button','保存');await audit('quick-validation',true)
  await click('.record-tab','收入');await audit('quick-income');await click('.record-tab','转账');await audit('quick-transfer',true);await closeDialog()
  await navigate('transaction');await click('.tx-row__actions button[aria-label="编辑流水"]');await audit('transaction-edit',true)
- if(await js(`return !one('.bk-dialog .el-cascader input')?.value`))knownIssues.push('既有问题：首次编辑收入记录时，类型监听会清空分类回填；本次未修改表单业务逻辑。')
+ await assertUI('编辑分类回填不被类型监听清空',`return !!one('.bk-dialog .el-cascader input')?.value`)
  await closeDialog()
  await click('.tx-row__actions button[aria-label="复制流水"]');await audit('transaction-copy');await closeDialog()
  await navigate('account');await click('[data-guide="account-create"]');await audit('account-dialog',true);await closeDialog()
@@ -271,6 +282,122 @@ async function dashboardChecks(){
  }finally{
   delay=0;empty=false;Object.assign(transactions[1],originalRecord);Object.assign(budgets[0],originalBudget);accounts[2].archived=originalArchived
   win.setContentSize(1440,900);await setup('light')
+ }
+}
+async function backfillChecks(){
+ win.webContents.debugger.attach('1.3')
+ await win.webContents.debugger.sendCommand('Emulation.setFocusEmulationEnabled',{enabled:true})
+ const saved=()=>requests.filter(r=>r.path==='/transaction/saveWithReward').map(r=>JSON.parse(r.body))
+ const dismissPopups=async()=>{
+  await js(`const e=one('.el-dialog__title');e.dispatchEvent(new PointerEvent('pointerdown',{bubbles:true}));e.dispatchEvent(new MouseEvent('mousedown',{bubbles:true}));e.dispatchEvent(new MouseEvent('mouseup',{bubbles:true}));e.click()`)
+  await sleep(200)
+ }
+ const fieldInput=async(label,value)=>{
+  await js(`field(${JSON.stringify(label)})?.querySelector('.el-date-editor .el-input__wrapper')?.dispatchEvent(new MouseEvent('mousedown',{bubbles:true}));`)
+  await sleep(100)
+  await js(`const e=field(${JSON.stringify(label)})?.querySelector('input');if(!e)throw Error('未找到表单字段');e.value=${JSON.stringify(value)};e.dispatchEvent(new Event('input',{bubbles:true}));`)
+  await sleep(100)
+  await js(`const e=field(${JSON.stringify(label)}).querySelector('input');e.dispatchEvent(new Event('change',{bubbles:true}));e.blur();`)
+  await dismissPopups()
+ }
+ const pickCategory=async name=>{
+  await click('.bk-dialog .el-cascader')
+  await js(`const option=all('.el-cascader-node__label').find(e=>e.textContent.includes(${JSON.stringify(name)}));if(!option)throw Error('未找到分类选项');option.click()`)
+  await sleep(200);await dismissPopups()
+ }
+ const expect=(name,passed)=>{interactions.push({name,passed:!!passed});if(!passed)throw Error('请求断言失败：'+name);console.log('交互通过',name)}
+ try{
+  for(const [width,height]of (process.env.UI_BACKFILL_INTERACTIONS?[]:[[1440,900],[720,800],[480,720]])){
+   for(const theme of ['light','dark']){
+    win.setContentSize(width,height);await setup(theme);await navigate('transaction');await click('[data-guide="tx-backfill"]')
+    await audit(`backfill-${width}-${theme}`,true)
+    await assertUI('补录说明与底部按钮 '+width+theme,`return one('.el-dialog__title')?.textContent==='补流水'&&one('.tf-backfill-note')?.textContent.includes('月结经验不重算')&&all('.el-dialog__footer button').length===3`)
+    await click('.record-tab','转账');await audit(`backfill-transfer-${width}-${theme}`,true);await closeDialog()
+   }
+  }
+  win.setContentSize(1440,900);await setup('light');await navigate(`transaction?type=expense&start=${day(1)}&end=${day(28)}`)
+  const originalQuery=JSON.parse(requests.filter(r=>r.path==='/transaction/page').at(-1).body)
+  await click('[data-guide="tx-backfill"]')
+  await assertUI('默认昨天的本地时间且日期位于金额前',`const value=one('.tf-backfill-date input').value;const d=new Date();d.setDate(d.getDate()-1);return value.slice(0,10)===[d.getFullYear(),String(d.getMonth()+1).padStart(2,'0'),String(d.getDate()).padStart(2,'0')].join('-')&&Math.abs(new Date(value.replace(' ','T')).getTime()-d.getTime())<5000&&all('.bk-dialog .el-form-item')[0].classList.contains('tf-backfill-date')`)
+  const originalTime=await js(`return one('.tf-backfill-date input').value.slice(11)`)
+  await click('.tf-date-shortcuts button','前天')
+  await assertUI('前天快捷日期保留时分秒',`const value=one('.tf-backfill-date input').value,d=new Date();d.setDate(d.getDate()-2);return value.slice(0,10)===[d.getFullYear(),String(d.getMonth()+1).padStart(2,'0'),String(d.getDate()).padStart(2,'0')].join('-')&&value.slice(11)===${JSON.stringify(originalTime)}`)
+  await click('.tf-date-shortcuts button','昨天')
+  const datePoint=await js(`const r=one('.tf-backfill-date input').getBoundingClientRect();return {x:Math.round(r.left+40),y:Math.round(r.top+r.height/2)};`)
+  win.webContents.sendInputEvent({type:'mouseDown',button:'left',clickCount:1,...datePoint});win.webContents.sendInputEvent({type:'mouseUp',button:'left',clickCount:1,...datePoint});await sleep(450)
+  await assertUI('日历禁选未来日期',`return !!one('.el-date-table td.disabled')&&!!one('.el-date-table td.today:not(.disabled)')`)
+  await dismissPopups()
+  await input('.record-amount input','23.45');await pickCategory('交通出行')
+  const beforeFuture=saved().length
+  const future=await js(`const d=new Date();d.setHours(23,59,59,0);return [d.getFullYear(),String(d.getMonth()+1).padStart(2,'0'),String(d.getDate()).padStart(2,'0')].join('-')+' 23:59:59'`)
+  await fieldInput('发生时间',future);await click('.el-dialog__footer button','保存')
+  await assertUI('提交拦截今天尚未发生的时间',`return !!one('.bk-dialog')&&one('.tf-backfill-date .el-form-item__error')?.textContent.includes('不能晚于当前时间')`)
+  expect('未来时间不发送保存请求',saved().length===beforeFuture)
+  await dismissPopups();await fieldInput('发生时间','2024-02-29 12:34:56')
+  await fieldInput('备注','  保留原始备注  ')
+  await js(`field('标签').querySelector('.el-select__wrapper').click()`);await sleep(200);await click('.el-select-dropdown__item','家庭共同开支');await dismissPopups()
+  const start=requests.length
+  await click('.el-dialog__footer button','保存并继续');await sleep(500)
+  const first=saved().at(-1)
+  expect('历史支出原样提交日期、金额、分类和备注',first.type==='expense'&&first.transactionDate==='2024-02-29T12:34:56'&&first.amount===23.45&&first.categoryId===4&&first.accountId===1&&first.note==='保留原始备注'&&first.tags==='[1]'&&!('id'in first))
+  await assertUI('连续补录保留日期类型账户，清空金额分类备注标签并聚焦',`return one('.record-tab.is-active').textContent.trim()==='支出'&&one('.tf-backfill-date input').value==='2024-02-29 12:34:56'&&field('账户').textContent.includes('日常银行卡')&&one('.record-amount input').value===''&&one('.bk-dialog .el-cascader input').value===''&&field('备注').querySelector('input').value===''&&!field('标签').querySelector('.el-tag')&&document.activeElement===one('.record-amount input')&&!one('.el-form-item__error')`)
+  await assertUI('成功提示包含补录日期和实际经验',`return all('.el-message--success').some(e=>e.textContent.includes('2024-02-29')&&e.textContent.includes('5 点经验'))`)
+  const refreshes=requests.slice(start).filter(r=>r.path==='/transaction/page')
+  expect('单次成功仅刷新一次流水且不改变筛选',refreshes.length===1&&JSON.stringify(JSON.parse(refreshes[0].body))===JSON.stringify(originalQuery))
+  expect('成功触发等级刷新',requests.slice(start).some(r=>r.path==='/level/currentLevel'))
+  await click('.el-dialog__footer button','保存并继续')
+  await assertUI('下一笔重新校验金额及分类',`return field('金额').querySelector('.el-form-item__error')&&field('分类').querySelector('.el-form-item__error')`)
+  await click('.record-tab','收入');await input('.record-amount input','1234.56');await pickCategory('工资收入')
+  saveReward=0;await click('.el-dialog__footer button','保存并继续');saveReward=5
+  expect('收入补录仍使用所选历史时间',saved().at(-1).type==='income'&&saved().at(-1).categoryId===5&&saved().at(-1).transactionDate===first.transactionDate)
+  await assertUI('封顶时显示实际零奖励',`return all('.el-message--success').some(e=>e.textContent.includes('本次获得 0 点经验'))`)
+  await click('.record-tab','转账');await selectField('转入账户','随身现金');await input('.record-amount input','50');await fieldInput('手续费','1.25')
+  await click('.el-dialog__footer button','保存并继续')
+  expect('转账补录提交双账户与手续费',saved().at(-1).type==='transfer'&&saved().at(-1).toAccountId===2&&saved().at(-1).fee===1.25&&saved().at(-1).categoryId===null)
+  await assertUI('转账连续补录保留双账户并清空手续费',`return one('.record-tab.is-active').textContent.trim()==='转账'&&field('账户').textContent.includes('日常银行卡')&&field('转入账户').textContent.includes('随身现金')&&field('手续费').querySelector('input').value===''&&one('.record-amount input').value===''`)
+  await input('.record-amount input','88.88');await fieldInput('手续费','0.25');await fieldInput('备注','失败后保留')
+  await js(`field('标签').querySelector('.el-select__wrapper').click()`);await sleep(200);await click('.el-select-dropdown__item','值得纪念的一天');await dismissPopups()
+  const beforeFailure=requests.length;saveFailures=1
+  await click('.el-dialog__footer button','保存并继续');await sleep(250)
+  await assertUI('失败保留全部输入与弹窗',`return one('.record-amount input').value==='88.88'&&field('手续费').querySelector('input').value==='0.25'&&field('备注').querySelector('input').value==='失败后保留'&&field('转入账户').textContent.includes('随身现金')&&field('标签').textContent.includes('值得纪念的一天')&&one('.tf-backfill-date input').value==='2024-02-29 12:34:56'&&!one('.el-dialog__footer button.is-loading')`)
+  expect('失败不发出流水刷新或自动重试',requests.slice(beforeFailure).filter(r=>r.path==='/transaction/saveWithReward').length===1&&!requests.slice(beforeFailure).some(r=>r.path==='/transaction/page'))
+  const beforeRetry=saved().length;saveDelay=1600
+  await js(`const b=all('.el-dialog__footer button').find(e=>e.textContent.trim()==='保存');b.click();b.click();all('.el-dialog__footer button').find(e=>e.textContent.trim()==='保存并继续').click()`)
+  await sleep(150)
+  await assertUI('慢请求锁定表单、类型、日期快捷键及取消关闭',`return all('.bk-dialog .el-form input').every(e=>e.disabled)&&all('.record-tab,.tf-date-shortcuts button').every(e=>e.disabled)&&!one('.el-dialog__headerbtn')&&all('.el-dialog__footer button').find(e=>e.textContent.trim()==='取消').disabled`)
+  await js(`document.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',code:'Escape',bubbles:true}));all('.el-dialog__footer button').find(e=>e.textContent.trim()==='取消').click()`)
+  await assertUI('请求期间 Escape 和取消不能关闭',`return !!one('.bk-dialog')`)
+  await sleep(1800);saveDelay=0
+  expect('双击和交叉保存只提交一笔且可重试',saved().length===beforeRetry+1&&JSON.stringify(saved().at(-1))===JSON.stringify(saved().at(-2)))
+  await assertUI('保存成功关闭弹窗，保留列表筛选',`return !one('.bk-dialog')&&location.hash.startsWith('#/transaction')`)
+  await click('[data-guide="tx-backfill"]');await assertUI('重新打开补录清空旧金额',`return one('.record-amount input').value===''&&one('.record-tab.is-active').textContent.trim()==='支出'`)
+  await fieldInput('发生时间',day(date.getDate())+' 00:00:00');await input('.record-amount input','10');await pickCategory('交通出行');await click('.el-dialog__footer button','保存')
+  expect('允许补录今天已经发生的交易',saved().at(-1).transactionDate===day(date.getDate())+'T00:00:00')
+  await click('[data-guide="tx-create"]')
+  await assertUI('普通新增没有补录说明和连续保存按钮',`return !one('.tf-backfill-note')&&!!field('日期')&&all('.el-dialog__footer button').length===2&&field('日期').querySelector('input').value.slice(0,10)===${JSON.stringify(day(date.getDate()))}`)
+  await input('.record-amount input','10');await pickCategory('交通出行');await fieldInput('日期','2099-01-01 12:34:56');await click('.el-dialog__footer button','保存')
+  expect('普通新增保留既有日期行为',saved().at(-1).transactionDate==='2099-01-01T12:34:56')
+  await navigate('transaction');await click('.filter-card button','重置')
+  for(const type of ['income','transfer','expense']){
+   const index=transactions.findIndex(r=>r.type===type),record=transactions[index]
+   for(const action of ['编辑流水','复制流水']){
+    await js(`all('.tx-row')[${index}].querySelector('[aria-label="${action}"]').click()`);await sleep(350)
+    await assertUI(`${action} ${type} 正确回填`,type==='transfer'
+     ?`return field('转入账户').textContent.includes('随身现金')&&one('.record-tab.is-active').textContent.trim()==='转账'`
+     :`return one('.bk-dialog .el-cascader input').value.includes(${JSON.stringify(categories.find(c=>c.id===record.categoryId).name)})`)
+    await assertUI(`${action} ${type} 保持原发生时间`, `return field('日期').querySelector('input').value===${JSON.stringify(record.transactionDate.replace('T',' '))}`)
+    const before=requests.length;await click('.el-dialog__footer button','保存')
+    const request=requests.slice(before).find(r=>r.path===(action==='编辑流水'?'/transaction/update':'/transaction/saveWithReward'))
+    const payload=request&&JSON.parse(request.body)
+    expect(`${action} ${type} 使用正确接口和记录身份`,payload&&payload.type===type&&payload.transactionDate===record.transactionDate&&(action==='编辑流水'?payload.id===record.id:!('id'in payload)))
+   }
+  }
+ }catch(error){
+  console.log('补录失败时表单状态',await js(`return {text:one('.bk-dialog')?.innerText,inputs:all('.bk-dialog input').map(e=>({value:e.value,disabled:e.disabled})),calendar:all('.el-date-table td').map(e=>e.className),pickers:[...document.querySelectorAll('.el-picker__popper')].map(e=>({html:e.outerHTML.slice(0,600),display:getComputedStyle(e).display})),active:document.activeElement?.outerHTML}`))
+  await snapshot('backfill-failure');throw error
+ }finally{
+  win.webContents.debugger.detach()
+  saveDelay=0;saveFailures=0;saveReward=5;win.setContentSize(1440,900);await setup('light')
  }
 }
 async function storageChecks(){
