@@ -380,7 +380,7 @@ CREATE TABLE IF NOT EXISTS t_message (
 -- 索引：加速未读消息查询
 CREATE INDEX IF NOT EXISTS idx_message_read ON t_message(f_status, f_create_time DESC);
 
--- 月报快照和作业仅由业务事务创建，启动脚本不生成业务数据。
+-- 仅在 AI 成功后原子保存月报；启动脚本不创建月报或模型请求。
 CREATE TABLE IF NOT EXISTS t_monthly_report (
     f_id INTEGER PRIMARY KEY AUTOINCREMENT,
     f_month TEXT NOT NULL UNIQUE,
@@ -390,17 +390,17 @@ CREATE TABLE IF NOT EXISTS t_monthly_report (
     f_generated_at TEXT NOT NULL,
     f_message_id INTEGER
 );
-CREATE TABLE IF NOT EXISTS t_monthly_report_ai_job (
-    f_id TEXT PRIMARY KEY,
-    f_report_id INTEGER NOT NULL REFERENCES t_monthly_report(f_id),
-    f_snapshot_version INTEGER NOT NULL,
+-- 兼容旧库；重复启动的重复列异常由初始化容错处理，不覆盖已有结果。
+ALTER TABLE t_monthly_report ADD COLUMN f_ai_result TEXT;
+
+-- 月报 AI 解读配置（单用户桌面应用，固定一行 f_id=1）。
+-- 说明：AI 解读已由后端 AgentScope 直接发起，密钥随本地库保存（与桌面单机风险面相当），回显接口不返回明文 key。
+CREATE TABLE IF NOT EXISTS t_ai_config (
+    f_id INTEGER PRIMARY KEY,
+    f_base_url TEXT NOT NULL DEFAULT '',
+    f_model TEXT NOT NULL DEFAULT '',
+    f_api_key TEXT NOT NULL DEFAULT '',
+    f_include_names INTEGER NOT NULL DEFAULT 0,
     f_config_version TEXT NOT NULL,
-    f_attempt INTEGER NOT NULL,
-    f_status TEXT NOT NULL,
-    f_created_at TEXT NOT NULL,
-    f_error_code TEXT,
-    f_result TEXT,
-    UNIQUE(f_report_id, f_snapshot_version, f_config_version, f_attempt)
+    f_update_time TEXT NOT NULL
 );
-CREATE UNIQUE INDEX IF NOT EXISTS idx_monthly_ai_running ON t_monthly_report_ai_job(f_report_id) WHERE f_status='running';
-CREATE INDEX IF NOT EXISTS idx_monthly_ai_version ON t_monthly_report_ai_job(f_report_id, f_snapshot_version);

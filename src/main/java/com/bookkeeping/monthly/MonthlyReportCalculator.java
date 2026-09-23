@@ -1,14 +1,18 @@
 package com.bookkeeping.monthly;
 
 import org.springframework.stereotype.Component;
+
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.YearMonth;
 import java.util.*;
 import java.util.function.Predicate;
+
 import static com.bookkeeping.monthly.MonthlyReportModels.*;
 
-/** 无数据库副作用的月报计算器；阈值仅用于提示，不给用户打财务健康分。 */
+/**
+ * 无数据库副作用的月报计算器；阈值仅用于提示，不给用户打财务健康分。
+ */
 @Component
 public class MonthlyReportCalculator {
     public static final String RULE_VERSION = "1";
@@ -52,7 +56,8 @@ public class MonthlyReportCalculator {
                 BigDecimal amount = sum(txs), prevAmount = sum(prev);
                 String name = id == 0 ? "未分类/分类异常" : categories.get(id).name();
                 Map<Integer, List<Tx>> children = new TreeMap<>();
-                for (Tx tx : txs) children.computeIfAbsent(id == 0 ? 0 : tx.categoryId(), k -> new ArrayList<>()).add(tx);
+                for (Tx tx : txs)
+                    children.computeIfAbsent(id == 0 ? 0 : tx.categoryId(), k -> new ArrayList<>()).add(tx);
                 List<Breakdown> breakdown = new ArrayList<>();
                 children.forEach((childId, childRows) -> breakdown.add(new Breakdown(childId,
                         childId == 0 ? name : categories.get(childId).name(), money(sum(childRows)), childRows.size())));
@@ -110,12 +115,19 @@ public class MonthlyReportCalculator {
             String name = budget.categoryId() == null ? "总预算" : Optional.ofNullable(categories.get(budget.categoryId())).map(Category::name).orElse("已删除分类");
             BigDecimal excess = used.subtract(limit).max(ZERO);
             budgets.add(new BudgetComparison(budget.id(), budget.categoryId(), name, money(limit), money(used), money(excess), percentage(used, limit)));
-            if (excess.signum() > 0) facts.add(new Fact("CNY:budget:" + budget.id(), "budget", "CNY", budget.categoryId(), name + "超预算",
-                    Map.of("amount", money(limit), "used", money(used), "excess", money(excess),
-                                                "excessPercentage", limit.signum() > 0 ? percentage(excess, limit) : "不适用"),
-                    "先核对预算是否覆盖必要支出；必要时调整预算结构，对非必要部分设定每周上限。"));
+            if (excess.signum() > 0)
+                facts.add(new Fact("CNY:budget:" + budget.id(), "budget", "CNY", budget.categoryId(), name + "超预算",
+                        Map.of("amount", money(limit), "used", money(used), "excess", money(excess),
+                                "excessPercentage", limit.signum() > 0 ? percentage(excess, limit) : "不适用"),
+                        "先核对预算是否覆盖必要支出；必要时调整预算结构，对非必要部分设定每周上限。"));
         }
-        facts.sort(Comparator.comparingInt(f -> switch (f.kind()) { case "budget" -> 0; case "growth" -> 1; case "frequency" -> 2; case "large" -> 3; default -> 4; }));
+        facts.sort(Comparator.comparingInt(f -> switch (f.kind()) {
+            case "budget" -> 0;
+            case "growth" -> 1;
+            case "frequency" -> 2;
+            case "large" -> 3;
+            default -> 4;
+        }));
         return new Snapshot(month.toString(), RULE_VERSION, current.size(), summaries, budgets, facts, List.of(
                 "仅分析已记录账单，不代表全部收入或消费；一笔流水不等于一件商品。",
                 "转账本金不计收支，手续费单列；结余已扣除转账手续费，与原报表口径略有不同。",
@@ -133,6 +145,7 @@ public class MonthlyReportCalculator {
         }
         return 0;
     }
+
     private static boolean belongs(Integer id, int parent, Map<Integer, Category> categories) {
         if (root(id, categories) == 0) return false;
         Set<Integer> seen = new HashSet<>();
@@ -143,19 +156,50 @@ public class MonthlyReportCalculator {
         }
         return false;
     }
+
     private static Map<Integer, List<Tx>> group(List<Tx> rows, Map<Integer, Category> categories) {
         Map<Integer, List<Tx>> groups = new TreeMap<>();
         rows.forEach(t -> groups.computeIfAbsent(root(t.categoryId(), categories), k -> new ArrayList<>()).add(t));
         return groups;
     }
-    private static List<Tx> inMonth(List<Tx> rows, YearMonth month) { return rows.stream().filter(t -> t.date().startsWith(month.toString())).toList(); }
-    private static List<Tx> expenses(List<Tx> rows) { return rows.stream().filter(t -> "expense".equals(t.type())).toList(); }
-    private static String currency(Tx t) { return t.currency() == null || t.currency().trim().isEmpty() ? "UNKNOWN" : t.currency().trim(); }
-    private static BigDecimal sum(List<Tx> rows) { return sum(rows, t -> true); }
-    private static BigDecimal sum(List<Tx> rows, Predicate<Tx> predicate) { return rows.stream().filter(predicate).map(t -> decimal(t.amount())).reduce(ZERO, BigDecimal::add); }
-    private static BigDecimal decimal(String s) { return s == null ? ZERO : new BigDecimal(s); }
-    private static String money(BigDecimal v) { return v.setScale(2, RoundingMode.HALF_UP).toPlainString(); }
-    private static String average(BigDecimal v, int n) { return n == 0 ? "0.00" : money(v.divide(BigDecimal.valueOf(n), 2, RoundingMode.HALF_UP)); }
-    private static String percentage(BigDecimal v, BigDecimal total) { return total.signum() <= 0 ? null : v.multiply(new BigDecimal("100")).divide(total, 2, RoundingMode.HALF_UP).toPlainString(); }
-    private static String growth(BigDecimal v, BigDecimal prev) { return percentage(v.subtract(prev), prev); }
+
+    private static List<Tx> inMonth(List<Tx> rows, YearMonth month) {
+        return rows.stream().filter(t -> t.date().startsWith(month.toString())).toList();
+    }
+
+    private static List<Tx> expenses(List<Tx> rows) {
+        return rows.stream().filter(t -> "expense".equals(t.type())).toList();
+    }
+
+    private static String currency(Tx t) {
+        return t.currency() == null || t.currency().trim().isEmpty() ? "UNKNOWN" : t.currency().trim();
+    }
+
+    private static BigDecimal sum(List<Tx> rows) {
+        return sum(rows, t -> true);
+    }
+
+    private static BigDecimal sum(List<Tx> rows, Predicate<Tx> predicate) {
+        return rows.stream().filter(predicate).map(t -> decimal(t.amount())).reduce(ZERO, BigDecimal::add);
+    }
+
+    private static BigDecimal decimal(String s) {
+        return s == null ? ZERO : new BigDecimal(s);
+    }
+
+    private static String money(BigDecimal v) {
+        return v.setScale(2, RoundingMode.HALF_UP).toPlainString();
+    }
+
+    private static String average(BigDecimal v, int n) {
+        return n == 0 ? "0.00" : money(v.divide(BigDecimal.valueOf(n), 2, RoundingMode.HALF_UP));
+    }
+
+    private static String percentage(BigDecimal v, BigDecimal total) {
+        return total.signum() <= 0 ? null : v.multiply(new BigDecimal("100")).divide(total, 2, RoundingMode.HALF_UP).toPlainString();
+    }
+
+    private static String growth(BigDecimal v, BigDecimal prev) {
+        return percentage(v.subtract(prev), prev);
+    }
 }

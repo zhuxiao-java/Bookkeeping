@@ -1,43 +1,131 @@
 package com.bookkeeping.monthly;
 
-import tools.jackson.core.JacksonException;
-import tools.jackson.databind.ObjectMapper;
-import org.springframework.jdbc.core.JdbcTemplate;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
+import com.bookkeeping.dao.entity.AccountEntity;
+import com.bookkeeping.dao.entity.BudgetEntity;
+import com.bookkeeping.dao.entity.CategoryEntity;
+import com.bookkeeping.dao.entity.MessageEntity;
+import com.bookkeeping.dao.entity.MonthlyReportEntity;
+import com.bookkeeping.dao.entity.TransactionEntity;
+import com.bookkeeping.dao.mapper.AccountMapper;
+import com.bookkeeping.dao.mapper.BudgetMapper;
+import com.bookkeeping.dao.mapper.CategoryMapper;
+import com.bookkeeping.dao.mapper.MessageMapper;
+import com.bookkeeping.dao.mapper.MonthlyReportMapper;
+import com.bookkeeping.dao.mapper.TransactionMapper;
+import com.bookkeeping.constant.MessageBizType;
+import com.bookkeeping.constant.MessageStatus;
+import com.bookkeeping.constant.MessageType;
 import org.springframework.stereotype.Repository;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
+
 import java.time.YearMonth;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 import static com.bookkeeping.monthly.MonthlyReportModels.*;
 
-/** 月报独立的 JDBC 映射层，和原 MyBatis 业务共享数据源与事务。 */
+/**
+ * 月报持久化仓储：全部改用 MyBatis-Plus mapper + QueryWrapper，彻底移除 JdbcTemplate。
+ * <p>
+ * 职责：
+ * 1) 实体 {@link MonthlyReportEntity} 与领域模型 {@link StoredReport} 互转，
+ *    并负责快照/结果 JSON 的序列化；
+ * 2) 组装统计所需的来源数据 {@link Source}（流水 + 账户币种 + 分类 + 预算），复用既有实体的 mapper 读取；
+ * 3) 月报关联消息的创建与更新，复用 {@link MessageMapper}。
+ *
+ * @author zhuxiao
+ */
 @Repository
 public class MonthlyReportRepository {
-    final JdbcTemplate jdbc;
-    final ObjectMapper json;
-    public MonthlyReportRepository(JdbcTemplate jdbc, ObjectMapper json) {
-        this.jdbc = jdbc;
+    private final MonthlyReportMapper reportMapper;
+    private final TransactionMapper transactionMapper;
+    private final AccountMapper accountMapper;
+    private final CategoryMapper categoryMapper;
+    private final BudgetMapper budgetMapper;
+    private final MessageMapper messageMapper;
+    private final ObjectMapper json;
+
+    public MonthlyReportRepository(MonthlyReportMapper reportMapper,
+                                   TransactionMapper transactionMapper, AccountMapper accountMapper,
+                                   CategoryMapper categoryMapper, BudgetMapper budgetMapper,
+                                   MessageMapper messageMapper, ObjectMapper json) {
+        this.reportMapper = reportMapper;
+        this.transactionMapper = transactionMapper;
+        this.accountMapper = accountMapper;
+        this.categoryMapper = categoryMapper;
+        this.budgetMapper = budgetMapper;
+        this.messageMapper = messageMapper;
         this.json = json;
     }
 
+    // ==================== JSON 编解码 ====================
+
+    /**
+     * 统一序列化入口：快照、来源指纹、AI 结果均经此写入文本列。
+     */
+    public String encode(Object value) {
+        return json.writeValueAsString(value);
+    }
+
+    private <T> T decode(String value, Class<T> type) {
+        return json.readValue(value, type);
+    }
+
+    // ==================== 来源数据组装 ====================
+
+    /**
+     * 读取指定月份及其前 3 个月的来源数据（供计算器统计环比/三月均值）。
+     * <p>
+     * 与原 JdbcTemplate 实现口径一致：流水取 [month-3 月初, month+1 月初) 左闭右开区间，
+     * 币种来自账户关联（缺失记为 null→UNKNOWN），并只保留与本次流水/预算相关的分类链，避免上传无关分类。
+     */
     public Source source(YearMonth month) {
-        List<Tx> transactions = jdbc.query("""
-                SELECT t.f_id, t.f_type, t.f_amount, t.f_fee, t.f_category_id,
-                       t.f_account_id, a.f_currency, t.f_date
-                FROM t_transaction t LEFT JOIN t_account a ON a.f_id=t.f_account_id
-                WHERE t.f_date >= ? AND t.f_date < ? ORDER BY t.f_id
-                """, (rs, n) -> new Tx(rs.getLong(1), rs.getString(2), rs.getString(3), rs.getString(4),
-                nullableInt(rs, 5), nullableInt(rs, 6), rs.getString(7), rs.getString(8)),
-                month.minusMonths(3).atDay(1).toString(), month.plusMonths(1).atDay(1).toString());
-        List<Category> categories = jdbc.query("SELECT f_id,f_parent_id,f_name,f_type FROM t_category ORDER BY f_id",
-                (rs, n) -> new Category(rs.getInt(1), nullableInt(rs, 2), rs.getString(3), rs.getString(4)));
-        List<Budget> budgets = jdbc.query("SELECT f_id,f_category_id,f_amount FROM t_budget WHERE f_year=? AND f_month=? ORDER BY f_id",
-                (rs, n) -> new Budget(rs.getInt(1), nullableInt(rs, 2), rs.getString(3)), month.getYear(), month.getMonthValue());
-        String firstMonth = jdbc.queryForObject("SELECT substr(MIN(f_date),1,7) FROM t_transaction", String.class);
+        String start = month.minusMonths(3).atDay(1).toString();
+        String end = month.plusMonths(1).atDay(1).toString();
+        //  accountId -> 币种代码：一次性载入账户表，避免逐条 join
+        Map<Integer, String> currencyByAccount = new HashMap<>();
+        for (AccountEntity account : accountMapper.selectList(null)) {
+            currencyByAccount.put(account.getId(), account.getCurrency() == null ? null : account.getCurrency().getValue());
+        }
+        List<TransactionEntity> txEntities = transactionMapper.selectList(new QueryWrapper<TransactionEntity>()
+                .ge("f_date", start).lt("f_date", end).orderByAsc("f_id"));
+        List<Tx> transactions = new ArrayList<>(txEntities.size());
+        for (TransactionEntity t : txEntities) {
+            transactions.add(new Tx(t.getId().longValue(), t.getType().getValue(), plain(t.getAmount()), plain(t.getFee()),
+                    t.getCategoryId(), t.getAccountId(), currencyByAccount.get(t.getAccountId()),
+                    t.getTransactionDate().toLocalDate().toString()));
+        }
+        List<CategoryEntity> categoryEntities = categoryMapper.selectList(new QueryWrapper<CategoryEntity>().orderByAsc("f_id"));
+        Map<Integer, Category> categoryById = new HashMap<>();
+        List<Category> allCategories = new ArrayList<>();
+        for (CategoryEntity c : categoryEntities) {
+            Category category = new Category(c.getId(), c.getParentId(), c.getName(), c.getType() == null ? null : c.getType().getValue());
+            categoryById.put(category.id(), category);
+            allCategories.add(category);
+        }
+        List<BudgetEntity> budgetEntities = budgetMapper.selectList(new QueryWrapper<BudgetEntity>()
+                .eq("f_year", month.getYear()).eq("f_month", month.getMonthValue()).orderByAsc("f_id"));
+        List<Budget> budgets = new ArrayList<>();
+        for (BudgetEntity b : budgetEntities) {
+            budgets.add(new Budget(b.getId(), b.getCategoryId(), plain(b.getAmount())));
+        }
+        String firstMonth = reportMapper.firstTransactionMonth();
         String historyStart = month.minusMonths(3).toString();
         if (firstMonth != null && firstMonth.compareTo(historyStart) < 0) firstMonth = historyStart;
-        Map<Integer, Category> byId = new HashMap<>();
-        categories.forEach(c -> byId.put(c.id(), c));
+        // 仅保留被流水/预算引用到的分类及其全部父级，收敛发送给模型的数据面
+        List<Category> relevant = filterRelevant(allCategories, categoryById, transactions, budgets);
+        return new Source(transactions, relevant, budgets, firstMonth);
+    }
+
+    private static List<Category> filterRelevant(List<Category> all, Map<Integer, Category> byId,
+                                                 List<Tx> transactions, List<Budget> budgets) {
         Set<Integer> relevant = new HashSet<>();
         List<Integer> references = new ArrayList<>();
         transactions.forEach(t -> references.add(t.categoryId()));
@@ -48,56 +136,136 @@ public class MonthlyReportRepository {
                 id = category == null ? null : category.parentId();
             }
         }
-        return new Source(transactions, categories.stream().filter(c -> relevant.contains(c.id())).toList(), budgets, firstMonth);
+        return all.stream().filter(c -> relevant.contains(c.id())).toList();
     }
 
+    private static String plain(java.math.BigDecimal value) {
+        return value == null ? null : value.toPlainString();
+    }
+
+    /**
+     * 计算来源数据指纹：规则版本 + 来源序列化结果的 SHA-256。
+     * 快照与当前来源指纹不一致即视为「已过期」，用于解读前的乐观校验。
+     */
+    public String fingerprint(Source source) {
+        try {
+            byte[] digest = java.security.MessageDigest.getInstance("SHA-256")
+                    .digest((MonthlyReportCalculator.RULE_VERSION + encode(source)).getBytes(java.nio.charset.StandardCharsets.UTF_8));
+            return java.util.HexFormat.of().formatHex(digest);
+        } catch (java.security.NoSuchAlgorithmException e) {
+            throw new IllegalStateException(e);
+        }
+    }
+
+    // ==================== 月报快照 CRUD ====================
+
     public StoredReport byMonth(String month) {
-        return jdbc.query("SELECT * FROM t_monthly_report WHERE f_month=?", this::report, month).stream().findFirst().orElse(null);
+        MonthlyReportEntity entity = reportMapper.selectOne(new QueryWrapper<MonthlyReportEntity>().eq("f_month", month));
+        return toStored(entity);
     }
+
     public StoredReport byId(long id) {
-        return jdbc.query("SELECT * FROM t_monthly_report WHERE f_id=?", this::report, id).stream().findFirst().orElse(null);
+        return toStored(reportMapper.selectById((int) id));
     }
+
     public List<StoredReport> byYear(int year) {
-        return jdbc.query("SELECT * FROM t_monthly_report WHERE f_month>=? AND f_month<? ORDER BY f_month DESC",
-                this::report, year + "-01", (year + 1) + "-01");
+        List<MonthlyReportEntity> entities = reportMapper.selectList(new QueryWrapper<MonthlyReportEntity>()
+                .ge("f_month", year + "-01").lt("f_month", (year + 1) + "-01").orderByDesc("f_month"));
+        List<StoredReport> result = new ArrayList<>(entities.size());
+        entities.forEach(e -> result.add(toStored(e)));
+        return result;
     }
-    public AiJob latestJob(long reportId, int version) {
-        return jdbc.query("SELECT * FROM t_monthly_report_ai_job WHERE f_report_id=? AND f_snapshot_version=? ORDER BY rowid DESC LIMIT 1",
-                this::mapJob, reportId, version).stream().findFirst().orElse(null);
+
+    /**
+     * 新增月报快照，返回带自增主键的实体。
+     */
+    public MonthlyReportEntity insertReport(String month, String sourceHash, String snapshotJson, String generatedAt, String resultJson) {
+        MonthlyReportEntity entity = new MonthlyReportEntity();
+        entity.setMonth(month);
+        entity.setVersion(1);
+        entity.setSourceHash(sourceHash);
+        entity.setSnapshot(snapshotJson);
+        entity.setAiResult(resultJson);
+        entity.setGeneratedAt(generatedAt);
+        reportMapper.insert(entity);
+        return entity;
     }
-    public AiJob latestSuccess(long reportId, int version) {
-        return jdbc.query("SELECT * FROM t_monthly_report_ai_job WHERE f_report_id=? AND f_snapshot_version=? AND f_status='succeeded' ORDER BY rowid DESC LIMIT 1",
-                this::mapJob, reportId, version).stream().findFirst().orElse(null);
+
+    /**
+     * 更新既有月报：版本自增、覆盖来源指纹/快照/生成时间。
+     * 全程用 UpdateWrapper 指定 SET，避免把主键写入 SET 子句；version 用 setSql 自增规避读改写竞态。
+     */
+    public boolean updateReport(long id, int version, String sourceHash, String snapshotJson, String generatedAt, String resultJson) {
+        return reportMapper.update(null, new UpdateWrapper<MonthlyReportEntity>()
+                .eq("f_id", id).eq("f_version", version)
+                .set("f_source_hash", sourceHash)
+                .set("f_snapshot", snapshotJson)
+                .set("f_ai_result", resultJson)
+                .set("f_generated_at", generatedAt)
+                .setSql("f_version = f_version + 1")) == 1;
     }
-    public List<AiJob> jobs(long reportId, int version, String config) {
-        return jdbc.query("SELECT * FROM t_monthly_report_ai_job WHERE f_report_id=? AND f_snapshot_version=? AND f_config_version=? ORDER BY f_attempt DESC",
-                this::mapJob, reportId, version, config);
+
+    public void updateReportMessage(long id, Long messageId) {
+        MonthlyReportEntity entity = new MonthlyReportEntity();
+        entity.setId((int) id);
+        entity.setMessageId(messageId);
+        reportMapper.updateById(entity);
     }
-    public AiJob job(String id) {
-        return jdbc.query("SELECT * FROM t_monthly_report_ai_job WHERE f_id=?", this::mapJob, id).stream().findFirst().orElse(null);
+
+    private StoredReport toStored(MonthlyReportEntity entity) {
+        if (entity == null) return null;
+        return new StoredReport(entity.getId().longValue(), entity.getMonth(), entity.getVersion(),
+                entity.getSourceHash(), entity.getGeneratedAt(), decode(entity.getSnapshot(), Snapshot.class), entity.getMessageId(),
+                entity.getAiResult() == null ? null : decode(entity.getAiResult(), JsonNode.class));
     }
-    public String encode(Object value) {
-        try { return json.writeValueAsString(value); }
-        catch (JacksonException e) { throw new IllegalStateException("月报序列化失败"); }
+
+    /** 只在启动迁移时读取旧档案，正常查询与生成不依赖旧表。 */
+    public void migrateLegacyResults() {
+        if (reportMapper.hasLegacyAutomatic()) reportMapper.clearLegacyAutomatic();
+        if (!reportMapper.hasLegacyJobs()) return;
+        for (MonthlyReportEntity entity : reportMapper.selectList(new QueryWrapper<MonthlyReportEntity>().isNull("f_ai_result"))) {
+            Snapshot snapshot = decode(entity.getSnapshot(), Snapshot.class);
+            for (String text : reportMapper.legacyResults(entity.getId(), entity.getVersion())) {
+                JsonNode result;
+                try {
+                    result = decode(text, JsonNode.class);
+                    MonthlyReportAiService.validateResult(result, snapshot);
+                } catch (RuntimeException invalid) {
+                    // 旧档案可能损坏；不回显正文，继续寻找同快照的最近有效成功结果。
+                    continue;
+                }
+                reportMapper.update(null, new UpdateWrapper<MonthlyReportEntity>()
+                        .eq("f_id", entity.getId()).isNull("f_ai_result").set("f_ai_result", encode(result)));
+                break;
+            }
+        }
     }
-    private <T> T decode(String value, Class<T> type) {
-        try { return json.readValue(value, type); }
-        catch (JacksonException e) { throw new IllegalStateException("月报数据损坏"); }
+
+    // ==================== 关联消息 ====================
+
+    /**
+     * 新建一条月报消息（未读），返回其主键。
+     */
+    public Long createMessage(String title, String content, Long bizId) {
+        MessageEntity entity = new MessageEntity();
+        entity.setTitle(title);
+        entity.setContent(content);
+        entity.setType(MessageType.MONTHLY_REPORT);
+        entity.setBizType(MessageBizType.MONTHLY_REPORT);
+        entity.setBizId(bizId == null ? null : bizId.intValue());
+        entity.setStatus(MessageStatus.UN_READ);
+        messageMapper.insert(entity);
+        return entity.getId().longValue();
     }
-    private StoredReport report(ResultSet rs, int row) throws SQLException {
-        long message = rs.getLong("f_message_id");
-        Long messageId = rs.wasNull() ? null : message;
-        return new StoredReport(rs.getLong("f_id"), rs.getString("f_month"), rs.getInt("f_version"),
-                rs.getString("f_source_hash"), rs.getString("f_generated_at"), decode(rs.getString("f_snapshot"), Snapshot.class), messageId);
-    }
-    private AiJob mapJob(ResultSet rs, int row) throws SQLException {
-        String result = rs.getString("f_result");
-        return new AiJob(rs.getString("f_id"), rs.getLong("f_report_id"), rs.getInt("f_snapshot_version"),
-                rs.getString("f_config_version"), rs.getInt("f_attempt"), rs.getString("f_status"),
-                rs.getString("f_created_at"), rs.getString("f_error_code"), result == null ? null : decode(result, tools.jackson.databind.JsonNode.class));
-    }
-    private static Integer nullableInt(ResultSet rs, int col) throws SQLException {
-        int value = rs.getInt(col);
-        return rs.wasNull() ? null : value;
+
+    /**
+     * 更新既有月报消息内容。
+     */
+    public void updateMessage(Long messageId, String content) {
+        if (messageId == null) return;
+        MessageEntity entity = new MessageEntity();
+        entity.setId(messageId.intValue());
+        entity.setContent(content);
+        messageMapper.updateById(entity);
     }
 }

@@ -5,6 +5,8 @@ import com.baomidou.mybatisplus.core.MybatisSqlSessionFactoryBuilder;
 import com.baomidou.mybatisplus.core.config.GlobalConfig;
 import com.baomidou.mybatisplus.core.toolkit.GlobalConfigUtils;
 import com.bookkeeping.constant.ExpTransactionType;
+import com.bookkeeping.constant.TransactionType;
+import com.bookkeeping.dao.dto.TransactionDTO;
 import com.bookkeeping.dao.mapper.*;
 import com.bookkeeping.dao.mapping.*;
 import com.bookkeeping.service.*;
@@ -34,6 +36,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 import java.math.BigDecimal;
 import java.nio.file.Path;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.concurrent.CountDownLatch;
@@ -55,6 +58,7 @@ class LevelSystemSqliteTest {
     private UserLevelService levels;
     private CheckInService checkins;
     private TransactionServiceImpl transactions;
+    private BudgetServiceImpl budget;
     private MessageService messages;
 
     @BeforeEach
@@ -77,6 +81,7 @@ class LevelSystemSqliteTest {
         configuration.addMapper(CheckInMapper.class);
         configuration.addMapper(TransactionMapper.class);
         configuration.addMapper(BudgetMapper.class);
+        configuration.addMapper(AccountMapper.class);
         SqlSessionFactory factory = new MybatisSqlSessionFactoryBuilder().build(configuration);
         SqlSessionTemplate session = new SqlSessionTemplate(factory);
         configs = new LevelConfigServiceImpl(Mappers.getMapper(LevelConfigMapping.class));
@@ -87,7 +92,7 @@ class LevelSystemSqliteTest {
         ReflectionTestUtils.setField(logs, "baseMapper", session.getMapper(ExperienceLogMapper.class));
         transactions = new TransactionServiceImpl(Mappers.getMapper(TransactionMapping.class));
         ReflectionTestUtils.setField(transactions, "baseMapper", session.getMapper(TransactionMapper.class));
-        BudgetServiceImpl budget = new BudgetServiceImpl(Mappers.getMapper(BudgetMapping.class));
+        budget = new BudgetServiceImpl(Mappers.getMapper(BudgetMapping.class));
         ReflectionTestUtils.setField(budget, "baseMapper", session.getMapper(BudgetMapper.class));
         UserLevelServiceImpl target = new UserLevelServiceImpl(Mappers.getMapper(UserLevelMapping.class));
         ReflectionTestUtils.setField(target, "baseMapper", session.getMapper(UserLevelMapper.class));
@@ -104,6 +109,15 @@ class LevelSystemSqliteTest {
         ReflectionTestUtils.setField(checkinTarget, "levelService", levels);
         ReflectionTestUtils.setField(checkinTarget, "messageService", messages);
         checkins = transactional(checkinTarget);
+        AccountServiceImpl accounts = new AccountServiceImpl(Mappers.getMapper(AccountMapping.class));
+        ReflectionTestUtils.setField(accounts, "baseMapper", session.getMapper(AccountMapper.class));
+        ReflectionTestUtils.setField(transactions, "accountService", accounts);
+        ReflectionTestUtils.setField(transactions, "budgetService", budget);
+        ReflectionTestUtils.setField(transactions, "userLevelService", levels);
+        transactions = transactional(transactions);
+        ReflectionTestUtils.setField(budget, "transactionService", transactions);
+        ReflectionTestUtils.setField(budget, "categoryService", mock(CategoryService.class));
+        ReflectionTestUtils.setField(budget, "messageService", messages);
     }
 
     @SuppressWarnings("unchecked")
@@ -349,6 +363,115 @@ class LevelSystemSqliteTest {
             executor.shutdownNow();
             assertTrue(executor.awaitTermination(10, TimeUnit.SECONDS));
         }
+    }
+
+    @Test
+    void backfill_preservesHistoricalDates_andAppliesAllBalanceEffects() {
+        prepareAccounts();
+        LocalDateTime occurred = LocalDateTime.of(2024, 2, 29, 23, 59, 58);
+        TransactionDTO expense = backfill(TransactionType.EXPENSE, "30.30", occurred);
+        TransactionDTO income = backfill(TransactionType.INCOME, "100.10", occurred.minusDays(1));
+        TransactionDTO transfer = backfill(TransactionType.TRANSFER, "20", occurred.minusMonths(2));
+        transfer.setToAccountId(2);
+        transfer.setFee(new BigDecimal("0.50"));
+        assertEquals(8, transactions.saveWithReward(expense));
+        assertEquals(1, transactions.saveWithReward(income));
+        assertEquals(1, transactions.saveWithReward(transfer));
+        assertEquals(occurred, transactions.detail(1).getTransactionDate());
+        assertEquals(income.getTransactionDate(), transactions.detail(2).getTransactionDate());
+        assertEquals(transfer.getTransactionDate(), transactions.detail(3).getTransactionDate());
+        assertBalance(1, "1049.30");
+        assertBalance(2, "520");
+        assertEquals(0, new BigDecimal("30.30").compareTo(transactions.selectBeforeExpenseAmount(occurred.toLocalDate())));
+        var summary = transactions.summary(occurred.toLocalDate().withDayOfMonth(1).atStartOfDay(), occurred);
+        assertEquals(0, new BigDecimal("100.10").compareTo(summary.income()));
+        assertEquals(0, new BigDecimal("30.30").compareTo(summary.expense()));
+        assertEquals(0, jdbc.queryForObject("SELECT COUNT(*) FROM t_check_in", Integer.class));
+        assertEquals(0, jdbc.queryForObject("SELECT COUNT(*) FROM t_experience_log", Integer.class));
+    }
+
+    @Test
+    void backfill_sharesTodaysRewardLimitWithOrdinaryRecords() {
+        prepareAccounts();
+        LocalDateTime historical = LocalDate.now().minusYears(1).atTime(12, 30);
+        jdbc.update("INSERT INTO t_exp_transaction(f_source,f_exp_change,f_create_time) VALUES ('record','15',?)", historical.toString());
+        assertEquals(8, transactions.saveWithReward(backfill(TransactionType.INCOME, "1", LocalDateTime.now())));
+        for (int i = 0; i < 7; i++) {
+            assertEquals(1, transactions.saveWithReward(backfill(TransactionType.INCOME, "1", historical.minusDays(i))));
+        }
+        assertEquals(0, transactions.saveWithReward(backfill(TransactionType.INCOME, "1", historical.minusMonths(1))));
+        assertEquals(0, transactions.saveWithReward(backfill(TransactionType.INCOME, "1", LocalDateTime.now())));
+        assertUser(1, 15, 15, 0);
+        assertBalance(1, "1010");
+        assertEquals(15, jdbc.queryForObject("SELECT SUM(f_exp_change) FROM t_exp_transaction WHERE f_create_time >= ? AND f_create_time < ?",
+                Integer.class, LocalDate.now().toString(), LocalDate.now().plusDays(1).toString()));
+        assertEquals(1, jdbc.queryForObject("SELECT COUNT(*) FROM t_exp_transaction WHERE f_create_time < ?",
+                Integer.class, LocalDate.now().toString()));
+    }
+
+    @Test
+    void backfill_updatesBudgetUsageWithoutRewritingClosedSettlement() {
+        prepareMonth("1000", "900");
+        LocalDate month = LocalDate.now().withDayOfMonth(1).minusMonths(1);
+        levels.monthlyLevelChange();
+        var closedLog = jdbc.queryForList("SELECT * FROM t_experience_log");
+        var closedExperience = jdbc.queryForList("SELECT * FROM t_exp_transaction WHERE f_source='budget'");
+        assertEquals(8, transactions.saveWithReward(backfill(TransactionType.EXPENSE, "200", month.atTime(12, 30))));
+        assertEquals(closedLog, jdbc.queryForList("SELECT * FROM t_experience_log"));
+        assertEquals(closedExperience, jdbc.queryForList("SELECT * FROM t_exp_transaction WHERE f_source='budget'"));
+        levels.monthlyLevelChange();
+        assertEquals(closedLog, jdbc.queryForList("SELECT * FROM t_experience_log"));
+        assertEquals(closedExperience, jdbc.queryForList("SELECT * FROM t_exp_transaction WHERE f_source='budget'"));
+        assertUser(3, 508, 508, 0);
+        assertEquals(0, new BigDecimal("1100").compareTo(budget.selectBudgetInfoByYearMonth(month.getYear(), month.getMonthValue()).get(0).amountUsed()));
+        assertBalance(1, "-200");
+    }
+
+    @Test
+    void backfill_isIncludedWhenMonthHasNotYetSettled() {
+        prepareMonth("1000", "900");
+        LocalDate month = LocalDate.now().withDayOfMonth(1).minusMonths(1);
+        assertEquals(8, transactions.saveWithReward(backfill(TransactionType.EXPENSE, "200", month.atTime(12, 30))));
+        assertEquals(0, jdbc.queryForObject("SELECT COUNT(*) FROM t_experience_log", Integer.class));
+        levels.monthlyLevelChange();
+        assertEquals("1100", jdbc.queryForObject("SELECT f_actual_amount FROM t_experience_log", String.class));
+        assertEquals(-8, jdbc.queryForObject("SELECT f_exp_change FROM t_experience_log", Integer.class));
+        assertUser(1, 0, 8, 8);
+    }
+
+    @Test
+    void backfill_failedBalanceWriteRollsBackRecord_withoutReward() {
+        prepareAccounts();
+        jdbc.execute("CREATE TRIGGER reject_balance BEFORE UPDATE ON t_account BEGIN SELECT RAISE(ABORT, '模拟余额写入失败'); END");
+        assertThrows(RuntimeException.class, () -> transactions.saveWithReward(
+                backfill(TransactionType.EXPENSE, "20", LocalDate.now().minusMonths(1).atTime(12, 30))));
+        assertEquals(0, jdbc.queryForObject("SELECT COUNT(*) FROM t_transaction", Integer.class));
+        assertEquals(0, jdbc.queryForObject("SELECT COUNT(*) FROM t_exp_transaction", Integer.class));
+        assertBalance(1, "1000");
+        assertUser(1, 0, 0, 0);
+    }
+
+    private TransactionDTO backfill(TransactionType type, String amount, LocalDateTime occurred) {
+        TransactionDTO dto = new TransactionDTO();
+        dto.setType(type);
+        dto.setAmount(new BigDecimal(amount));
+        dto.setFee(BigDecimal.ZERO);
+        dto.setAccountId(1);
+        dto.setTransactionDate(occurred);
+        dto.setNote("原始备注");
+        dto.setTags("[]");
+        if (type != TransactionType.TRANSFER) {
+            dto.setCategoryId(jdbc.queryForObject("SELECT f_id FROM t_category WHERE f_type=? LIMIT 1", Integer.class, type.getValue()));
+        }
+        return dto;
+    }
+
+    private void prepareAccounts() {
+        jdbc.update("INSERT INTO t_account(f_id,f_name,f_type,f_current_balance) VALUES (1,'补录账户','cash','1000'),(2,'转入账户','bank','500')");
+    }
+
+    private void assertBalance(int id, String expected) {
+        assertEquals(0, new BigDecimal(expected).compareTo(jdbc.queryForObject("SELECT f_current_balance FROM t_account WHERE f_id=?", BigDecimal.class, id)));
     }
 
     private void prepareMonth(String budget, String expense) {

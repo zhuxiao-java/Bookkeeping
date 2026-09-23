@@ -38,7 +38,21 @@ public enum BookkeepingResp implements RespInfo {
 
     RESTORE_FAIL("B0016", "备份恢复失败"),
 
-    CSV_IMPORT_FAIL("B0017", "CSV 导入失败")
+    CSV_IMPORT_FAIL("B0017", "CSV 导入失败"),
+
+    AI_CONFIG_INVALID("B0018", "AI 接口配置无效，请检查接口地址与模型名"),
+
+    AI_CONFIG_CHANGED("B0019", "配置已变更，请重新确认后再试"),
+
+    AI_NOT_CONFIGURED("B0020", "请先完成 AI 接口地址、模型与密钥配置"),
+
+    AI_CONSENT_REQUIRED("B0021", "请先预览并确认发送统计数据后再生成 AI 月报"),
+
+    AI_STALE("B0022", "账单或报告已变化，请重新预览并确认"),
+
+    MONTH_INVALID("B0024", "只能生成已结束月份的月报，格式应为 yyyy-MM"),
+
+    REPORT_NOT_FOUND("B0025", "月报不存在")
     ;
 
 

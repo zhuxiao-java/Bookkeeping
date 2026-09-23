@@ -11,6 +11,8 @@ import com.bookkeeping.service.BackupService;
 import com.bookkeeping.service.CategoryService;
 import com.bookkeeping.service.TransactionService;
 import com.bookkeeping.util.CsvUtil;
+import com.bookkeeping.monthly.MonthlyAiRequestGuard;
+import java.util.UUID;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
@@ -80,6 +82,8 @@ public class BackupServiceImpl implements BackupService {
     @Resource
     private DataSource dataSource;
     @Resource
+    private MonthlyAiRequestGuard monthlyAiRequestGuard;
+    @Resource
     private TransactionService transactionService;
     @Resource
     private AccountService accountService;
@@ -111,6 +115,7 @@ public class BackupServiceImpl implements BackupService {
                  Statement statement = connection.createStatement()) {
                 statement.executeUpdate("VACUUM INTO '" + escapeSqlPath(tmp.toAbsolutePath().toString()) + "'");
             }
+            sanitizeSnapshot(tmp);
             return Files.readAllBytes(tmp);
         } catch (SQLException | IOException e) {
             throw new BusinessException(BookkeepingResp.BACKUP_SNAPSHOT_FAIL);
@@ -126,18 +131,25 @@ public class BackupServiceImpl implements BackupService {
         }
         Path dbPath = Path.of(bookkeepingDir, "accounts.db").toAbsolutePath().normalize();
         Path staging = dbPath.resolveSibling(dbPath.getFileName() + ".restore");
+        boolean paused = false;
+        boolean restored = false;
         try {
             Files.write(staging, dbBytes);
             // 覆盖前用独立连接校验备份完整性与关键表结构：杜绝用损坏/异类库覆盖现库（NEW-03）
             validateBackupDb(staging);
+            sanitizeSnapshot(staging);
+            monthlyAiRequestGuard.pauseForRestore();
+            paused = true;
             // 安全兜底：校验通过后把现库另存为带时间戳的 .bak（多次恢复不互相覆盖），出错可回退
             if (Files.exists(dbPath)) {
                 Path bak = dbPath.resolveSibling(
                         dbPath.getFileName() + "." + BACKUP_STAMP.format(LocalDateTime.now()) + ".bak");
-                Files.copy(dbPath, bak, StandardCopyOption.REPLACE_EXISTING);
+                // 恢复前兜底也必须净化，不能通过原文件复制把密钥带入 .bak。
+                Files.write(bak, createSnapshot());
             }
             // rename 覆盖：POSIX 下活动连接仍指向旧 inode，故必须重启后端才能加载新库
             Files.move(staging, dbPath, StandardCopyOption.REPLACE_EXISTING);
+            restored = true;
             // 清理属于旧库的 sidecar 文件，避免新库配旧日志
             deleteQuietly(dbPath.resolveSibling(dbPath.getFileName() + "-journal"));
             deleteQuietly(dbPath.resolveSibling(dbPath.getFileName() + "-wal"));
@@ -147,6 +159,48 @@ public class BackupServiceImpl implements BackupService {
         } finally {
             // 校验失败/异常时清理暂存文件（成功 move 后已不存在，deleteQuietly 幂等）
             deleteQuietly(staging);
+            if (paused && !restored) monthlyAiRequestGuard.resumeAfterRestoreFailure();
+        }
+    }
+
+    /**
+     * 只净化临时副本：保留非敏感连接配置，剔除密钥、有效授权及运行态。
+     * secure_delete 与 VACUUM 一并清理空闲页，避免仅 UPDATE 后仍能从备份字节中找回旧密钥。
+     * 任一步失败即拒绝产出备份，不允许降级返回未经净化的文件。
+     */
+    private void sanitizeSnapshot(Path snapshot) {
+        try (Connection connection = DriverManager.getConnection("jdbc:sqlite:" + snapshot.toAbsolutePath());
+             Statement statement = connection.createStatement()) {
+            Set<String> tables = new HashSet<>();
+            try (ResultSet rs = statement.executeQuery("SELECT name FROM sqlite_master WHERE type='table'")) {
+                while (rs.next()) tables.add(rs.getString(1));
+            }
+            // PRAGMA 会返回结果集，进入事务前必须消费并关闭；旧备份无 AI 表时也不能遗留活动语句。
+            try (ResultSet result = statement.executeQuery("PRAGMA secure_delete=ON")) {
+                if (!result.next() || result.getInt(1) != 1) throw new SQLException("secure_delete unavailable");
+            }
+            try (ResultSet result = statement.executeQuery("PRAGMA journal_mode=DELETE")) {
+                if (!result.next() || !"delete".equalsIgnoreCase(result.getString(1)))
+                    throw new SQLException("journal mode unavailable");
+            }
+            connection.setAutoCommit(false);
+            if (tables.contains("t_ai_config")) {
+                boolean legacyAutomatic = false;
+                try (ResultSet columns = statement.executeQuery("PRAGMA table_info(t_ai_config)")) {
+                    while (columns.next()) if ("f_automatic".equals(columns.getString("name"))) legacyAutomatic = true;
+                }
+                statement.executeUpdate("UPDATE t_ai_config SET f_api_key='',f_config_version='" + UUID.randomUUID()
+                        + "'" + (legacyAutomatic ? ",f_automatic=0" : ""));
+            }
+            if (tables.contains("t_monthly_report_ai_job")) {
+                statement.executeUpdate("UPDATE t_monthly_report_ai_job SET f_status='interrupted',"
+                        + "f_error_code='INTERRUPTED',f_result=NULL WHERE f_status='running'");
+            }
+            connection.commit();
+            connection.setAutoCommit(true);
+            statement.execute("VACUUM");
+        } catch (SQLException e) {
+            throw new BusinessException(BookkeepingResp.BACKUP_SNAPSHOT_FAIL);
         }
     }
 
