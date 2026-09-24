@@ -144,6 +144,19 @@ Windows 为 `nsis` 安装包，Linux 为 `AppImage`。
 **跨平台约束**：后端为原生可执行文件，无法交叉编译。Win 包在 Windows 打、Linux 包在 Linux 打；
 macOS 的 arm64 / x64 也建议分别在对应架构机器上完成 §2 + §3。
 
+**Windows CI 自动打包**：上述 Windows 流程（§2.2 + §3）已由 GitHub Actions 自动化，
+见 `.github/workflows/build-windows-exe.yml`：
+
+| 触发方式 | 行为 |
+| --- | --- |
+| 推送 `main` / 手动 `workflow_dispatch` | 构建 NSIS 安装包，上传为 Actions 产物（`bookkeeping-win-x64`） |
+| 推送 `v*` 标签 | 构建后自动发布 GitHub Release，安装包作为 Release 附件，可直接分发 |
+
+工作流步骤与本文档一致：checkout → 安装 self-framework 到本地仓库 → `mvn package` →
+`jlink` + `jpackage`（含 `-Dfile.encoding=UTF-8`）→ 布局 `resources/java`（先清空避免混入其他平台产物）→
+`npm ci && vite build && electron-builder --win --x64`。注意 Actions 产物未做代码签名，
+SmartScreen 会提示未知发布者（签名见路线图「工程与分发」）。
+
 **图标维护**：如需换 Logo，只改 `build/logo.svg`，然后 `npx electron build/gen-icons.cjs`
 重新生成全部图标产物，再执行 `npm run dist`。
 
