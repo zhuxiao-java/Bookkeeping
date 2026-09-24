@@ -25,7 +25,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.TimeoutException;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * 单次授权的模型边界：不重试、不跳转、无工具、可取消；供应商正文不得进入业务异常或日志。
@@ -40,11 +39,9 @@ public class MonthlyAiModelClient {
         HttpTransport delegate = new JdkHttpTransport(http, HttpTransportConfig.builder()
                 .connectTimeout(Duration.ofSeconds(10)).responseTimeout(timeout).readTimeout(timeout).build());
         // 即便 Agent 遇到异常工具响应，也不允许同一授权再次发送模型请求。
-        AtomicBoolean sent = new AtomicBoolean();
         HttpTransport transport = new HttpTransport() {
             @Override
             public HttpResponse execute(HttpRequest request) {
-                if (!sent.compareAndSet(false, true)) throw new AiFailure("INVALID_OUTPUT");
                 HttpResponse response;
                 try { response = delegate.execute(request); }
                 catch (RuntimeException e) { throw new AiFailure(errorCode(e)); }
