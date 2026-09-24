@@ -27,7 +27,7 @@ import java.util.concurrent.CancellationException;
 import java.util.concurrent.TimeoutException;
 
 /**
- * 单次授权的模型边界：不重试、不跳转、无工具、可取消；供应商正文不得进入业务异常或日志。
+ * 模型调用边界：不重试、不跳转、无工具、可取消；供应商正文不得进入业务异常或日志。
  */
 @Component
 public class MonthlyAiModelClient {
@@ -38,7 +38,7 @@ public class MonthlyAiModelClient {
         if (payload.length() > 100000) return Mono.error(new AiFailure("SUMMARY_TOO_LARGE"));
         HttpTransport delegate = new JdkHttpTransport(http, HttpTransportConfig.builder()
                 .connectTimeout(Duration.ofSeconds(10)).responseTimeout(timeout).readTimeout(timeout).build());
-        // 即便 Agent 遇到异常工具响应，也不允许同一授权再次发送模型请求。
+        // 传输层守卫：拒绝重定向、限制响应大小，异常统一归类为错误码，不透出供应商正文。
         HttpTransport transport = new HttpTransport() {
             @Override
             public HttpResponse execute(HttpRequest request) {
