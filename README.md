@@ -178,7 +178,7 @@ cd frontend && npm run dist
 产物输出于 `frontend/release/`：macOS 为 `.dmg` + `.zip`，Windows 为 NSIS 安装包，Linux 为 AppImage。由于后端为原生可执行文件**无法交叉编译**，各平台需在对应系统上打包。
 
 - 完整步骤、目录约定、验证清单与常见问题见 **[docs/desktop-packaging.md](docs/desktop-packaging.md)**。
-- 仓库已配置 GitHub Actions（[.github/workflows/build-windows-exe.yml](.github/workflows/build-windows-exe.yml)），推送 `main` 或手动触发即可自动构建 Windows x64 安装包。
+- 仓库已配置 GitHub Actions（[.github/workflows/build-windows-exe.yml](.github/workflows/build-windows-exe.yml)）：推送 `main` 或手动触发即自动构建 Windows x64 安装包并上传为 Actions 产物；推送 `v*` 标签（如 `v1.0.0`）会在构建完成后自动发布 GitHub Release 并附带安装包，可直接分发下载。
 
 ---
 
