@@ -203,11 +203,7 @@ public class TransactionServiceImpl extends IBaseCrudServiceImpl<TransactionDTO,
                 return StreamUtil.any(treeList, tree -> tree.isChild(transaction.getCategoryId()))
                         .chooseCategory(transaction.getCategoryId());
             } else {
-                CategoryService.CategoryTree tree2 = StreamUtil.any(treeList, tree -> tree.isChild(transaction.getCategoryId()));
-                if (Objects.isNull(tree2)) {
-                    System.out.println(transaction.getId());
-                }
-                return tree2;
+                return StreamUtil.any(treeList, tree -> Objects.equals(transaction.getCategoryId(), tree.categoryId()) || tree.isChild(transaction.getCategoryId()));
             }
         });
         group.forEach((tree, transactionList) -> {
