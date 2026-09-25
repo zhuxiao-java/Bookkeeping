@@ -29,6 +29,11 @@ import javax.sql.DataSource;
 import java.math.BigDecimal;
 import java.nio.file.Path;
 import java.time.YearMonth;
+import java.time.Clock;
+import java.time.Instant;
+import java.time.ZoneId;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.*;
@@ -71,6 +76,7 @@ class MonthlyReportTest {
         GlobalConfigUtils.setGlobalConfig(configuration, new GlobalConfig()
                 .setDbConfig(new GlobalConfig.DbConfig()).setMetaObjectHandler(new SelfMetaObjectHandler()));
         configuration.addMapper(MonthlyReportMapper.class);
+        configuration.addMapper(PeriodReportMapper.class);
         configuration.addMapper(TransactionMapper.class);
         configuration.addMapper(AccountMapper.class);
         configuration.addMapper(CategoryMapper.class);
@@ -86,7 +92,7 @@ class MonthlyReportTest {
                 session.getMapper(CategoryMapper.class),
                 session.getMapper(BudgetMapper.class),
                 session.getMapper(MessageMapper.class),
-                json);
+                json, session.getMapper(PeriodReportMapper.class));
         guard = new MonthlyAiRequestGuard(new DataSourceTransactionManager(ds));
         service = new MonthlyReportService(repo, new MonthlyReportCalculator(), guard);
         configService = new AiConfigService(session.getMapper(AiConfigMapper.class), guard);
@@ -523,6 +529,205 @@ class MonthlyReportTest {
                 .append(i < 5 ? "," : "");
         assertThrows(RuntimeException.class, () -> MonthlyReportAiService.validateResult(
                 json.readTree(good.replaceFirst("\"observations\":\\[[^]]*]", "\"observations\":[" + tooMany + "]")), snapshot));
+    }
+
+    @Test
+    void periodBoundariesArchivesAndLeapYear() {
+        Clock sunday = Clock.fixed(Instant.parse("2025-01-05T15:59:59Z"), ZoneId.of("Asia/Shanghai"));
+        Clock monday = Clock.fixed(Instant.parse("2025-01-05T16:00:00Z"), ZoneId.of("Asia/Shanghai"));
+        assertThrows(RuntimeException.class, () -> ReportPeriod.closed("week", "2024-12-30", sunday));
+        ReportPeriod week = ReportPeriod.closed("week", "2024-12-30", monday);
+        assertEquals("2025-01-05", week.end());
+        assertEquals("2024-12-23", week.previous(1).periodKey());
+        assertEquals("2024-12-31", ReportPeriod.closed("year", "2024", monday).end());
+        assertEquals("2024-02-29", ReportPeriod.closed("month", "2024-02", monday).end());
+        for (String[] bad : List.of(new String[]{"day", "2024"}, new String[]{"week", "2024-12-31"},
+                new String[]{"week", "2024-02-30"}, new String[]{"year", "1899"}, new String[]{"year", "2025"},
+                new String[]{"month", "2025-01"}, new String[]{"year", "24"}))
+            assertThrows(RuntimeException.class, () -> ReportPeriod.closed(bad[0], bad[1], monday));
+        MonthlyReportService fixed = new MonthlyReportService(repo, new MonthlyReportCalculator(), guard, monday);
+        List<PeriodEntry> weeks = fixed.list("week", 2024);
+        assertEquals(53, weeks.size());
+        assertEquals("2024-12-30", weeks.get(0).periodKey());
+        assertEquals("2025-01-05", weeks.get(0).end());
+        assertTrue(fixed.list("week", 2025).isEmpty());
+        assertEquals(125, fixed.list("year", 2025).size());
+        assertEquals("1900", fixed.list("year", 2025).get(124).periodKey());
+        assertTrue(fixed.list("month", 2025).isEmpty());
+    }
+
+    @Test
+    void crossYearWeekAndFourCompleteWeeksPerCurrency() {
+        for (String day : List.of("2024-12-02", "2024-12-09", "2024-12-16", "2024-12-23"))
+            txDay(day, "expense", "10", 1, null, "0");
+        txDay("2024-12-23", "expense", "30", 2, null, "0");
+        txDay("2024-12-30", "expense", "0.10", 1, null, "0");
+        txDay("2025-01-05", "expense", "0.20", 1, null, "0");
+        txDay("2025-01-05", "transfer", "999", 1, null, "0.05");
+        txDay("2025-01-06", "expense", "900", 1, null, "0");
+        txDay("2025-01-01", "expense", "5", 2, null, "0");
+        jdbc.update("INSERT INTO t_budget(f_amount,f_month,f_year) VALUES ('0',12,2024),('0',1,2025)");
+        Candidate candidate = service.candidate("week", "2024-12-30");
+        Snapshot s = candidate.snapshot();
+        CurrencySummary cny = s.currencies().stream().filter(c -> c.currency().equals("CNY")).findFirst().orElseThrow();
+        assertEquals("0.30", cny.expense()); assertEquals("-0.35", cny.balance());
+        assertEquals("10.00", cny.historyAverage()); assertEquals("10.00", cny.previousExpense());
+        assertNull(s.currencies().stream().filter(c -> c.currency().equals("DOLLAR")).findFirst().orElseThrow().historyAverage());
+        assertTrue(s.budgets().isEmpty()); assertEquals(4, s.count());
+        assertTrue(s.facts().stream().allMatch(f -> f.start().equals("2024-12-30") && f.end().equals("2025-01-05")));
+        jdbc.update("UPDATE t_budget SET f_amount='100'");
+        assertEquals(candidate.sourceHash(), service.candidate("week", "2024-12-30").sourceHash());
+        txDay("2024-12-09", "expense", "1", 1, null, "0");
+        assertNotEquals(candidate.sourceHash(), service.candidate("week", "2024-12-30").sourceHash());
+    }
+
+    @Test
+    void annualRawAggregationMonthlyBudgetsAndEvidenceRanges() {
+        jdbc.update("INSERT INTO t_category(f_id,f_name,f_parent_id,f_type) VALUES (1001,'年度父类',NULL,'expense'),(1002,'年度子类',1001,'expense')");
+        tx("2023-02", "expense", "50", 1, 1001, "0");
+        tx("2024-01", "expense", "20", 1, 1001, "0");
+        txDay("2024-02-29", "expense", "30", 1, 1002, "0");
+        tx("2024-12", "income", "100", 1, null, "0");
+        tx("2024-12", "transfer", "999", 1, null, "0.10");
+        tx("2024-12", "expense", "7", 2, 1001, "0");
+        jdbc.update("INSERT INTO t_budget(f_category_id,f_amount,f_month,f_year) VALUES (NULL,'10',1,2024),(1001,'25',2,2024),(1002,'25',2,2024),(NULL,'1',2,2023)");
+        Snapshot s = service.candidate("year", "2024").snapshot();
+        CurrencySummary cny = s.currencies().stream().filter(c -> c.currency().equals("CNY")).findFirst().orElseThrow();
+        assertEquals("50.00", cny.expense()); assertEquals("49.90", cny.balance());
+        assertEquals("50.00", cny.previousExpense()); assertNull(cny.historyAverage());
+        assertEquals(24, s.trend().size()); assertEquals(3, s.budgets().size());
+        assertEquals(List.of("20.00", "30.00", "30.00"), s.budgets().stream().map(BudgetComparison::used).toList());
+        assertEquals(2, s.budgets().stream().map(BudgetComparison::month).distinct().count());
+        for (TrendMonth row : s.trend()) {
+            Snapshot month = service.candidate(row.month()).snapshot();
+            CurrencySummary summary = month.currencies().stream().filter(c -> c.currency().equals(row.currency())).findFirst().orElse(null);
+            assertEquals(summary == null ? "0.00" : summary.expense(), row.expense());
+        }
+        BigDecimal total = s.trend().stream().filter(t -> t.currency().equals("CNY")).map(t -> new BigDecimal(t.expense())).reduce(BigDecimal.ZERO, BigDecimal::add);
+        assertEquals(new BigDecimal(cny.expense()), total);
+        assertEquals(0, s.trend().stream().filter(t -> t.month().equals("2024-03")).findFirst().orElseThrow().count());
+        Fact feb = s.facts().stream().filter(f -> f.kind().equals("budget") && f.categoryId() != null).findFirst().orElseThrow();
+        assertEquals("2024-02-01", feb.start()); assertEquals("2024-02-29", feb.end());
+        assertTrue(s.facts().stream().filter(f -> f.kind().equals("top")).allMatch(f -> f.start().equals("2024-01-01") && f.end().equals("2024-12-31")));
+        assertEquals(4, json.valueToTree(newController().range("2024-01-01", "2024-12-31", "CNY")).path("data").size());
+        String hash = service.candidate("year", "2024").sourceHash();
+        jdbc.update("UPDATE t_budget SET f_amount='200' WHERE f_year=2023");
+        assertEquals(hash, service.candidate("year", "2024").sourceHash());
+        jdbc.update("UPDATE t_budget SET f_amount='200' WHERE f_year=2024");
+        assertNotEquals(hash, service.candidate("year", "2024").sourceHash());
+    }
+
+    @Test
+    void typedIdentityLegacyJsonAndRepeatedInitPreserveReports() {
+        Detail month = report("2024-02");
+        PeriodDetail week = ai.generate(periodRequest("week", "2024-02-12"));
+        PeriodDetail year = ai.generate(periodRequest("year", "2024"));
+        assertEquals(month.id(), week.id());
+        assertEquals("month", service.detail("month", month.id()).snapshot().resolvedPeriod().type());
+        assertEquals("week", service.detail("week", week.id()).snapshot().resolvedPeriod().type());
+        assertThrows(RuntimeException.class, () -> service.detail("year", week.id()));
+        assertEquals(2, count("SELECT count(*) FROM t_period_report"));
+        assertEquals(1, count("SELECT count(*) FROM t_message WHERE f_type='weekly_report' AND f_biz_type='weekly_report'"));
+        assertEquals(1, count("SELECT count(*) FROM t_message WHERE f_type='yearly_report' AND f_biz_type='yearly_report'"));
+        var legacy = (tools.jackson.databind.node.ObjectNode) json.valueToTree(month.snapshot());
+        legacy.remove("period"); legacy.remove("trend");
+        for (JsonNode fact : legacy.path("facts")) { ((tools.jackson.databind.node.ObjectNode) fact).remove("start"); ((tools.jackson.databind.node.ObjectNode) fact).remove("end"); }
+        jdbc.update("UPDATE t_monthly_report SET f_snapshot=? WHERE f_id=?", legacy.toString(), month.id());
+        init(); init();
+        assertEquals(month.result(), service.detail(month.id()).result());
+        assertEquals("month", service.detail(month.id()).snapshot().resolvedPeriod().type());
+        assertEquals(year.result(), service.detail("year", year.id()).result());
+        assertEquals(2, ai.generate(periodRequest("week", "2024-02-12")).version());
+        assertEquals(3, count("SELECT count(*) FROM t_message"));
+    }
+
+    @ParameterizedTest
+    @CsvSource({"week,2024-02-12", "month,2024-02", "year,2024"})
+    void allPeriodsRequireConsentValidateActionsAndMatchPreview(String type, String key) {
+        configured(); assertNull(ai.preview(type, key));
+        tx("2024-02", "income", "100", 1, null, "0");
+        PeriodGenerateRequest p = periodRequest(type, key);
+        assertThrows(RuntimeException.class, () -> ai.generate(new PeriodGenerateRequest(type, key, p.sourceHash(), 0, p.configVersion(), false)));
+        verifyNoInteractions(client);
+        String action = "{\"summary\":\"摘要\",\"limitations\":\"有限\",\"observations\":[],\"actions\":[{\"text\":\"核对后调整开支\",\"factIds\":[\"CNY:overview\"]}]}";
+        when(client.call(any(), anyString(), anyString(), anyInt(), any())).thenReturn(Mono.just(action));
+        assertThrows(RuntimeException.class, () -> ai.generate(p));
+        tx("2024-02", "expense", "20", 1, null, "0");
+        assertThrows(RuntimeException.class, () -> ai.generate(p));
+        PeriodPreview preview = ai.preview(type, key);
+        when(client.call(any(), anyString(), anyString(), anyInt(), any())).thenReturn(Mono.just(action.replace("CNY:overview", "invalid")));
+        assertThrows(RuntimeException.class, () -> ai.generate(periodRequest(type, key)));
+        when(client.call(any(), anyString(), anyString(), anyInt(), any())).thenReturn(Mono.just(action));
+        PeriodDetail saved = ai.generate(periodRequest(type, key));
+        assertEquals(1, saved.result().path("actions").size());
+        var payload = org.mockito.ArgumentCaptor.forClass(String.class);
+        verify(client, times(3)).call(any(), anyString(), payload.capture(), eq(2000), any());
+        assertEquals(json.valueToTree(preview.summary()), json.readTree(payload.getValue()));
+        assertFalse(payload.getValue().contains("不应发送的备注"));
+        assertFalse(payload.getValue().contains("隐私账户"));
+        assertFalse(payload.getValue().contains("2024-02-15"));
+        assertEquals(type, saved.type());
+        var tooMany = (tools.jackson.databind.node.ObjectNode) json.readTree(action);
+        var actions = tooMany.putArray("actions");
+        for (int i = 0; i < 4; i++) actions.add(json.readTree(action).path("actions").get(0));
+        assertThrows(RuntimeException.class, () -> MonthlyReportAiService.validateResult(tooMany, saved.snapshot()));
+        PeriodGenerateRequest fresh = periodRequest(type, key);
+        configService.revoke(false);
+        assertThrows(RuntimeException.class, () -> ai.generate(fresh));
+        verify(client, times(3)).call(any(), anyString(), anyString(), anyInt(), any());
+    }
+
+    @ParameterizedTest
+    @CsvSource({"week,2024-02-12", "year,2024"})
+    void periodFailureRollsBackAndLateSourceChangesKeepOldReport(String type, String key) throws Exception {
+        configured(); tx("2024-02", "expense", "20", 1, null, "0");
+        when(client.call(any(), anyString(), anyString(), anyInt(), any())).thenReturn(Mono.just(VALID_RESULT));
+        PeriodDetail old = ai.generate(periodRequest(type, key));
+        jdbc.execute("CREATE TRIGGER fail_period_message BEFORE UPDATE ON t_message BEGIN SELECT RAISE(ABORT,'test'); END");
+        assertThrows(RuntimeException.class, () -> ai.generate(periodRequest(type, key)));
+        assertEquals(1, service.detail(type, old.id()).version());
+        CompletableFuture<String> response = new CompletableFuture<>(); CountDownLatch started = new CountDownLatch(1);
+        when(client.call(any(), anyString(), anyString(), anyInt(), any())).thenReturn(Mono.fromFuture(response).doOnSubscribe(s -> started.countDown()));
+        ExecutorService pool = Executors.newSingleThreadExecutor();
+        try {
+            Future<PeriodDetail> pending = pool.submit(() -> ai.generate(periodRequest(type, key)));
+            assertTrue(started.await(2, TimeUnit.SECONDS));
+            tx("2024-02", "expense", "1", 1, null, "0"); response.complete(VALID_RESULT);
+            assertEquals(com.bookkeeping.exception.BusinessException.class,
+                    assertThrows(ExecutionException.class, () -> pending.get(2, TimeUnit.SECONDS)).getCause().getClass());
+            assertTrue(service.detail(type, old.id()).stale());
+            assertEquals(old.result(), service.detail(type, old.id()).result());
+            assertEquals(1, service.detail(type, old.id()).version());
+        } finally { pool.shutdownNow(); }
+    }
+
+    @ParameterizedTest
+    @CsvSource({"week,2024-02-12", "year,2024"})
+    void periodCallsShareGlobalGuardAndRestoreCancellation(String type, String key) throws Exception {
+        configured(); tx("2024-02", "expense", "20", 1, null, "0");
+        CountDownLatch started = new CountDownLatch(1);
+        when(client.call(any(), anyString(), anyString(), anyInt(), any())).thenReturn(Mono.<String>never().doOnSubscribe(s -> started.countDown()));
+        ExecutorService pool = Executors.newSingleThreadExecutor();
+        try {
+            Future<PeriodDetail> pending = pool.submit(() -> ai.generate(periodRequest(type, key)));
+            assertTrue(started.await(2, TimeUnit.SECONDS));
+            assertEquals("BUSY", MonthlyAiModelClient.errorCode(assertThrows(RuntimeException.class, () -> submit("2024-02"))));
+            guard.pauseForRestore();
+            assertEquals("CANCELLED", MonthlyAiModelClient.errorCode(assertThrows(ExecutionException.class, () -> pending.get(2, TimeUnit.SECONDS)).getCause()));
+            guard.resumeAfterRestoreFailure();
+            assertEquals(0, count("SELECT count(*) FROM t_period_report"));
+            verify(client, times(1)).call(any(), anyString(), anyString(), anyInt(), any());
+        } finally { pool.shutdownNow(); }
+    }
+
+    private PeriodGenerateRequest periodRequest(String type, String key) {
+        PeriodPreview p = ai.preview(type, key);
+        return new PeriodGenerateRequest(type, key, p.sourceHash(), p.baseVersion(), p.configVersion(), true);
+    }
+
+    private void txDay(String day, String type, String amount, int account, Integer category, String fee) {
+        jdbc.update("INSERT INTO t_transaction(f_type,f_amount,f_fee,f_account_id,f_category_id,f_date) VALUES (?,?,?,?,?,?)",
+                type, amount, fee, account, category, day + "T23:59:59.999");
     }
 
     // ==================== 辅助 ====================

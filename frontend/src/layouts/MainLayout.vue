@@ -73,7 +73,7 @@ const menus = [
   { path: '/account', title: '账户', icon: Wallet },
   { path: '/transaction', title: '流水', icon: Tickets },
   { path: '/report', title: '报表', icon: DataAnalysis },
-  { path: '/monthly-report', title: 'AI 月报', icon: Calendar },
+  { path: '/ai-report', title: 'AI 报告', icon: Calendar },
   { path: '/budget', title: '预算', icon: PieChart },
   { path: '/level', title: '等级', icon: Medal },
   { path: '/settings', title: '设置', icon: Setting }

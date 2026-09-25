@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { aiError, aiFail, cents, comparison, currencyName, factEvidence, lastClosedMonth, monthRange, simulate } from './monthlyReport'
+import { lastClosedPeriod, validPeriod, periodRange, periodTitle } from './reportPeriod'
 
 describe('月报自然月边界', () => {
   it('跨年默认上月、闰年及普通二月', () => {
@@ -8,6 +9,30 @@ describe('月报自然月边界', () => {
     expect(monthRange('2024-02')).toEqual(['2024-02-01', '2024-02-29'])
     expect(monthRange('2023-02')).toEqual(['2023-02-01', '2023-02-28'])
     expect(monthRange('2024-12')).toEqual(['2024-12-01', '2024-12-31'])
+  })
+})
+describe('周报与年报周期', () => {
+  it('周日仍选上一完整周，周一切换，跨年按周一归档', () => {
+    expect(lastClosedPeriod('week', new Date(2025, 0, 5, 23, 59))).toBe('2024-12-23')
+    expect(lastClosedPeriod('week', new Date(2025, 0, 6))).toBe('2024-12-30')
+    expect(lastClosedPeriod('year', new Date(2025, 0, 1))).toBe('2024')
+    expect(periodRange('week', '2024-12-30')).toEqual(['2024-12-30', '2025-01-05'])
+    expect(periodRange('year', '2024')).toEqual(['2024-01-01', '2024-12-31'])
+    expect(periodTitle('week', '2024-12-30')).toContain('2025-01-05')
+  })
+  it('拒绝非周一、伪日期、未结束及1900年前的周期', () => {
+    const now = new Date(2025, 0, 6)
+    for (const key of ['2024-12-31', '2024-02-30', '2025-01-06', '1899-12-25']) expect(validPeriod('week', key, now)).toBe(false)
+    expect(validPeriod('week', '2024-12-30', now)).toBe(true)
+    expect(validPeriod('year', '2025', now)).toBe(false)
+    expect(validPeriod('year', '2024', now)).toBe(true)
+    expect(validPeriod('year', '1899', now)).toBe(false)
+    expect(validPeriod('month', '2024-13', now)).toBe(false)
+  })
+  it('比较文案随周期切换，不带月度残留', () => {
+    expect(comparison('20', null, null, 'week')).toContain('上周无记录')
+    expect(comparison('20', '0', null, 'year')).toBe('本年新增')
+    expect(comparison('120', '100', '20.00', 'year')).toBe('较上年 +20.00%')
   })
 })
 describe('本地目标试算', () => {

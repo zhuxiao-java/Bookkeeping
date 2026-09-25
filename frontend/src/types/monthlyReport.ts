@@ -1,3 +1,10 @@
+export type ReportType = 'week' | 'month' | 'year'
+export interface TrendMonth { month: string; currency: string; income: string; expense: string; fees: string; balance: string; count: number }
+export interface PeriodEntry { type: ReportType; periodKey: string; start: string; end: string; id: number | null; version: number | null; generatedAt: string | null; hasReport: boolean }
+export interface PeriodDetail { id: number; type: ReportType; periodKey: string; start: string; end: string; version: number; generatedAt: string; stale: boolean; snapshot: MonthlySnapshot; result: AiResult | null }
+export interface PeriodPreview { type: ReportType; periodKey: string; start: string; end: string; sourceHash: string; baseVersion: number; configVersion: string; baseUrl: string; model: string; includeNames: boolean; summary: unknown }
+export interface PeriodGenerateRequest { type: ReportType; periodKey: string; sourceHash: string; baseVersion: number; configVersion: string; confirmed: true }
+
 export interface CategoryStat {
   categoryId: number; name: string; amount: string; count: number; average: string
   share: string | null; previousAmount: string | null; previousCount: number | null
@@ -12,12 +19,14 @@ export interface CurrencySummary {
 }
 export interface MonthlyFact {
   id: string; kind: string; currency: string; categoryId: number | null
-  title: string; values: Record<string, string | null>; suggestion: string
+  title: string; values: Record<string, string | null>; suggestion: string; start?: string | null; end?: string | null
 }
 export interface MonthlySnapshot {
-  month: string; ruleVersion: string; count: number; currencies: CurrencySummary[]
-  budgets: { id: number; categoryId: number | null; name: string; amount: string; used: string; excess: string; percentage: string | null }[]
+  month: string | null; ruleVersion: string; count: number; currencies: CurrencySummary[]
+  budgets: { id: number; categoryId: number | null; name: string; amount: string; used: string; excess: string; percentage: string | null; month?: string | null }[]
   facts: MonthlyFact[]; limitations: string[]
+  period?: { type: ReportType; periodKey: string; start: string; endExclusive: string } | null
+  trend?: TrendMonth[]
 }
 export interface AiResult {
   summary: string; limitations: string; provider: string; model: string; generatedAt: string

@@ -37,6 +37,7 @@ class BackupAiPrivacyTest {
         jdbc.update("INSERT INTO t_account(f_name,f_type,f_currency) VALUES('保留账本','cash','CNY')");
         jdbc.update("INSERT INTO t_ai_config(f_id,f_base_url,f_model,f_api_key,f_config_version,f_update_time) VALUES(1,'https://example.com/v1','test',?,'old-version','2026-01-01T00:00:00')", KEY);
         jdbc.update("INSERT INTO t_monthly_report(f_month,f_version,f_source_hash,f_snapshot,f_generated_at,f_ai_result) VALUES('2024-01',1,'hash','{}','2024-02-01','{\"summary\":\"保留报告\"}')");
+        jdbc.update("INSERT INTO t_period_report(f_period_type,f_period_key,f_version,f_source_hash,f_snapshot,f_generated_at,f_ai_result) VALUES('week','2024-01-01',2,'week-hash','{}','2024-01-08','{\"summary\":\"保留周报\"}'),('year','2024',3,'year-hash','{}','2025-01-01','{\"summary\":\"保留年报\"}')");
         service = new BackupServiceImpl();
         coordinator = mock(MonthlyAiRequestGuard.class);
         ReflectionTestUtils.setField(service, "dataSource", ds);
@@ -66,6 +67,11 @@ class BackupAiPrivacyTest {
         assertNotEquals("old-version", copy.queryForObject("SELECT f_config_version FROM t_ai_config", String.class));
         assertEquals("保留账本", copy.queryForObject("SELECT f_name FROM t_account", String.class));
         assertEquals("ok", copy.queryForObject("PRAGMA integrity_check", String.class));
+        assertEquals(2, copy.queryForObject("SELECT count(*) FROM t_period_report", Integer.class));
+        assertEquals(2, copy.queryForObject("SELECT f_version FROM t_period_report WHERE f_period_type='week'", Integer.class));
+        assertEquals(3, copy.queryForObject("SELECT f_version FROM t_period_report WHERE f_period_type='year'", Integer.class));
+        assertTrue(copy.queryForObject("SELECT f_ai_result FROM t_period_report WHERE f_period_type='week'", String.class).contains("保留周报"));
+        assertTrue(copy.queryForObject("SELECT f_ai_result FROM t_period_report WHERE f_period_type='year'", String.class).contains("保留年报"));
     }
 
     @Test

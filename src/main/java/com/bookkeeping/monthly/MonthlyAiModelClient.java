@@ -124,12 +124,12 @@ public class MonthlyAiModelClient {
                 case "TIMEOUT" -> "AI 请求超时，可能已计费，请核对后手动重试。";
                 case "CANCELLED" -> "已停止当前调用；已发送请求无法保证从服务商撤回。";
                 case "CONFIG_CHANGED" -> "AI 配置已变化，请重新预览并确认。";
-                case "NO_DATA" -> "本月没有可分析的流水，未调用 AI。";
+                case "NO_DATA" -> "所选周期没有可分析的流水，未调用 AI。";
                 case "NETWORK" -> "无法连接 AI 服务，请检查网络与服务地址。";
                 case "REDIRECT_REJECTED" -> "已拒绝服务重定向，请核对 HTTPS 服务根地址。";
                 case "INVALID_JSON" -> "AI 未返回有效 JSON，未保存本次报告，已有报告保持不变。";
                 case "INVALID_OUTPUT" -> "AI 响应不符合约定，未保存本次报告，已有报告保持不变。";
-                case "SUMMARY_TOO_LARGE" -> "月报摘要超过安全上限，未发送。";
+                case "SUMMARY_TOO_LARGE" -> "报告摘要超过安全上限，未发送。";
                 case "OUTPUT_TOO_LARGE" -> "AI 响应超过安全上限。";
                 case "BUSY" -> "已有 AI 请求正在处理，请等待当前请求结束，不会排队。";
                 case "STORAGE_FAILED" -> "本地 AI 数据读写失败，请检查磁盘状态后重新读取配置和已保存报告。";

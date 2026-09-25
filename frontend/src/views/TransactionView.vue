@@ -526,7 +526,7 @@ onBeforeUnmount(() => {
       </div>
     </header>
 
-    <el-alert v-if="filters.currency && focusId == null" :title="`${currencyName(filters.currency)} · 当前筛选 ${total} 笔，金额合计 ${currencyTotal}。仅查询所选日期范围；若账单有更新，可能与月报快照不同。`" type="info" :closable="false" />
+    <el-alert v-if="filters.currency && focusId == null" :title="`${currencyName(filters.currency)} · 当前筛选 ${total} 笔，金额合计 ${currencyTotal}。仅查询所选日期范围；若账单有更新，可能与 AI 报告快照不同。`" type="info" :closable="false" />
     <!-- 筛选栏（轻量工具条；保留 filter-card 类供打印样式钩子） -->
     <div class="surface filter-card quiet-controls bk-enter" data-guide="tx-filters">
       <!-- 分组一：筛选维度（类型 / 账户 / 分类 / 标签 / 日期 + 快捷区间） -->

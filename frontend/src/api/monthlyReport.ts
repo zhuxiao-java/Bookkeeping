@@ -1,7 +1,22 @@
 import { request } from './http'
 import type { DataResponse, Transaction } from '@/types/model'
 export type MonthlyRangeTransaction = Omit<Transaction, 'amount' | 'fee'> & { amount: string; fee: string; monthlyRootId: number; categoryPath: number[] }
-import type { AiConfig, AiGenerateRequest, AiPreview, AiSettings, MonthlyDetail, MonthEntry } from '@/types/monthlyReport'
+import type { AiConfig, AiGenerateRequest, AiPreview, AiSettings, MonthlyDetail, MonthEntry, ReportType, PeriodEntry, PeriodDetail, PeriodPreview, PeriodGenerateRequest } from '@/types/monthlyReport'
+
+export const periodReportApi = {
+  async list(type: ReportType, year: number) {
+    return (await request<DataResponse<PeriodEntry[]>>({ url: '/ai-report', params: { type, year }, silent: true, noRetry: true })).data
+  },
+  async detail(type: ReportType, id: number) {
+    return (await request<DataResponse<PeriodDetail>>({ url: `/ai-report/${type}/${id}`, silent: true, noRetry: true })).data
+  },
+  async preview(type: ReportType, periodKey: string) {
+    return (await request<DataResponse<PeriodPreview | null>>({ url: '/ai-report/ai/preview', params: { type, periodKey }, silent: true, noRetry: true })).data
+  },
+  async generate(data: PeriodGenerateRequest, signal?: AbortSignal) {
+    return (await request<DataResponse<PeriodDetail>>({ url: '/ai-report/ai/generate', method: 'POST', data, signal, timeout: 150000, noRetry: true, silent: true })).data
+  }
+}
 
 export const monthlyReportApi = {
   async transactions(start: string, end: string, currency: string) {

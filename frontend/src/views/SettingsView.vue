@@ -47,7 +47,7 @@ const menus: { key: MenuKey; label: string; icon: typeof Setting }[] = [
   { key: 'category', label: '分类管理', icon: PriceTag },
   { key: 'tag', label: '标签管理', icon: Coin },
   { key: 'data', label: '数据管理', icon: DataAnalysis },
-  { key: 'ai', label: 'AI 月报', icon: Reading },
+  { key: 'ai', label: 'AI 报告', icon: Reading },
   { key: 'help', label: '使用说明', icon: Reading },
   { key: 'about', label: '关于', icon: Wallet }
 ]
@@ -584,7 +584,7 @@ function onCsvImported(res: CsvImportResult) {
             <div class="split-row data-row">
               <div class="row-copy">
                 <h3 class="row-copy__title">完整备份</h3>
-                <p class="row-copy__desc">将账户、流水、分类、预算和月报保存为 SQLite 快照（.db）。新导出与自动备份不含 AI 密钥，旧发送确认失效；历史备份可能仍含旧密钥，请勿外传，必要时到供应商轮换密钥。</p>
+                <p class="row-copy__desc">将账户、流水、分类、预算和 AI 报告保存为 SQLite 快照（.db）。新导出与自动备份不含 AI 密钥，旧发送确认失效；历史备份可能仍含旧密钥，请勿外传，必要时到供应商轮换密钥。</p>
               </div>
               <el-button :loading="backuping" @click="onExportDb">导出完整备份</el-button>
             </div>

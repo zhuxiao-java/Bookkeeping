@@ -65,18 +65,20 @@ const coverSrc = computed(() => {
 const weather = computed(() => (current.value?.type === 'weather' ? parseWeather(current.value.content) : null))
 
 /** bizType → 跳转目标 */
-const JUMP_TARGET: Record<MessageBizType, { path: string; label: string }> = {
+const JUMP_TARGET: Record<MessageBizType, { path: string; label: string; type?: 'week' | 'month' | 'year' }> = {
   transaction: { path: '/transaction', label: '交易流水' },
   budget: { path: '/budget', label: '预算管理' },
   level: { path: '/level', label: '等级页面' },
-  monthly_report: { path: '/monthly-report', label: 'AI 月报' }
+  monthly_report: { path: '/ai-report', label: 'AI 月报', type: 'month' },
+  weekly_report: { path: '/ai-report', label: 'AI 周报', type: 'week' },
+  yearly_report: { path: '/ai-report', label: 'AI 年报', type: 'year' }
 }
 
 /**
  * 支持按 bizId 定位到具体记录的目标页；
  * level 只做页面级跳转（bizId 为经验日志 id，定位价值低），不往 URL 上挂无人消费的参数。
  */
-const LOCATABLE: MessageBizType[] = ['transaction', 'budget', 'monthly_report']
+const LOCATABLE: MessageBizType[] = ['transaction', 'budget', 'monthly_report', 'weekly_report', 'yearly_report']
 
 const jumpTarget = computed(() => {
   const bizType = current.value?.bizType
@@ -106,7 +108,7 @@ function jump() {
   emit('navigate')
   router.push({
     path: target.path,
-    query: LOCATABLE.includes(msg.bizType) && msg.bizId != null ? { bizId: String(msg.bizId) } : undefined
+    query: { ...(target.type ? { type: target.type } : {}), ...(LOCATABLE.includes(msg.bizType) && msg.bizId != null ? { bizId: String(msg.bizId) } : {}) }
   })
 }
 </script>
