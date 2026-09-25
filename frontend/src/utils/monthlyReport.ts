@@ -1,4 +1,4 @@
-import type { MonthlyFact } from '@/types/monthlyReport'
+import type { MonthlyFact, ReportType } from '@/types/monthlyReport'
 
 export function lastClosedMonth(now = new Date()): string {
   const date = new Date(now.getFullYear(), now.getMonth() - 1, 1)
@@ -23,18 +23,21 @@ export function simulate(amount: string, count: number, mode: 'count' | 'percent
   return money((total * n * 2n + divisor) / (2n * divisor))
 }
 export const currencyName = (v: string) => ({ CNY: '人民币', DOLLAR: '美元', UNKNOWN: '币种未知' }[v] ?? v)
-export function comparison(current: string, previous: string | null, growth: string | null): string {
-  if (previous === null) return '上月无记录，暂不比较'
-  if (Number(previous) === 0) return Number(current) > 0 ? '本月新增' : '与上月持平'
-  return growth == null ? '暂不比较' : `环比 ${Number(growth) > 0 ? '+' : ''}${growth}%`
+export function comparison(current: string, previous: string | null, growth: string | null, type: ReportType = 'month'): string {
+  const prev = { week: '上周', month: '上月', year: '上年' }[type]
+  const now = { week: '本周', month: '本月', year: '本年' }[type]
+  if (previous === null) return `${prev}无记录，暂不比较`
+  if (Number(previous) === 0) return Number(current) > 0 ? `${now}新增` : `与${prev}持平`
+  return growth == null ? '暂不比较' : `${type === 'year' ? '较上年' : '环比'} ${Number(growth) > 0 ? '+' : ''}${growth}%`
 }
 const valueLabels: Record<string, string> = {
   income: '收入', expense: '消费', fees: '手续费', balance: '结余', amount: '金额/预算', used: '已用',
   excess: '超额', excessPercentage: '超额比例 %', previousAmount: '上月金额', increase: '增加额', growth: '增幅 %',
   count: '笔数', previousCount: '上月笔数', average: '平均单笔', previousAverage: '上月单笔', combinedAmount: '合计', share: '占比 %'
 }
-export function factEvidence(fact: MonthlyFact): string {
-  return Object.entries(fact.values).map(([key, value]) => `${valueLabels[key] ?? key}：${value ?? '暂无'}`).join(' · ')
+export function factEvidence(fact: MonthlyFact, type: ReportType = 'month'): string {
+  const prev = { week: '上周', month: '上月', year: '上年' }[type]
+  return Object.entries(fact.values).map(([key, value]) => `${(valueLabels[key] ?? key).replace('上月', prev)}：${value ?? '暂无'}`).join(' · ')
 }
 const errors: Record<string, string> = {
   INVALID_URL: '仅支持 HTTPS 服务根地址，不能含凭据、查询参数或片段。',
@@ -43,7 +46,7 @@ const errors: Record<string, string> = {
   CONFIG_CHANGED: '配置已变化，请重新预览并确认。', CONSENT_REQUIRED: '请先预览摘要并明确确认本次发送。',
   UNAVAILABLE: 'AI 服务尚未配置，请检查连接设置。', BUSY: '已有请求正在处理，请稍后再试。',
   STALE: '账单或报告已变化，请重新预览并确认。', CANCELLED: '已停止当前调用；已发请求无法保证从服务商撤回。',
-  NO_DATA: '本月没有可分析的流水，未调用 AI。',
+  NO_DATA: '所选周期没有可分析的流水，未调用 AI。',
   TIMEOUT: '请求超时，可能已计费；请先重新读取已保存报告，再决定是否重试。',
   NETWORK: '无法连接 AI 服务，请检查网络和服务地址。', BACKEND: '本地后端尚未就绪或正在恢复数据，请检查服务状态后重试。',
   HTTP_401: 'AI 服务鉴权失败，请检查 API Key。', HTTP_403: 'AI 服务拒绝访问，请检查密钥权限。',

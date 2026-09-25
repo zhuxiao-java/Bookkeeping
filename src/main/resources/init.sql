@@ -393,6 +393,20 @@ CREATE TABLE IF NOT EXISTS t_monthly_report (
 -- 兼容旧库；重复启动的重复列异常由初始化容错处理，不覆盖已有结果。
 ALTER TABLE t_monthly_report ADD COLUMN f_ai_result TEXT;
 
+-- 周报与年报独立归档，历史月报仍保留在原表。
+CREATE TABLE IF NOT EXISTS t_period_report (
+    f_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    f_period_type TEXT NOT NULL CHECK (f_period_type IN ('week', 'year')),
+    f_period_key TEXT NOT NULL,
+    f_version INTEGER NOT NULL,
+    f_source_hash TEXT NOT NULL,
+    f_snapshot TEXT NOT NULL,
+    f_ai_result TEXT NOT NULL,
+    f_generated_at TEXT NOT NULL,
+    f_message_id INTEGER,
+    UNIQUE (f_period_type, f_period_key)
+);
+
 -- 月报 AI 解读配置（单用户桌面应用，固定一行 f_id=1）。
 -- 说明：AI 解读已由后端 AgentScope 直接发起，密钥随本地库保存（与桌面单机风险面相当），回显接口不返回明文 key。
 CREATE TABLE IF NOT EXISTS t_ai_config (

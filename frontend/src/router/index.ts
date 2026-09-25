@@ -36,8 +36,13 @@ const router = createRouter({
         {
           path: 'monthly-report',
           name: 'monthly-report',
+          redirect: to => ({ path: '/ai-report', query: { ...to.query, type: 'month', periodKey: to.query.month ?? to.query.periodKey } })
+        },
+        {
+          path: 'ai-report',
+          name: 'ai-report',
           component: () => import('@/views/MonthlyReportView.vue'),
-          meta: { title: 'AI 月报' }
+          meta: { title: 'AI 报告' }
         },
         {
           path: 'budget',

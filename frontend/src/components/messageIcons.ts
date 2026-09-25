@@ -29,7 +29,9 @@ const TYPE_ICON: Partial<Record<MessageType, Component>> = {
   level: Medal,
   system: Bell,
   weather: Sunny,
-  monthly_report: Calendar
+  monthly_report: Calendar,
+  weekly_report: Calendar,
+  yearly_report: Calendar
 }
 
 /** 天气细分图标；Element Plus 没有雪花图标，降雪暂用毛毛雨表意 */

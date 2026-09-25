@@ -19,7 +19,8 @@ public final class MonthlyReportModels {
     public record Category(int id, Integer parentId, String name, String type) {
     }
 
-    public record Budget(int id, Integer categoryId, String amount) {
+    public record Budget(int id, Integer categoryId, String amount, String month) {
+        public Budget(int id, Integer categoryId, String amount) { this(id, categoryId, amount, null); }
     }
 
     public record Source(List<Tx> transactions, List<Category> categories, List<Budget> budgets,
@@ -44,17 +45,53 @@ public final class MonthlyReportModels {
     }
 
     public record BudgetComparison(int id, Integer categoryId, String name, String amount,
-                                   String used, String excess, String percentage) {
+                                   String used, String excess, String percentage, String month) {
+        public BudgetComparison(int id, Integer categoryId, String name, String amount, String used, String excess, String percentage) {
+            this(id, categoryId, name, amount, used, excess, percentage, null);
+        }
     }
 
     public record Fact(String id, String kind, String currency, Integer categoryId,
-                       String title, Map<String, String> values, String suggestion) {
+                       String title, Map<String, String> values, String suggestion, String start, String end) {
+        public Fact(String id, String kind, String currency, Integer categoryId, String title, Map<String, String> values, String suggestion) {
+            this(id, kind, currency, categoryId, title, values, suggestion, null, null);
+        }
     }
 
     public record Snapshot(String month, String ruleVersion, int count,
                            List<CurrencySummary> currencies, List<BudgetComparison> budgets,
-                           List<Fact> facts, List<String> limitations) {
+                           List<Fact> facts, List<String> limitations, ReportPeriod period, List<TrendMonth> trend) {
+        public Snapshot {
+            trend = trend == null ? List.of() : trend;
+        }
+        public Snapshot(String month, String ruleVersion, int count, List<CurrencySummary> currencies,
+                        List<BudgetComparison> budgets, List<Fact> facts, List<String> limitations) {
+            this(month, ruleVersion, count, currencies, budgets, facts, limitations, null, List.of());
+        }
+        public ReportPeriod resolvedPeriod() { return period == null ? ReportPeriod.of("month", month) : period; }
     }
+
+    public record TrendMonth(String month, String currency, String income, String expense, String fees,
+                             String balance, int count) { }
+
+    public record PeriodEntry(String type, String periodKey, String start, String end, Long id,
+                              Integer version, String generatedAt, boolean hasReport) { }
+
+    public record PeriodDetail(long id, String type, String periodKey, String start, String end, int version,
+                               String generatedAt, boolean stale, Snapshot snapshot, JsonNode result) {
+        public static PeriodDetail from(Detail detail) {
+            ReportPeriod p = detail.snapshot().resolvedPeriod();
+            return new PeriodDetail(detail.id(), p.type(), p.periodKey(), p.start().toString(), p.end(),
+                    detail.version(), detail.generatedAt(), detail.stale(), detail.snapshot(), detail.result());
+        }
+    }
+
+    public record PeriodGenerateRequest(String type, String periodKey, String sourceHash, int baseVersion,
+                                        String configVersion, boolean confirmed) { }
+
+    public record PeriodPreview(String type, String periodKey, String start, String end, String sourceHash,
+                                int baseVersion, String configVersion, String baseUrl, String model,
+                                boolean includeNames, Map<String, Object> summary) { }
 
     public record StoredReport(long id, String month, int version, String sourceHash,
                                String generatedAt, Snapshot snapshot, Long messageId, JsonNode result) {

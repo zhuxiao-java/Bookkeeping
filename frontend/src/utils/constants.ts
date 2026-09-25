@@ -64,7 +64,9 @@ export const MESSAGE_TYPE_OPTIONS: EnumOption<MessageType>[] = [
   { value: 'level', label: '等级' },
   { value: 'system', label: '系统' },
   { value: 'weather', label: '天气' },
-  { value: 'monthly_report', label: 'AI 月报' }
+  { value: 'monthly_report', label: 'AI 月报' },
+  { value: 'weekly_report', label: 'AI 周报' },
+  { value: 'yearly_report', label: 'AI 年报' }
 ]
 
 /**
@@ -78,7 +80,9 @@ export const MESSAGE_TYPE_COLOR: Record<MessageType, string> = {
   level: '#2f7fe0',
   system: '#909399',
   weather: '#00B8A9',
-  monthly_report: '#1f7a5c'
+  monthly_report: '#1f7a5c',
+  weekly_report: '#1f7a5c',
+  yearly_report: '#1f7a5c'
 }
 
 function labelOf<V extends string | number>(

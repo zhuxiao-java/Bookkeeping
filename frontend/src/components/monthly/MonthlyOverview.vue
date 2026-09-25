@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, watch } from 'vue'
 import { useChart } from '@/composables/useChart'
-import type { CurrencySummary } from '@/types/monthlyReport'
+import type { CurrencySummary, ReportType } from '@/types/monthlyReport'
+import { currentLabels, historyLabels } from '@/utils/reportPeriod'
 import { comparison, currencyName } from '@/utils/monthlyReport'
-const props = withDefaults(defineProps<{ summary: CurrencySummary; compact?: boolean }>(), { compact: false })
+const props = withDefaults(defineProps<{ summary: CurrencySummary; compact?: boolean; periodType?: ReportType }>(), { compact: false, periodType: 'month' })
 const { elRef, render } = useChart()
 const cards = computed(() => [
   ['收入', props.summary.income], ['消费支出', props.summary.expense],
@@ -23,9 +24,9 @@ watch(() => props.summary, draw)
 </script>
 <template>
   <section>
-    <div class="split-row"><h2>{{ currencyName(summary.currency) }} · 本月概览</h2><span>{{ summary.count }} 笔记账</span></div>
+    <div class="split-row"><h2>{{ currencyName(summary.currency) }} · {{ currentLabels[periodType] }}概览</h2><span>{{ summary.count }} 笔记账</span></div>
     <div class="metrics"><div v-for="[label, value] in cards" :key="label" class="metric"><span>{{ label }}</span><strong>{{ value }}</strong></div></div>
-    <p class="muted">{{ comparison(summary.expense, summary.previousExpense, summary.growth) }} · 前三个自然月消费均值：{{ summary.historyAverage ?? '历史不足' }}（仅已记录账单）</p>
+    <p class="muted">{{ comparison(summary.expense, summary.previousExpense, summary.growth, periodType) }}<template v-if="periodType !== 'year'"> · {{ historyLabels[periodType] }}消费均值：{{ summary.historyAverage ?? '历史不足' }}</template>（仅已记录账单）</p>
     <div v-if="!compact" v-show="Number(summary.expense) > 0" ref="elRef" class="chart" aria-label="一级分类支出 Top 5" />
   </section>
 </template>

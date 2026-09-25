@@ -16,6 +16,8 @@ public enum MessageType implements IEnum<String> {
     GREETING("greeting"),
     WEATHER("weather"),
     MONTHLY_REPORT("monthly_report"),
+    WEEKLY_REPORT("weekly_report"),
+    YEARLY_REPORT("yearly_report"),
     ;
     @JsonValue
     private final String type;

@@ -7,6 +7,9 @@ import com.bookkeeping.dao.entity.BudgetEntity;
 import com.bookkeeping.dao.entity.CategoryEntity;
 import com.bookkeeping.dao.entity.MessageEntity;
 import com.bookkeeping.dao.entity.MonthlyReportEntity;
+import com.bookkeeping.dao.entity.PeriodReportEntity;
+import com.bookkeeping.dao.mapper.PeriodReportMapper;
+import org.springframework.beans.factory.annotation.Autowired;
 import com.bookkeeping.dao.entity.TransactionEntity;
 import com.bookkeeping.dao.mapper.AccountMapper;
 import com.bookkeeping.dao.mapper.BudgetMapper;
@@ -51,11 +54,20 @@ public class MonthlyReportRepository {
     private final BudgetMapper budgetMapper;
     private final MessageMapper messageMapper;
     private final ObjectMapper json;
+    private final PeriodReportMapper periodMapper;
 
     public MonthlyReportRepository(MonthlyReportMapper reportMapper,
                                    TransactionMapper transactionMapper, AccountMapper accountMapper,
                                    CategoryMapper categoryMapper, BudgetMapper budgetMapper,
                                    MessageMapper messageMapper, ObjectMapper json) {
+        this(reportMapper, transactionMapper, accountMapper, categoryMapper, budgetMapper, messageMapper, json, null);
+    }
+
+    @Autowired
+    public MonthlyReportRepository(MonthlyReportMapper reportMapper, TransactionMapper transactionMapper,
+                                   AccountMapper accountMapper, CategoryMapper categoryMapper, BudgetMapper budgetMapper,
+                                   MessageMapper messageMapper, ObjectMapper json, PeriodReportMapper periodMapper) {
+        this.periodMapper = periodMapper;
         this.reportMapper = reportMapper;
         this.transactionMapper = transactionMapper;
         this.accountMapper = accountMapper;
@@ -87,8 +99,12 @@ public class MonthlyReportRepository {
      * 币种来自账户关联（缺失记为 null→UNKNOWN），并只保留与本次流水/预算相关的分类链，避免上传无关分类。
      */
     public Source source(YearMonth month) {
-        String start = month.minusMonths(3).atDay(1).toString();
-        String end = month.plusMonths(1).atDay(1).toString();
+        return source(ReportPeriod.of("month", month.toString()));
+    }
+
+    public Source source(ReportPeriod period) {
+        String start = period.sourceStart().toString();
+        String end = period.endExclusive().toString();
         //  accountId -> 币种代码：一次性载入账户表，避免逐条 join
         Map<Integer, String> currencyByAccount = new HashMap<>();
         for (AccountEntity account : accountMapper.selectList(null)) {
@@ -110,14 +126,16 @@ public class MonthlyReportRepository {
             categoryById.put(category.id(), category);
             allCategories.add(category);
         }
-        List<BudgetEntity> budgetEntities = budgetMapper.selectList(new QueryWrapper<BudgetEntity>()
-                .eq("f_year", month.getYear()).eq("f_month", month.getMonthValue()).orderByAsc("f_id"));
+        List<BudgetEntity> budgetEntities = "week".equals(period.type()) ? List.of() : budgetMapper.selectList(new QueryWrapper<BudgetEntity>()
+                .eq("f_year", period.start().getYear())
+                .eq("month".equals(period.type()), "f_month", period.start().getMonthValue()).orderByAsc("f_id"));
         List<Budget> budgets = new ArrayList<>();
         for (BudgetEntity b : budgetEntities) {
-            budgets.add(new Budget(b.getId(), b.getCategoryId(), plain(b.getAmount())));
+            budgets.add(new Budget(b.getId(), b.getCategoryId(), plain(b.getAmount()),
+                    "year".equals(period.type()) ? YearMonth.of(b.getYear(), b.getMonth()).toString() : null));
         }
-        String firstMonth = reportMapper.firstTransactionMonth();
-        String historyStart = month.minusMonths(3).toString();
+        String firstMonth = "month".equals(period.type()) ? reportMapper.firstTransactionMonth() : null;
+        String historyStart = YearMonth.from(period.sourceStart()).toString();
         if (firstMonth != null && firstMonth.compareTo(historyStart) < 0) firstMonth = historyStart;
         // 仅保留被流水/预算引用到的分类及其全部父级，收敛发送给模型的数据面
         List<Category> relevant = filterRelevant(allCategories, categoryById, transactions, budgets);
@@ -148,9 +166,13 @@ public class MonthlyReportRepository {
      * 快照与当前来源指纹不一致即视为「已过期」，用于解读前的乐观校验。
      */
     public String fingerprint(Source source) {
+        return fingerprint(null, source);
+    }
+
+    public String fingerprint(ReportPeriod period, Source source) {
         try {
             byte[] digest = java.security.MessageDigest.getInstance("SHA-256")
-                    .digest((MonthlyReportCalculator.RULE_VERSION + encode(source)).getBytes(java.nio.charset.StandardCharsets.UTF_8));
+                    .digest((MonthlyReportCalculator.RULE_VERSION + (period == null ? "" : encode(period)) + encode(source)).getBytes(java.nio.charset.StandardCharsets.UTF_8));
             return java.util.HexFormat.of().formatHex(digest);
         } catch (java.security.NoSuchAlgorithmException e) {
             throw new IllegalStateException(e);
@@ -212,6 +234,60 @@ public class MonthlyReportRepository {
         reportMapper.updateById(entity);
     }
 
+    public StoredReport byPeriod(ReportPeriod period) {
+        if ("month".equals(period.type())) return byMonth(period.periodKey());
+        return toStored(periodMapper.selectOne(new QueryWrapper<PeriodReportEntity>()
+                .eq("f_period_type", period.type()).eq("f_period_key", period.periodKey())));
+    }
+
+    public StoredReport byId(String type, long id) {
+        if ("month".equals(type)) return byId(id);
+        return toStored(periodMapper.selectOne(new QueryWrapper<PeriodReportEntity>()
+                .eq("f_period_type", type).eq("f_id", id)));
+    }
+
+    public List<StoredReport> byYear(String type, int year) {
+        if ("month".equals(type)) return byYear(year);
+        return periodMapper.selectList(new QueryWrapper<PeriodReportEntity>().eq("f_period_type", type)
+                .ge(!"year".equals(type), "f_period_key", year + "-01-01")
+                .lt(!"year".equals(type), "f_period_key", (year + 1) + "-01-01")
+                .orderByDesc("f_period_key")).stream().map(this::toStored).toList();
+    }
+
+    public void savePeriod(ReportPeriod p, StoredReport old, String hash, String snapshot, String now, String result) {
+        if ("month".equals(p.type())) {
+            if (old == null) insertReport(p.periodKey(), hash, snapshot, now, result);
+            else if (!updateReport(old.id(), old.version(), hash, snapshot, now, result)) throw stale();
+            return;
+        }
+        if (old == null) {
+            PeriodReportEntity entity = new PeriodReportEntity();
+            entity.setPeriodType(p.type()); entity.setPeriodKey(p.periodKey()); entity.setVersion(1);
+            entity.setSourceHash(hash); entity.setSnapshot(snapshot); entity.setGeneratedAt(now); entity.setAiResult(result);
+            periodMapper.insert(entity);
+        } else if (periodMapper.update(null, new UpdateWrapper<PeriodReportEntity>()
+                .eq("f_id", old.id()).eq("f_period_type", p.type()).eq("f_version", old.version())
+                .set("f_source_hash", hash).set("f_snapshot", snapshot).set("f_generated_at", now)
+                .set("f_ai_result", result).setSql("f_version = f_version + 1")) != 1) throw stale();
+    }
+
+    public void updateReportMessage(String type, long id, Long messageId) {
+        if ("month".equals(type)) updateReportMessage(id, messageId);
+        else periodMapper.update(null, new UpdateWrapper<PeriodReportEntity>()
+                .eq("f_id", id).eq("f_period_type", type).set("f_message_id", messageId));
+    }
+
+    private static com.bookkeeping.exception.BusinessException stale() {
+        return new com.bookkeeping.exception.BusinessException(com.bookkeeping.constant.BookkeepingResp.AI_STALE);
+    }
+
+    private StoredReport toStored(PeriodReportEntity entity) {
+        if (entity == null) return null;
+        return new StoredReport(entity.getId(), entity.getPeriodKey(), entity.getVersion(), entity.getSourceHash(),
+                entity.getGeneratedAt(), decode(entity.getSnapshot(), Snapshot.class), entity.getMessageId(),
+                decode(entity.getAiResult(), JsonNode.class));
+    }
+
     private StoredReport toStored(MonthlyReportEntity entity) {
         if (entity == null) return null;
         return new StoredReport(entity.getId().longValue(), entity.getMonth(), entity.getVersion(),
@@ -247,11 +323,15 @@ public class MonthlyReportRepository {
      * 新建一条月报消息（未读），返回其主键。
      */
     public Long createMessage(String title, String content, Long bizId) {
+        return createMessage("month", title, content, bizId);
+    }
+
+    public Long createMessage(String type, String title, String content, Long bizId) {
         MessageEntity entity = new MessageEntity();
         entity.setTitle(title);
         entity.setContent(content);
-        entity.setType(MessageType.MONTHLY_REPORT);
-        entity.setBizType(MessageBizType.MONTHLY_REPORT);
+        entity.setType(MessageType.fromValue(type.equals("week") ? "weekly_report" : type.equals("year") ? "yearly_report" : "monthly_report"));
+        entity.setBizType(MessageBizType.fromValue(entity.getType().getValue()));
         entity.setBizId(bizId == null ? null : bizId.intValue());
         entity.setStatus(MessageStatus.UN_READ);
         messageMapper.insert(entity);

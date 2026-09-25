@@ -44,7 +44,7 @@ function save() {
     const value = await monthlyAiApi.save(payload)
     if (!current()) return
     apply(value)
-    notice.value = value.hasKey ? '配置已保存。请到 AI 月报页面选择月份，预览并确认后生成。' : '配置已保存，请输入此服务的 API Key 后再使用。'
+    notice.value = value.hasKey ? '配置已保存。请到 AI 报告页面选择周期，预览并确认后生成。' : '配置已保存，请输入此服务的 API Key 后再使用。'
   })
 }
 async function revoke(clear = false) {
@@ -79,7 +79,7 @@ function test() {
 
 <template>
   <section class="page page--comfortable page--settings quiet-controls ai-settings">
-    <header class="settings-heading"><div><h1 class="page-head__title">AI 月报设置</h1><p class="page-head__sub">连接你的模型，每次生成都由你亲自确认。</p></div><el-button @click="router.push('/monthly-report')">前往 AI 月报 →</el-button></header>
+    <header class="settings-heading"><div><h1 class="page-head__title">AI 报告设置</h1><p class="page-head__sub">连接你的模型，每次生成都由你亲自确认。</p></div><el-button @click="router.push('/ai-report')">前往 AI 报告 →</el-button></header>
       <el-alert v-if="settings && !settings.available" title="尚未完成接口地址、模型或密钥配置，暂时无法发起 AI 解读。" type="warning" :closable="false" />
       <el-alert v-if="error" :title="error" type="error" :closable="false" />
       <el-button v-if="!settings" :disabled="busy" @click="reload">重新读取配置</el-button>
@@ -98,8 +98,9 @@ function test() {
       </section>
       <section class="surface panel privacy-panel">
         <h2>每次发送，都由你决定</h2>
-        <p>选择已结束的月份 → 预览实际摘要 → 确认生成。没有自动发送、后台排队或启动补生成。</p>
-        <p class="muted">仅发送月份、币种、收支汇总、分类汇总、笔数、比较值、预算与规则事实。不发送逐笔交易、明细日期、备注、账户名或余额、标签、生日、文件路径。</p>
+        <p>报告提供有数据依据的省钱建议，仅供参考，不承诺节省金额，也不会自动修改预算。</p>
+        <p>选择已结束的周、月或自然年 → 预览实际摘要 → 确认生成。三类报告共用此配置，没有自动发送、后台排队或启动补生成。</p>
+        <p class="muted">仅发送周期边界、币种、收支汇总、分类汇总、笔数、比较值、适用预算与规则事实；年报包含逐月汇总。不发送逐笔交易、明细日期、备注、账户名或余额、标签、生日、文件路径。</p>
         <p class="muted">模型调用可能计费。超时后请先查看已保存报告，再决定是否重新生成。已发出的请求无法保证从供应商撤回。</p>
         <el-button :disabled="revoking || !settings?.hasKey" @click="revoke()">停止当前发送</el-button>
       </section>

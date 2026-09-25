@@ -118,6 +118,34 @@ class MonthlyReportHttpIntegrationTest {
             assertEquals("INVALID_OUTPUT", body("POST", "/monthly-report/ai/generate", refresh).path("code").asString());
             assertEquals(completed, data("GET", "/monthly-report/" + id, null));
             assertEquals(3, requests.get());
+            assertEquals(completed.path("snapshot"), data("GET", "/ai-report/month/" + id, null).path("snapshot"));
+            output.set("{\"summary\":\"周期报告\",\"limitations\":\"仅代表记录数据\",\"observations\":[],\"actions\":[]}");
+            for (String[] period : List.of(new String[]{"week", "2024-01-15"}, new String[]{"month", "2024-01"}, new String[]{"year", "2024"})) {
+                String type = period[0], key = period[1];
+                JsonNode p = data("GET", "/ai-report/ai/preview?type=" + type + "&periodKey=" + key, null);
+                int before = requests.get();
+                assertEquals(type, p.path("type").asString());
+                assertEquals(key, p.path("periodKey").asString());
+                Map<String, Object> request = new java.util.HashMap<>(Map.of("type", type, "periodKey", key,
+                        "sourceHash", p.path("sourceHash").asString(), "baseVersion", p.path("baseVersion").asInt(),
+                        "configVersion", p.path("configVersion").asString(), "confirmed", false));
+                assertNotEquals("S0806", body("POST", "/ai-report/ai/generate", request).path("code").asString());
+                assertEquals(before, requests.get());
+                request.put("confirmed", true);
+                JsonNode report = data("POST", "/ai-report/ai/generate", request);
+                assertEquals(type, report.path("type").asString());
+                assertEquals(before + 1, requests.get());
+                assertEquals(report, data("GET", "/ai-report/" + type + "/" + report.path("id").asLong(), null));
+                JsonNode archive = data("GET", "/ai-report?type=" + type + "&year=2024", null);
+                assertTrue(archive.isArray());
+                assertTrue(java.util.stream.StreamSupport.stream(archive.spliterator(), false)
+                        .anyMatch(e -> e.path("periodKey").asString().equals(key) && e.path("hasReport").asBoolean()));
+                if (type.equals("week")) assertTrue(p.path("summary").path("budgets").isEmpty());
+                if (type.equals("year")) assertEquals(12, p.path("summary").path("trend").size());
+                assertFalse(sent.get().contains("私密"));
+            }
+            assertNotEquals("S0806", body("GET", "/ai-report/ai/preview?type=week&periodKey=2024-01-16", null).path("code").asString());
+            assertNotEquals("S0806", body("GET", "/ai-report?type=day&year=2024", null).path("code").asString());
             String logs = Files.readString(temp.resolve("backend.log"));
             assertFalse(logs.contains("integration-fake-key"));
             assertFalse(logs.contains("私密逐笔备注"));

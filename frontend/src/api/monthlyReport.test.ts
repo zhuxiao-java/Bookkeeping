@@ -1,9 +1,22 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { monthlyAiApi, monthlyReportApi } from './monthlyReport'
+import { monthlyAiApi, monthlyReportApi, periodReportApi } from './monthlyReport'
 const request = vi.hoisted(() => vi.fn())
 vi.mock('./http', () => ({ request }))
 beforeEach(() => { request.mockReset(); request.mockResolvedValue({ data: true }) })
 describe('AI HTTP 契约', () => {
+  it.each(['week', 'month', 'year'] as const)('%s 统一接口携带类型和周期且不重试', async type => {
+    const periodKey = type === 'week' ? '2024-12-30' : type === 'month' ? '2024-12' : '2024'
+    await periodReportApi.list(type, 2024)
+    expect(request).toHaveBeenLastCalledWith({ url: '/ai-report', params: { type, year: 2024 }, silent: true, noRetry: true })
+    await periodReportApi.detail(type, 1)
+    expect(request).toHaveBeenLastCalledWith({ url: `/ai-report/${type}/1`, silent: true, noRetry: true })
+    await periodReportApi.preview(type, periodKey)
+    expect(request).toHaveBeenLastCalledWith({ url: '/ai-report/ai/preview', params: { type, periodKey }, silent: true, noRetry: true })
+    const data = { type, periodKey, sourceHash: 'hash', baseVersion: 1, configVersion: 'v1', confirmed: true as const }
+    const signal = new AbortController().signal
+    await periodReportApi.generate(data, signal)
+    expect(request).toHaveBeenLastCalledWith({ url: '/ai-report/ai/generate', method: 'POST', data, signal, timeout: 150000, silent: true, noRetry: true })
+  })
   it('连接测试携带明确确认版本，禁止自动重试并留足超时', async () => {
     const consent = { configVersion: 'v1', confirmed: true as const }
     expect(await monthlyAiApi.test(consent)).toBe(true)
