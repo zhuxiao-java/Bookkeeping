@@ -75,6 +75,8 @@ export type CategoryType = 'income' | 'expense'
 export type TransactionType = 'income' | 'expense' | 'transfer'
 export type CurrencyCode = 'CNY' | 'DOLLAR'
 export type ArchivedFlag = 0 | 1
+/** 标签分组：scene-普通场景标签 / brand-品牌标签 */
+export type TagGroup = 'scene' | 'brand'
 
 // —— 实体 ——
 
@@ -157,10 +159,11 @@ export interface BudgetInfo {
   amountUsed: number
 }
 
-/** 标签（名称唯一） */
+/** 标签（名称唯一）；group 区分品牌维度与普通场景标签，缺省视为 scene */
 export interface Tag extends BaseEntity {
   name: string
   color: string
+  group?: TagGroup
 }
 
 // —— 交易统计聚合（POST /transaction/stats/*）——

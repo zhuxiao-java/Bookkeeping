@@ -71,9 +71,12 @@ CREATE TABLE IF NOT EXISTS t_tag (
      f_id            INTEGER PRIMARY KEY AUTOINCREMENT,      -- 标签唯一ID
      f_name          TEXT    NOT NULL UNIQUE,                -- 标签名称（唯一）
      f_color         TEXT,                                   -- 标签颜色
+     f_group         TEXT    NOT NULL DEFAULT 'scene',       -- 标签分组：scene-普通场景标签 / brand-品牌标签
      f_create_time    DATETIME DEFAULT CURRENT_TIMESTAMP,      -- 创建时间
      f_update_time    DATETIME DEFAULT CURRENT_TIMESTAMP      -- 最后更新时间
 );
+-- 存量库补列：新增列对已有行填默认值 'scene'；新库上面 CREATE 已含此列，重复列异常由初始化容错跳过
+ALTER TABLE t_tag ADD COLUMN f_group TEXT NOT NULL DEFAULT 'scene';
 
 CREATE TABLE IF NOT EXISTS t_user_level (
     f_id            INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -363,6 +366,44 @@ INSERT OR IGNORE INTO t_tag (f_name, f_color) SELECT '学习',     '#F1CE63' WHE
 INSERT OR IGNORE INTO t_tag (f_name, f_color) SELECT '健身',     '#B6992D' WHERE NOT EXISTS (SELECT 1 FROM t_seed_marker WHERE f_seed_key = 'tag');
 INSERT OR IGNORE INTO t_tag (f_name, f_color) SELECT '家庭',     '#499894' WHERE NOT EXISTS (SELECT 1 FROM t_seed_marker WHERE f_seed_key = 'tag');
 INSERT OR IGNORE INTO t_seed_marker (f_seed_key) VALUES ('tag');
+
+-- =====================================================
+-- 品牌标签 seed（各大品牌一目了然）
+-- 由 t_seed_marker 'brand' 守卫仅执行一次；f_group='brand' 标记为品牌维度，与普通场景标签区分。
+-- 品牌是跨分类的正交维度（一笔“耐克跑鞋”可同时是分类服饰 + 品牌 Nike），故复用标签而非子分类。
+-- t_tag.f_name 表级 UNIQUE 兜底重跑；与用户自建同名标签冲突时被静默忽略，不覆盖其原色/分组。
+-- 颜色取自高区分度色池 DISTINCT_COLORS，同批内尽量拉开。
+-- =====================================================
+-- 数码电子
+INSERT OR IGNORE INTO t_tag (f_name, f_color, f_group) SELECT '苹果',   '#E15759', 'brand' WHERE NOT EXISTS (SELECT 1 FROM t_seed_marker WHERE f_seed_key = 'brand');
+INSERT OR IGNORE INTO t_tag (f_name, f_color, f_group) SELECT '华为',   '#4E79A7', 'brand' WHERE NOT EXISTS (SELECT 1 FROM t_seed_marker WHERE f_seed_key = 'brand');
+INSERT OR IGNORE INTO t_tag (f_name, f_color, f_group) SELECT '小米',   '#F28E2B', 'brand' WHERE NOT EXISTS (SELECT 1 FROM t_seed_marker WHERE f_seed_key = 'brand');
+INSERT OR IGNORE INTO t_tag (f_name, f_color, f_group) SELECT '三星',   '#59A14F', 'brand' WHERE NOT EXISTS (SELECT 1 FROM t_seed_marker WHERE f_seed_key = 'brand');
+INSERT OR IGNORE INTO t_tag (f_name, f_color, f_group) SELECT '索尼',   '#B07AA1', 'brand' WHERE NOT EXISTS (SELECT 1 FROM t_seed_marker WHERE f_seed_key = 'brand');
+INSERT OR IGNORE INTO t_tag (f_name, f_color, f_group) SELECT '戴尔',   '#76B7B2', 'brand' WHERE NOT EXISTS (SELECT 1 FROM t_seed_marker WHERE f_seed_key = 'brand');
+INSERT OR IGNORE INTO t_tag (f_name, f_color, f_group) SELECT '联想',   '#EDC948', 'brand' WHERE NOT EXISTS (SELECT 1 FROM t_seed_marker WHERE f_seed_key = 'brand');
+-- 服饰运动
+INSERT OR IGNORE INTO t_tag (f_name, f_color, f_group) SELECT 'Nike',      '#9C755F', 'brand' WHERE NOT EXISTS (SELECT 1 FROM t_seed_marker WHERE f_seed_key = 'brand');
+INSERT OR IGNORE INTO t_tag (f_name, f_color, f_group) SELECT '阿迪达斯', '#FF9DA7', 'brand' WHERE NOT EXISTS (SELECT 1 FROM t_seed_marker WHERE f_seed_key = 'brand');
+INSERT OR IGNORE INTO t_tag (f_name, f_color, f_group) SELECT '优衣库',   '#86BCB6', 'brand' WHERE NOT EXISTS (SELECT 1 FROM t_seed_marker WHERE f_seed_key = 'brand');
+INSERT OR IGNORE INTO t_tag (f_name, f_color, f_group) SELECT '李宁',     '#8CD17D', 'brand' WHERE NOT EXISTS (SELECT 1 FROM t_seed_marker WHERE f_seed_key = 'brand');
+INSERT OR IGNORE INTO t_tag (f_name, f_color, f_group) SELECT '安踏',     '#D37295', 'brand' WHERE NOT EXISTS (SELECT 1 FROM t_seed_marker WHERE f_seed_key = 'brand');
+INSERT OR IGNORE INTO t_tag (f_name, f_color, f_group) SELECT 'ZARA',     '#A0CBE8', 'brand' WHERE NOT EXISTS (SELECT 1 FROM t_seed_marker WHERE f_seed_key = 'brand');
+-- 餐饮茶饮
+INSERT OR IGNORE INTO t_tag (f_name, f_color, f_group) SELECT '星巴克', '#499894', 'brand' WHERE NOT EXISTS (SELECT 1 FROM t_seed_marker WHERE f_seed_key = 'brand');
+INSERT OR IGNORE INTO t_tag (f_name, f_color, f_group) SELECT '瑞幸',   '#F1CE63', 'brand' WHERE NOT EXISTS (SELECT 1 FROM t_seed_marker WHERE f_seed_key = 'brand');
+INSERT OR IGNORE INTO t_tag (f_name, f_color, f_group) SELECT '麦当劳', '#B6992D', 'brand' WHERE NOT EXISTS (SELECT 1 FROM t_seed_marker WHERE f_seed_key = 'brand');
+INSERT OR IGNORE INTO t_tag (f_name, f_color, f_group) SELECT '肯德基', '#E15759', 'brand' WHERE NOT EXISTS (SELECT 1 FROM t_seed_marker WHERE f_seed_key = 'brand');
+INSERT OR IGNORE INTO t_tag (f_name, f_color, f_group) SELECT '喜茶',   '#4E79A7', 'brand' WHERE NOT EXISTS (SELECT 1 FROM t_seed_marker WHERE f_seed_key = 'brand');
+INSERT OR IGNORE INTO t_tag (f_name, f_color, f_group) SELECT '海底捞', '#F28E2B', 'brand' WHERE NOT EXISTS (SELECT 1 FROM t_seed_marker WHERE f_seed_key = 'brand');
+-- 商超家居
+INSERT OR IGNORE INTO t_tag (f_name, f_color, f_group) SELECT '沃尔玛', '#59A14F', 'brand' WHERE NOT EXISTS (SELECT 1 FROM t_seed_marker WHERE f_seed_key = 'brand');
+INSERT OR IGNORE INTO t_tag (f_name, f_color, f_group) SELECT '山姆',   '#B07AA1', 'brand' WHERE NOT EXISTS (SELECT 1 FROM t_seed_marker WHERE f_seed_key = 'brand');
+INSERT OR IGNORE INTO t_tag (f_name, f_color, f_group) SELECT '盒马',   '#76B7B2', 'brand' WHERE NOT EXISTS (SELECT 1 FROM t_seed_marker WHERE f_seed_key = 'brand');
+INSERT OR IGNORE INTO t_tag (f_name, f_color, f_group) SELECT '永辉',   '#EDC948', 'brand' WHERE NOT EXISTS (SELECT 1 FROM t_seed_marker WHERE f_seed_key = 'brand');
+INSERT OR IGNORE INTO t_tag (f_name, f_color, f_group) SELECT '宜家',   '#9C755F', 'brand' WHERE NOT EXISTS (SELECT 1 FROM t_seed_marker WHERE f_seed_key = 'brand');
+-- 品牌 seed 批次完成，登记标记；后续启动整批跳过，不复活用户已删除的品牌标签
+INSERT OR IGNORE INTO t_seed_marker (f_seed_key) VALUES ('brand');
 
 CREATE TABLE IF NOT EXISTS t_message (
      f_id            INTEGER PRIMARY KEY AUTOINCREMENT,

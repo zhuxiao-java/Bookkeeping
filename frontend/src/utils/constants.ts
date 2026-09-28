@@ -4,6 +4,7 @@ import type {
   CategoryType,
   CurrencyCode,
   MessageType,
+  TagGroup,
   TransactionType
 } from '@/types/model'
 
@@ -55,6 +56,16 @@ export const ARCHIVED_LABEL: Record<ArchivedFlag, string> = {
   0: '正常',
   1: '已归档'
 }
+
+/** 标签分组选项：品牌作为跨分类的正交维度，与场景标签分列管理 */
+export const TAG_GROUP_OPTIONS: EnumOption<TagGroup>[] = [
+  { value: 'scene', label: '场景' },
+  { value: 'brand', label: '品牌' }
+]
+
+/** 标签分组文案；缺省/未知归为「场景」 */
+export const tagGroupLabel = (v?: TagGroup | string | null): string =>
+  TAG_GROUP_OPTIONS.find((o) => o.value === v)?.label ?? '场景'
 
 /** 站内信消息类型（与后端 MessageType 枚举一致） */
 export const MESSAGE_TYPE_OPTIONS: EnumOption<MessageType>[] = [
