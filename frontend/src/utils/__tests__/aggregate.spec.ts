@@ -7,6 +7,7 @@ import {
   monthlyBalance,
   sumIncomeExpense,
   aggregateByCategory,
+  aggregateByBrand,
   resolveRootCategory,
   accountBalanceSeries,
   adaptTrend,
@@ -16,6 +17,7 @@ import {
 import type {
   Account,
   Category,
+  Tag,
   Transaction,
   TransactionTrendItem,
   TransactionCategoryStat,
@@ -59,6 +61,9 @@ const accBase: Account = {
   archived: 0
 }
 const acc = (p: Partial<Account>): Account => ({ ...accBase, ...p })
+
+const tagBase: Tag = { id: 1, name: '', color: '', group: 'scene' }
+const tag = (p: Partial<Tag>): Tag => ({ ...tagBase, ...p })
 
 describe('区间判定', () => {
   it('inDateRange 取日期部分闭区间比较', () => {
@@ -151,6 +156,46 @@ describe('aggregateByCategory（三级分类归并）', () => {
   it('已删除分类的交易被跳过', () => {
     const agg = aggregateByCategory([tx({ categoryId: 999 })], categories, 'expense', 'root')
     expect(agg).toHaveLength(0)
+  })
+})
+
+describe('aggregateByBrand（跨分类品牌榜）', () => {
+  const tags = [
+    tag({ id: 10, name: '苹果', color: '#E15759', group: 'brand' }),
+    tag({ id: 11, name: 'Nike', color: '#9C755F', group: 'brand' }),
+    tag({ id: 20, name: '报销', color: '#4E79A7', group: 'scene' })
+  ]
+
+  it('仅统计 brand 标签，按金额降序', () => {
+    const agg = aggregateByBrand(
+      [
+        tx({ type: 'expense', amount: 8000, tags: '[10]' }),
+        tx({ type: 'expense', amount: 500, tags: '[11]' }),
+        tx({ type: 'expense', amount: 999, tags: '[20]' })
+      ],
+      tags
+    )
+    expect(agg.map((b) => b.name)).toEqual(['苹果', 'Nike'])
+    expect(agg[0]).toMatchObject({ tagId: 10, amount: 8000, count: 1, color: '#E15759' })
+  })
+
+  it('一笔挂多个品牌，金额分别计入每个品牌', () => {
+    const agg = aggregateByBrand([tx({ type: 'expense', amount: 100, tags: '[10,11]' })], tags)
+    expect(agg).toHaveLength(2)
+    expect(agg.find((b) => b.tagId === 10)?.amount).toBe(100)
+    expect(agg.find((b) => b.tagId === 11)?.amount).toBe(100)
+  })
+
+  it('transfer 与不存在的标签不计入；无品牌标签时返回空', () => {
+    const agg = aggregateByBrand(
+      [
+        tx({ type: 'transfer', amount: 500, tags: '[10]' }),
+        tx({ type: 'expense', amount: 50, tags: '[999]' })
+      ],
+      tags
+    )
+    expect(agg).toHaveLength(0)
+    expect(aggregateByBrand([tx({ amount: 10 })], [tag({ id: 1, group: 'scene' })])).toHaveLength(0)
   })
 })
 
