@@ -15,7 +15,7 @@ import static com.bookkeeping.monthly.MonthlyReportModels.*;
  */
 @Component
 public class MonthlyReportCalculator {
-    public static final String RULE_VERSION = "2";
+    public static final String RULE_VERSION = "3";
     private static final BigDecimal ZERO = BigDecimal.ZERO;
 
     public Snapshot calculate(YearMonth month, Source source) {
@@ -25,6 +25,8 @@ public class MonthlyReportCalculator {
     public Snapshot calculate(ReportPeriod period, Source source) {
         Map<Integer, Category> categories = new HashMap<>();
         source.categories().forEach(c -> categories.put(c.id(), c));
+        Map<Integer, String> brandNames = new HashMap<>();
+        source.brands().forEach(b -> brandNames.put(b.id(), b.name()));
         List<Tx> current = source.transactions().stream().filter(t -> period.contains(t.date())).toList();
         List<Tx> previous = source.transactions().stream().filter(t -> period.previous(1).contains(t.date())).toList();
         List<Tx> history = source.transactions().stream().filter(t -> t.date().compareTo(period.sourceStart().toString()) >= 0
@@ -105,9 +107,15 @@ public class MonthlyReportCalculator {
                     Map.of("income", money(income), "expense", money(expense), "fees", money(fees),
                             "balance", money(income.subtract(expense).subtract(fees)), "count", String.valueOf(rows.size())),
                     "先检查记账是否完整，再结合实际情况规划" + period.nextLabel() + "收支。"));
+            List<BrandStat> brands = brandStats(expenses, brandNames, expense);
+            // 品牌事实：金额/占比/笔数入 values（品牌名不入 values，不上传），供 AI 引用；仅取金额前列品牌
+            brands.stream().filter(b -> decimal(b.amount()).signum() > 0).limit(3).forEach(b -> facts.add(new Fact(
+                    currency + ":brand:" + b.tagId(), "brand", currency, null, b.name() + "是本期品牌消费之一",
+                    Map.of("amount", b.amount(), "share", b.share() == null ? "0" : b.share(), "count", String.valueOf(b.count())),
+                    "品牌消费仅基于已打品牌标签的流水，先核对是否为计划内开支，不把单一品牌高金额直接视为可削减项。")));
             summaries.add(new CurrencySummary(currency, money(income), money(expense), money(fees), money(income.subtract(expense).subtract(fees)), rows.size(),
                     hasPrevious ? money(prevExpense) : null, hasPrevious ? growth(expense, prevExpense) : null,
-                    hasHistory ? money(sum(histExpenses).divide(historyDivisor, 2, RoundingMode.HALF_UP)) : null, stats));
+                    hasHistory ? money(sum(histExpenses).divide(historyDivisor, 2, RoundingMode.HALF_UP)) : null, stats, brands));
         }
         List<Tx> cnyExpense = expenses(current.stream().filter(t -> currency(t).equals("CNY")).toList());
         List<BudgetComparison> budgets = new ArrayList<>();
@@ -132,7 +140,8 @@ public class MonthlyReportCalculator {
             case "growth" -> 1;
             case "frequency" -> 2;
             case "large" -> 3;
-            default -> 4;
+            case "brand" -> 4;
+            default -> 5;
         }));
         List<Fact> scopedFacts = facts.stream().map(f -> f.start() != null ? f : new Fact(f.id(), f.kind(), f.currency(),
                 f.categoryId(), f.title(), f.values(), f.suggestion(), period.start().toString(), period.end())).toList();
@@ -140,6 +149,7 @@ public class MonthlyReportCalculator {
                 "仅分析已记录账单，不代表全部收入或消费；一笔流水不等于一件商品。",
                 "转账本金不计收支，手续费单列；结余已扣除转账手续费，与原报表口径略有不同。",
                 "币种独立计算，不换汇；预算仅比较人民币消费，总预算与分类预算不相加。",
+                "品牌消费仅统计打了品牌标签的流水，一笔可同时计入多个品牌，不代表该品牌的全部消费。",
                 "week".equals(period.type()) ? "周报不折算或比较月预算；前四周每周均有该币种记录时才展示历史均值。"
                         : "year".equals(period.type()) ? "年度预算逐月核对，仅覆盖已设置预算的月份，不代表完整年度预算。" : "缺少历史时不输出环比或三月均值。",
                 "无记录周期不代表实际没有消费；历史比较只反映已记录账单。"), period, trend(period, current, currencies));
@@ -207,6 +217,28 @@ public class MonthlyReportCalculator {
 
     private static List<Tx> expenses(List<Tx> rows) {
         return rows.stream().filter(t -> "expense".equals(t.type())).toList();
+    }
+
+    /**
+     * 按品牌标签聚合支出：一笔支出可同时计入多个品牌，品牌维度独立于分类、不做去重。
+     * 仅统计已在品牌目录（brandNames）中的标签 id，其余标签忽略。
+     */
+    private static List<BrandStat> brandStats(List<Tx> expenses, Map<Integer, String> brandNames, BigDecimal totalExpense) {
+        if (brandNames.isEmpty()) return List.of();
+        Map<Integer, BigDecimal> amountByBrand = new TreeMap<>();
+        Map<Integer, Integer> countByBrand = new TreeMap<>();
+        for (Tx t : expenses) {
+            for (Integer tagId : t.tagIds()) {
+                if (!brandNames.containsKey(tagId)) continue;
+                amountByBrand.merge(tagId, decimal(t.amount()), BigDecimal::add);
+                countByBrand.merge(tagId, 1, Integer::sum);
+            }
+        }
+        List<BrandStat> result = new ArrayList<>();
+        amountByBrand.forEach((tagId, amount) -> result.add(new BrandStat(tagId, brandNames.get(tagId),
+                money(amount), countByBrand.getOrDefault(tagId, 0), percentage(amount, totalExpense))));
+        result.sort(Comparator.comparing((BrandStat b) -> decimal(b.amount())).reversed().thenComparingInt(BrandStat::tagId));
+        return result;
     }
 
     private static String currency(Tx t) {

@@ -15,8 +15,10 @@ export interface CategoryStat {
 export interface CurrencySummary {
   currency: string; income: string; expense: string; fees: string; balance: string; count: number
   previousExpense: string | null; growth: string | null; historyAverage: string | null
-  categories: CategoryStat[]
+  categories: CategoryStat[]; brands: BrandStat[]
 }
+/** 品牌消费统计：基于已打品牌标签的流水，一笔可同时计入多个品牌，占比相对本币种总支出。 */
+export interface BrandStat { tagId: number; name: string; amount: string; count: number; share: string | null }
 export interface MonthlyFact {
   id: string; kind: string; currency: string; categoryId: number | null
   title: string; values: Record<string, string | null>; suggestion: string; start?: string | null; end?: string | null

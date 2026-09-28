@@ -10,6 +10,7 @@ import { isReportType, lastClosedPeriod, validPeriod, periodTitle, reportLabels,
 import AnnualTrend from '@/components/monthly/AnnualTrend.vue'
 import MonthlyOverview from '@/components/monthly/MonthlyOverview.vue'
 import CategoryDiagnosis from '@/components/monthly/CategoryDiagnosis.vue'
+import BrandAnalysis from '@/components/monthly/BrandAnalysis.vue'
 import { bus, TRANSACTION_CHANGED, ACCOUNT_CHANGED, CATEGORY_CHANGED, BUDGET_CHANGED } from '@/utils/bus'
 
 const router = useRouter(), route = useRoute()
@@ -27,6 +28,8 @@ const label = computed(() => reportLabels[reportType.value])
 const budgetCoverage = computed(() => new Set(report.value?.snapshot.budgets.map(b => b.month).filter(Boolean)).size)
 const hasReport = computed(() => !!report.value?.result)
 const factMap = computed(() => new Map(report.value?.snapshot.facts.map(f => [f.id, f]) ?? []))
+// 仅保留有品牌消费（金额>0）的币种，避免空品牌面板
+const brandCurrencies = computed(() => (report.value?.snapshot.currencies ?? []).filter(c => (c.brands ?? []).some(b => Number(b.amount) > 0)))
 const canGenerate = computed(() => !loading.value && !sending.value && !previewLoading.value && !error.value && !needsCheck.value && !!settings.value?.available && !!settings.value?.hasKey)
 const sections = computed(() => [
   { key: 'observations', eyebrow: 'OBSERVATIONS', title: '这段时间，值得留意的变化', empty: '现有数据不足以形成更多发现。', items: report.value?.result?.observations ?? [] },
@@ -199,6 +202,7 @@ onBeforeUnmount(() => {
           </section>
           <section v-for="currency in report.snapshot.currencies" :key="currency.currency" class="surface metrics-panel"><MonthlyOverview :summary="currency" :period-type="reportType" compact /></section>
           <AnnualTrend v-if="reportType === 'year' && report.snapshot.trend?.length" :rows="report.snapshot.trend" />
+          <section v-for="currency in brandCurrencies" :key="`brand-${currency.currency}`" class="surface"><BrandAnalysis :summary="currency" :period-type="reportType" /></section>
           <section v-for="section in sections" :key="section.key" class="insights-section">
             <div class="section-heading"><p class="eyebrow">{{ section.eyebrow }}</p><h2>{{ section.title }}</h2></div>
             <p v-if="!section.items.length" class="surface empty-insight muted">{{ section.empty }}</p>
@@ -213,7 +217,7 @@ onBeforeUnmount(() => {
     </div>
     <el-dialog v-model="previewVisible" :title="`确认生成 AI ${label}`" width="min(720px, 92vw)" @close="invalidatePreview">
       <div class="preview-recipient"><span class="eyebrow">本次发送至</span><strong>{{ preview?.baseUrl }}</strong><p>{{ preview?.start }} ~ {{ preview?.end }} · {{ preview?.model }} · {{ preview?.includeNames ? '包含分类名称' : '分类已匿名化' }}</p></div>
-      <p>发送所选周期的收支、分类及事实统计。{{ reportType === 'week' ? '比较值包含此前四周汇总，不发送月预算。' : reportType === 'year' ? '包含上一年比较、全年逐月收支及已设置的月预算。' : '比较值包含此前三个自然月汇总及所选月预算。' }}仅发送周期边界与汇总，不发送逐笔交易、流水日期、备注、账户名或余额、标签、生日及文件路径。</p>
+      <p>发送所选周期的收支、分类、品牌聚合及事实统计。{{ reportType === 'week' ? '比较值包含此前四周汇总，不发送月预算。' : reportType === 'year' ? '包含上一年比较、全年逐月收支及已设置的月预算。' : '比较值包含此前三个自然月汇总及所选月预算。' }}仅发送周期边界与汇总，不发送逐笔交易、流水日期、备注、账户名或余额、生日及文件路径；品牌仅发送按品牌标签聚合的金额与占比，关闭分类名称时品牌名同样匿名。</p>
       <details class="preview-json"><summary>查看实际发送的完整摘要</summary><pre>{{ JSON.stringify(preview?.summary, null, 2) }}</pre></details>
       <p class="muted">供应商可能收取费用；重新生成可能再次计费。已发送的数据无法保证从供应商撤回。</p>
       <el-checkbox v-model="consent">我已检查摘要，确认本次发送并理解可能的费用</el-checkbox>

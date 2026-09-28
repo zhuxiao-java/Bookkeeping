@@ -13,7 +13,15 @@ public final class MonthlyReportModels {
     }
 
     public record Tx(long id, String type, String amount, String fee, Integer categoryId,
-                     Integer accountId, String currency, String date) {
+                     Integer accountId, String currency, String date, List<Integer> tagIds) {
+        public Tx {
+            tagIds = tagIds == null ? List.of() : tagIds;
+        }
+        /** 兼容不带标签的构造（历史调用与单测）。 */
+        public Tx(long id, String type, String amount, String fee, Integer categoryId,
+                  Integer accountId, String currency, String date) {
+            this(id, type, amount, fee, categoryId, accountId, currency, date, List.of());
+        }
     }
 
     public record Category(int id, Integer parentId, String name, String type) {
@@ -23,8 +31,19 @@ public final class MonthlyReportModels {
         public Budget(int id, Integer categoryId, String amount) { this(id, categoryId, amount, null); }
     }
 
+    /** 品牌标签目录：仅承载 id/name，用于将交易 tagIds 归属到具体品牌。 */
+    public record Brand(int id, String name) {
+    }
+
     public record Source(List<Tx> transactions, List<Category> categories, List<Budget> budgets,
-                         String firstMonth) {
+                         String firstMonth, List<Brand> brands) {
+        public Source {
+            brands = brands == null ? List.of() : brands;
+        }
+        /** 兼容不含品牌目录的构造（历史调用与单测）。 */
+        public Source(List<Tx> transactions, List<Category> categories, List<Budget> budgets, String firstMonth) {
+            this(transactions, categories, budgets, firstMonth, List.of());
+        }
     }
 
     public record Breakdown(int categoryId, String name, String amount, int count) {
@@ -39,9 +58,22 @@ public final class MonthlyReportModels {
                                List<Breakdown> children, List<LargeExpense> largeExpenses) {
     }
 
+    /** 品牌消费统计：一笔交易可同时计入多个品牌，故品牌维度独立于分类，不做去重累加。 */
+    public record BrandStat(int tagId, String name, String amount, int count, String share) {
+    }
+
     public record CurrencySummary(String currency, String income, String expense, String fees,
                                   String balance, int count, String previousExpense, String growth,
-                                  String historyAverage, List<CategoryStat> categories) {
+                                  String historyAverage, List<CategoryStat> categories, List<BrandStat> brands) {
+        public CurrencySummary {
+            brands = brands == null ? List.of() : brands;
+        }
+        /** 兼容不含品牌维度的构造（历史调用与单测）。 */
+        public CurrencySummary(String currency, String income, String expense, String fees,
+                               String balance, int count, String previousExpense, String growth,
+                               String historyAverage, List<CategoryStat> categories) {
+            this(currency, income, expense, fees, balance, count, previousExpense, growth, historyAverage, categories, List.of());
+        }
     }
 
     public record BudgetComparison(int id, Integer categoryId, String name, String amount,

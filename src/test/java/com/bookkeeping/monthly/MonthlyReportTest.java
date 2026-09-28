@@ -83,6 +83,7 @@ class MonthlyReportTest {
         configuration.addMapper(BudgetMapper.class);
         configuration.addMapper(MessageMapper.class);
         configuration.addMapper(AiConfigMapper.class);
+        configuration.addMapper(TagMapper.class);
         SqlSessionFactory factory = new MybatisSqlSessionFactoryBuilder().build(configuration);
         SqlSessionTemplate session = new SqlSessionTemplate(factory);
         repo = new MonthlyReportRepository(
@@ -92,7 +93,7 @@ class MonthlyReportTest {
                 session.getMapper(CategoryMapper.class),
                 session.getMapper(BudgetMapper.class),
                 session.getMapper(MessageMapper.class),
-                json, session.getMapper(PeriodReportMapper.class));
+                json, session.getMapper(PeriodReportMapper.class), session.getMapper(TagMapper.class));
         guard = new MonthlyAiRequestGuard(new DataSourceTransactionManager(ds));
         service = new MonthlyReportService(repo, new MonthlyReportCalculator(), guard);
         configService = new AiConfigService(session.getMapper(AiConfigMapper.class), guard);
@@ -506,6 +507,34 @@ class MonthlyReportTest {
         assertTrue(named.contains("餐饮美食"));
         assertFalse(masked.contains("餐饮美食"));
         assertTrue(masked.contains("分类-1001"));
+    }
+
+    @Test
+    void brandAggregationCountsAcrossCategoriesAndMasksNames() {
+        // 显式插入品牌/场景标签，避免依赖 seed 自增 id；用测试专属名避开唯一名冲突
+        jdbc.update("INSERT INTO t_category(f_id,f_name,f_type) VALUES (1001,'测试数码','expense'),(1002,'测试餐饮','expense')");
+        jdbc.update("INSERT INTO t_tag(f_id,f_name,f_color,f_group) VALUES (5001,'品牌甲','#E15759','brand'),(5002,'品牌乙','#3B7A57','brand'),(5003,'场景甲','#909399','scene')");
+        // 一笔支出同时打两个品牌 + 一个场景标签；跨分类另一笔只打一个品牌
+        jdbc.update("INSERT INTO t_transaction(f_type,f_amount,f_account_id,f_category_id,f_date,f_tags) VALUES ('expense','100',1,1001,'2024-02-15T12:00:00','[5001,5002,5003]')");
+        jdbc.update("INSERT INTO t_transaction(f_type,f_amount,f_account_id,f_category_id,f_date,f_tags) VALUES ('expense','30',1,1002,'2024-02-16T12:00:00','[5002]')");
+        Snapshot s = service.candidate("2024-02").snapshot();
+        CurrencySummary cny = s.currencies().get(0);
+        // 场景标签不计入品牌；品牌乙跨分类累加 130（2 笔），品牌甲 100（1 笔），按金额降序
+        assertEquals(2, cny.brands().size());
+        assertEquals("品牌乙", cny.brands().get(0).name());
+        assertEquals("130.00", cny.brands().get(0).amount());
+        assertEquals(2, cny.brands().get(0).count());
+        assertEquals("100.00", cny.brands().get(0).share());
+        assertEquals("品牌甲", cny.brands().get(1).name());
+        assertEquals("100.00", cny.brands().get(1).amount());
+        // 存在 brand 类事实供 AI 引用
+        assertTrue(s.facts().stream().anyMatch(f -> f.kind().equals("brand")));
+        // includeNames 关闭时品牌名脱敏，不泄露真实品牌名
+        String masked = json.writeValueAsString(MonthlyReportAiService.summaryFor(s, false));
+        String named = json.writeValueAsString(MonthlyReportAiService.summaryFor(s, true));
+        assertTrue(named.contains("品牌乙"));
+        assertFalse(masked.contains("品牌乙"));
+        assertTrue(masked.contains("品牌-5002"));
     }
 
     @Test

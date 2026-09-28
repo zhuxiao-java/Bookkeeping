@@ -8,6 +8,7 @@ import com.bookkeeping.dao.entity.CategoryEntity;
 import com.bookkeeping.dao.entity.MessageEntity;
 import com.bookkeeping.dao.entity.MonthlyReportEntity;
 import com.bookkeeping.dao.entity.PeriodReportEntity;
+import com.bookkeeping.dao.entity.TagEntity;
 import com.bookkeeping.dao.mapper.PeriodReportMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import com.bookkeeping.dao.entity.TransactionEntity;
@@ -16,6 +17,7 @@ import com.bookkeeping.dao.mapper.BudgetMapper;
 import com.bookkeeping.dao.mapper.CategoryMapper;
 import com.bookkeeping.dao.mapper.MessageMapper;
 import com.bookkeeping.dao.mapper.MonthlyReportMapper;
+import com.bookkeeping.dao.mapper.TagMapper;
 import com.bookkeeping.dao.mapper.TransactionMapper;
 import com.bookkeeping.constant.MessageBizType;
 import com.bookkeeping.constant.MessageStatus;
@@ -55,18 +57,20 @@ public class MonthlyReportRepository {
     private final MessageMapper messageMapper;
     private final ObjectMapper json;
     private final PeriodReportMapper periodMapper;
+    private final TagMapper tagMapper;
 
     public MonthlyReportRepository(MonthlyReportMapper reportMapper,
                                    TransactionMapper transactionMapper, AccountMapper accountMapper,
                                    CategoryMapper categoryMapper, BudgetMapper budgetMapper,
                                    MessageMapper messageMapper, ObjectMapper json) {
-        this(reportMapper, transactionMapper, accountMapper, categoryMapper, budgetMapper, messageMapper, json, null);
+        this(reportMapper, transactionMapper, accountMapper, categoryMapper, budgetMapper, messageMapper, json, null, null);
     }
 
     @Autowired
     public MonthlyReportRepository(MonthlyReportMapper reportMapper, TransactionMapper transactionMapper,
                                    AccountMapper accountMapper, CategoryMapper categoryMapper, BudgetMapper budgetMapper,
-                                   MessageMapper messageMapper, ObjectMapper json, PeriodReportMapper periodMapper) {
+                                   MessageMapper messageMapper, ObjectMapper json, PeriodReportMapper periodMapper,
+                                   TagMapper tagMapper) {
         this.periodMapper = periodMapper;
         this.reportMapper = reportMapper;
         this.transactionMapper = transactionMapper;
@@ -75,6 +79,7 @@ public class MonthlyReportRepository {
         this.budgetMapper = budgetMapper;
         this.messageMapper = messageMapper;
         this.json = json;
+        this.tagMapper = tagMapper;
     }
 
     // ==================== JSON 编解码 ====================
@@ -116,7 +121,7 @@ public class MonthlyReportRepository {
         for (TransactionEntity t : txEntities) {
             transactions.add(new Tx(t.getId().longValue(), t.getType().getValue(), plain(t.getAmount()), plain(t.getFee()),
                     t.getCategoryId(), t.getAccountId(), currencyByAccount.get(t.getAccountId()),
-                    t.getTransactionDate().toLocalDate().toString()));
+                    t.getTransactionDate().toLocalDate().toString(), parseTagIds(t.getTags())));
         }
         List<CategoryEntity> categoryEntities = categoryMapper.selectList(new QueryWrapper<CategoryEntity>().orderByAsc("f_id"));
         Map<Integer, Category> categoryById = new HashMap<>();
@@ -139,7 +144,9 @@ public class MonthlyReportRepository {
         if (firstMonth != null && firstMonth.compareTo(historyStart) < 0) firstMonth = historyStart;
         // 仅保留被流水/预算引用到的分类及其全部父级，收敛发送给模型的数据面
         List<Category> relevant = filterRelevant(allCategories, categoryById, transactions, budgets);
-        return new Source(transactions, relevant, budgets, firstMonth);
+        // 品牌标签目录：仅纳入本区间流水实际引用到的品牌，未打标的不进入数据面
+        List<Brand> brands = loadUsedBrands(transactions);
+        return new Source(transactions, relevant, budgets, firstMonth, brands);
     }
 
     private static List<Category> filterRelevant(List<Category> all, Map<Integer, Category> byId,
@@ -159,6 +166,40 @@ public class MonthlyReportRepository {
 
     private static String plain(java.math.BigDecimal value) {
         return value == null ? null : value.toPlainString();
+    }
+
+    /**
+     * 解析流水的标签 JSON（形如 "[1,3,5]"）为 id 列表；无标签或非法内容返回空列表。
+     */
+    private static List<Integer> parseTagIds(String raw) {
+        if (raw == null) return List.of();
+        String s = raw.trim();
+        if (s.isEmpty() || s.equals("[]") || s.equalsIgnoreCase("null")) return List.of();
+        s = s.replaceAll("[\\[\\]\"\\s]", "");
+        List<Integer> ids = new ArrayList<>();
+        for (String part : s.split(",")) {
+            if (part.isEmpty()) continue;
+            try {
+                ids.add(Integer.parseInt(part));
+            } catch (NumberFormatException ignored) {
+                // 非数字标签 id 直接忽略，不影响其余统计
+            }
+        }
+        return ids;
+    }
+
+    /**
+     * 读取本区间流水实际引用到的品牌标签（f_group='brand'）；仅 id/name，无引用则不发起查询。
+     */
+    private List<Brand> loadUsedBrands(List<Tx> transactions) {
+        Set<Integer> used = new HashSet<>();
+        for (Tx tx : transactions) used.addAll(tx.tagIds());
+        if (used.isEmpty() || tagMapper == null) return List.of();
+        List<Brand> brands = new ArrayList<>();
+        for (TagEntity tag : tagMapper.selectList(new QueryWrapper<TagEntity>().eq("f_group", "brand"))) {
+            if (used.contains(tag.getId())) brands.add(new Brand(tag.getId(), tag.getName()));
+        }
+        return brands;
     }
 
     /**
