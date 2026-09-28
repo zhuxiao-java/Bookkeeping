@@ -24,4 +24,9 @@ public class TagEntity extends BaseEntity<Integer> {
      */
     @TableField(value = "f_color")
     private String color;
+    /**
+     * 标签分组：scene-普通场景标签 / brand-品牌标签
+     */
+    @TableField(value = "f_group")
+    private String tagGroup;
 }

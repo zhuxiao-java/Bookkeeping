@@ -1,11 +1,13 @@
 import type {
   Account,
   Category,
+  Tag,
   Transaction,
   TransactionCategoryStat,
   TransactionMonthlyInfo,
   TransactionTrendItem
 } from '@/types/model'
+import { parseTagIds } from '@/types/model'
 import { toFen } from './format'
 import { COLOR_PALETTE } from './constants'
 
@@ -240,6 +242,51 @@ export function aggregateByCategory(
     }
     item.amount = toYuan(toFen(item.amount) + toFen(t.amount))
     item.count++
+  }
+
+  return [...agg.values()].sort((a, b) => b.amount - a.amount)
+}
+
+export interface BrandAgg {
+  tagId: number
+  name: string
+  color: string
+  /** 金额（元） */
+  amount: number
+  count: number
+}
+
+/**
+ * 按品牌标签聚合金额（跨分类）：仅统计 group='brand' 的标签。
+ * 一笔交易可挂多个品牌标签，其金额分别计入每个品牌；type 为 income / expense，transfer 不计。
+ * 已删除的标签（不在 tags 字典中）自动跳过；返回按金额降序，供品牌消费榜展示。
+ */
+export function aggregateByBrand(
+  transactions: Transaction[],
+  tags: Tag[],
+  type: 'income' | 'expense' = 'expense'
+): BrandAgg[] {
+  const brandById = new Map<number, Tag>()
+  for (const t of tags) {
+    if (t.group === 'brand') brandById.set(t.id, t)
+  }
+  if (!brandById.size) return []
+
+  const agg = new Map<number, BrandAgg>()
+  for (const tx of transactions) {
+    if (tx.type !== type) continue
+    for (const tagId of parseTagIds(tx.tags)) {
+      const brand = brandById.get(tagId)
+      // 非品牌标签或已删除标签：跳过
+      if (!brand) continue
+      let item = agg.get(tagId)
+      if (!item) {
+        item = { tagId, name: brand.name, color: brand.color || '#909399', amount: 0, count: 0 }
+        agg.set(tagId, item)
+      }
+      item.amount = toYuan(toFen(item.amount) + toFen(tx.amount))
+      item.count++
+    }
   }
 
   return [...agg.values()].sort((a, b) => b.amount - a.amount)
