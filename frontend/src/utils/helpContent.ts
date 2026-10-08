@@ -155,6 +155,15 @@ export const HELP_SECTIONS: HelpSection[] = [
         links: [{ label: '打开', action: { type: 'route', path: '/level' } }]
       },
       {
+        title: '陪伴宠物',
+        lines: [
+          '在总览领养一只猫、狗或鸟。心情跟着签到上升，当天第一次记账也会让它更有精神。',
+          '连续几天不打开应用，它会变得困倦，但不会离开，也不扣经验、不改账本。',
+          '连续签到 7 天、30 天会换一个更亲近的样子。屏保上也能看到它。'
+        ],
+        links: [{ label: '打开总览', action: { type: 'route', path: '/dashboard' } }]
+      },
+      {
         title: '设置',
         lines: [
           '个性化：主题模式、金额小数位、背景图与遮罩透明度、息屏等待时长。',

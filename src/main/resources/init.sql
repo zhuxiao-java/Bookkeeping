@@ -466,3 +466,29 @@ CREATE TABLE IF NOT EXISTS t_ai_config (
     f_config_version TEXT NOT NULL,
     f_update_time TEXT NOT NULL
 );
+
+-- 陪伴宠物：单机一只。f_slot 固定为 1，保证全库只有一行。
+-- 心情由签到与记账推动，不另记经验，也不进入账本口径。
+CREATE TABLE IF NOT EXISTS t_pet (
+    f_id            INTEGER PRIMARY KEY AUTOINCREMENT,
+    f_slot          INTEGER NOT NULL DEFAULT 1 UNIQUE,
+    f_name          TEXT    NOT NULL,
+    f_species       TEXT    NOT NULL,
+    f_mood          INTEGER NOT NULL DEFAULT 60,
+    f_adopted_on    DATE    NOT NULL,
+    f_settled_on    DATE,
+    f_create_time   DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    f_update_time   DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 每天至多一条结算、一条记账互动，避免同一天重复加减心情。
+CREATE TABLE IF NOT EXISTS t_pet_log (
+    f_id            INTEGER PRIMARY KEY AUTOINCREMENT,
+    f_event_date    DATE    NOT NULL,
+    f_event_type    TEXT    NOT NULL,
+    f_mood_before   INTEGER NOT NULL,
+    f_mood_after    INTEGER NOT NULL,
+    f_create_time   DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    f_update_time   DATETIME DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE (f_event_date, f_event_type)
+);

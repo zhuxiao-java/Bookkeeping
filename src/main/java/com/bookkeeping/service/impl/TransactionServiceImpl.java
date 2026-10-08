@@ -12,6 +12,7 @@ import com.bookkeeping.dao.mapping.TransactionMapping;
 import com.bookkeeping.service.AccountService;
 import com.bookkeeping.service.BudgetService;
 import com.bookkeeping.service.CategoryService;
+import com.bookkeeping.service.PetService;
 import com.bookkeeping.service.TransactionService;
 import com.bookkeeping.service.UserLevelService;
 import jakarta.annotation.Resource;
@@ -58,6 +59,8 @@ public class TransactionServiceImpl extends IBaseCrudServiceImpl<TransactionDTO,
     @Lazy
     @Autowired
     private UserLevelService userLevelService;
+    @Resource
+    private PetService petService;
 
     public TransactionServiceImpl(TransactionMapping mapping) {
         super(mapping);
@@ -326,11 +329,25 @@ public class TransactionServiceImpl extends IBaseCrudServiceImpl<TransactionDTO,
      * 属激励副作用，任何异常都不得影响记账主流程，故吞掉并记日志。
      */
     private int awardRecordExperience() {
+        int awarded = 0;
         try {
-            return userLevelService.gainRecordExperience();
+            awarded = userLevelService.gainRecordExperience();
         } catch (Exception e) {
             log.warn("记账经验奖励发放失败，已忽略以保证记账成功", e);
-            return 0;
+        }
+        touchPet();
+        return awarded;
+    }
+
+    /** 记账成功后的宠物互动。失败不影响入账，未领养时直接跳过。 */
+    private void touchPet() {
+        if (petService == null) {
+            return;
+        }
+        try {
+            petService.touchRecord();
+        } catch (Exception e) {
+            log.warn("陪伴宠物互动失败，已忽略以保证记账成功", e);
         }
     }
 

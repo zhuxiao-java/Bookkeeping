@@ -281,6 +281,25 @@ export interface CheckIn extends BaseEntity {
   streakDays: number
 }
 
+/** 陪伴宠物。未领养时 adopted 为 false，其余字段为空。 */
+export type PetSpecies = 'cat' | 'dog' | 'bird'
+export type PetMood = 'energetic' | 'calm' | 'sleepy'
+
+export interface PetView {
+  adopted: boolean
+  name?: string | null
+  species?: PetSpecies | null
+  speciesLabel?: string | null
+  mood?: number
+  moodKey?: PetMood | null
+  moodLabel?: string | null
+  stage?: number
+  streakDays?: number
+  checkedInToday?: boolean
+  recordedToday?: boolean
+  adoptedOn?: string | null
+}
+
 // —— 站内信（契约详见 docs/frontend-requirements.md 第 13 章） ——
 
 /** 站内信消息类型（后端 MessageType 枚举值；weather 为每日天气，content 存的是 Weather JSON） */

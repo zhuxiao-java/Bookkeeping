@@ -29,6 +29,7 @@ import { bus, TRANSACTION_CHANGED, ACCOUNT_CHANGED, BUDGET_CHANGED, CATEGORY_CHA
 import CategoryDot from '@/components/CategoryDot.vue'
 import LevelLogo from '@/components/LevelLogo.vue'
 import CheckInCard from '@/components/CheckInCard.vue'
+import PetCard from '@/components/PetCard.vue'
 import EmptyState from '@/components/EmptyState.vue'
 import { useLevelStore } from '@/stores/level'
 import { useCheckInStore } from '@/stores/checkin'
@@ -506,6 +507,7 @@ onBeforeUnmount(() => {
 
     <!-- 签到卡片（后端签到接口可用时展示） -->
     <CheckInCard />
+    <PetCard />
 
     <!-- 统计 tile（Hero 已展示本月收入/支出/结余，此处只补充不重复的指标） -->
     <section class="page-section" aria-labelledby="dashboard-summary-heading">

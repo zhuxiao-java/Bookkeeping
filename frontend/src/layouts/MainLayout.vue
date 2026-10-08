@@ -19,6 +19,7 @@ import {
 import { useSettingsStore } from '@/stores/settings'
 import { useDictStore } from '@/stores/dict'
 import { useLevelStore } from '@/stores/level'
+import { usePetStore } from '@/stores/pet'
 import QuickRecordDialog from '@/components/QuickRecordDialog.vue'
 import LevelLogo from '@/components/LevelLogo.vue'
 import MessageCenter from '@/components/MessageCenter.vue'
@@ -35,6 +36,7 @@ const route = useRoute()
 const settings = useSettingsStore()
 const dict = useDictStore()
 const level = useLevelStore()
+const pet = usePetStore()
 const guide = useGuideStore()
 // 预算不足应用内提醒：全局监听交易/预算变更，使用率首次越过 80%/100% 弹通知（MS-04）
 useBudgetAlert()
@@ -81,6 +83,7 @@ const menus = [
 function refreshLevel() {
   if (route.path === '/level') void level.loadAll(true)
   else void level.loadCurrent(true)
+  void pet.load(true)
 }
 
 function onQuickSaved() {
@@ -133,6 +136,7 @@ onMounted(() => {
   })
   // 等级为可选能力：接口未就绪时静默降级，侧边栏不展示
   level.loadCurrent()
+  void pet.load()
   // 首次启动播放全局引导：稍等一下，让布局与可选入口（铃铛、等级）先渲染出来
   if (!guide.isDone('global')) {
     guideTimer = window.setTimeout(() => {
