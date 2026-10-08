@@ -382,6 +382,8 @@ export interface CsvPreviewResult {
   /** 账单中主动跳过的行（交易关闭、全额退款等）；旧接口可能不返回 */
   ignoredCount?: number
   rows: CsvPreviewRow[]
+  /** 文件中出现的账户名，供导入前选择记入账户 */
+  accountNames?: string[]
 }
 
 export const backupApi = {
@@ -423,10 +425,13 @@ export const backupApi = {
     })
     return resp.data
   },
-  /** 预览流水导入（本应用 CSV，或微信/支付宝个人对账 csv、xlsx），不落库 */
-  async previewTransactionsCsv(file: File): Promise<CsvPreviewResult> {
+  /** 预览流水导入（本应用 CSV，或微信/支付宝个人对账 csv、xlsx），不落库。accountMap 把文件中的账户名改记到已有账户 */
+  async previewTransactionsCsv(file: File, accountMap?: Record<string, number>): Promise<CsvPreviewResult> {
     const form = new FormData()
     form.append('file', file, file.name || 'transactions.csv')
+    if (accountMap && Object.keys(accountMap).length) {
+      form.append('accountMap', JSON.stringify(accountMap))
+    }
     const resp = await request<DataResponse<CsvPreviewResult>>({
       url: '/backup/csv/transactions/preview',
       method: 'post',
@@ -437,9 +442,12 @@ export const backupApi = {
     return resp.data
   },
   /** 导入流水。skipDuplicates 控制本应用 CSV 的指纹去重；微信和支付宝按交易单号始终去重 */
-  async importTransactionsCsv(file: File, skipDuplicates = true): Promise<CsvImportResult> {
+  async importTransactionsCsv(file: File, skipDuplicates = true, accountMap?: Record<string, number>): Promise<CsvImportResult> {
     const form = new FormData()
     form.append('file', file, file.name || 'transactions.csv')
+    if (accountMap && Object.keys(accountMap).length) {
+      form.append('accountMap', JSON.stringify(accountMap))
+    }
     const resp = await request<DataResponse<CsvImportResult>>({
       url: '/backup/csv/transactions',
       method: 'post',

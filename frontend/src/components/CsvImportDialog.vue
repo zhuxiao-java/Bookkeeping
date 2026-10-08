@@ -1,21 +1,27 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, reactive, ref, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { UploadFilled } from '@element-plus/icons-vue'
 import EmptyState from './EmptyState.vue'
+import AccountOption from './AccountOption.vue'
 import { backupApi, ApiError } from '@/api'
 import type { CsvImportResult, CsvPreviewResult, CsvRowStatus } from '@/api'
+import { useDictStore } from '@/stores/dict'
 
 /**
  * 流水导入向导：三步流程
- * 1) 选择文件 → 2) 预览（可导入 / 重复 / 无法解析 / 已跳过）→ 3) 导入结果
- * 本应用 CSV 仍按已有账户、分类名称匹配。微信和支付宝个人对账文件会在确认导入时补齐账户与分类。
+ * 1) 选择文件 → 2) 为文件中的账户选择记入账户，并预览 → 3) 导入结果
+ * 小于等于 0 的选择表示按文件中的名称新建账户。
  */
 const props = defineProps<{ modelValue: boolean }>()
 const emit = defineEmits<{
   (e: 'update:modelValue', v: boolean): void
   (e: 'imported', result: CsvImportResult): void
 }>()
+
+const dict = useDictStore()
+/** 按文件中的账户名新建，而不是记入已有账户 */
+const CREATE_ACCOUNT = -1
 
 const visible = computed({
   get: () => props.modelValue,
@@ -36,6 +42,11 @@ const result = ref<CsvImportResult | null>(null)
 const skipDuplicates = ref(true)
 /** 预览表状态筛选 */
 const statusFilter = ref<'all' | CsvRowStatus>('all')
+/** 文件中的账户名 → 已有账户 id；CREATE_ACCOUNT 表示按该名称新建 */
+const accountChoices = reactive<Record<string, number | null>>({})
+/** 把文件中的全部账户改记到同一个已有账户 */
+const bulkAccountId = ref<number | undefined>()
+let previewSeq = 0
 
 const filteredRows = computed(() => {
   const rows = preview.value?.rows ?? []
@@ -56,10 +67,15 @@ function statusLabel(status: CsvRowStatus): string {
   return '重复'
 }
 
+const accountNames = computed(() => preview.value?.accountNames ?? [])
+
+const accountsReady = computed(() => accountNames.value.every((name) => accountChoices[name] != null))
+
 /** 打开时重置向导；关闭时清理状态 */
 watch(visible, (v) => {
   if (v) {
     reset()
+    dict.loadAll().catch(() => {})
   }
 })
 
@@ -72,6 +88,49 @@ function reset() {
   statusFilter.value = 'all'
   previewing.value = false
   importing.value = false
+  bulkAccountId.value = undefined
+  clearChoices()
+}
+
+function clearChoices() {
+  for (const key of Object.keys(accountChoices)) delete accountChoices[key]
+}
+
+function matchAccountId(name: string): number | null {
+  const accounts = dict.activeAccounts
+  const exact = accounts.find((account) => account.name === name)
+  if (exact) return exact.id
+  if (name === '微信零钱') return accounts.find((account) => account.name === '零钱')?.id ?? null
+  if (name === '支付宝') {
+    return accounts.find((account) => account.name === '余额' || account.name === '账户余额' || account.name === '支付宝余额')?.id ?? null
+  }
+  return null
+}
+
+function ensureChoices(names: string[]) {
+  for (const name of names) {
+    if (!(name in accountChoices)) accountChoices[name] = matchAccountId(name)
+  }
+}
+
+function partialMap(): Record<string, number> | undefined {
+  const map: Record<string, number> = {}
+  for (const name of accountNames.value) {
+    const value = accountChoices[name]
+    if (value != null) map[name] = value
+  }
+  return Object.keys(map).length ? map : undefined
+}
+
+function chosenMap(): Record<string, number> | undefined {
+  if (!accountNames.value.length) return undefined
+  const map: Record<string, number> = {}
+  for (const name of accountNames.value) {
+    const value = accountChoices[name]
+    if (value == null) return undefined
+    map[name] = value
+  }
+  return map
 }
 
 function pickFile() {
@@ -89,24 +148,41 @@ async function onFileChange(e: Event) {
 
 async function loadPreview() {
   if (!file.value) return
+  const seq = ++previewSeq
   previewing.value = true
   try {
-    preview.value = await backupApi.previewTransactionsCsv(file.value)
+    await dict.loadAll().catch(() => {})
+    const result = await backupApi.previewTransactionsCsv(file.value, partialMap())
+    if (seq !== previewSeq) return
+    preview.value = result
+    ensureChoices(result.accountNames ?? [])
     step.value = 1
   } catch (err) {
+    if (seq !== previewSeq) return
     if (!(err instanceof ApiError)) {
       ElMessage.error(err instanceof Error ? err.message : 'CSV 解析失败')
     }
   } finally {
-    previewing.value = false
+    if (seq === previewSeq) previewing.value = false
   }
 }
 
+function onBulkAccount(id: number | undefined) {
+  if (id == null) return
+  for (const name of accountNames.value) accountChoices[name] = id
+  void loadPreview()
+}
+
+function onAccountChoice() {
+  bulkAccountId.value = undefined
+  void loadPreview()
+}
+
 async function doImport() {
-  if (!file.value) return
+  if (!file.value || !accountsReady.value) return
   importing.value = true
   try {
-    result.value = await backupApi.importTransactionsCsv(file.value, skipDuplicates.value)
+    result.value = await backupApi.importTransactionsCsv(file.value, skipDuplicates.value, chosenMap())
     step.value = 2
     emit('imported', result.value)
   } catch (err) {
@@ -141,7 +217,7 @@ const importableCount = computed(() => {
   <el-dialog
     v-model="visible"
     title="导入流水"
-    width="760px"
+    width="820px"
     :close-on-click-modal="false"
     append-to-body
     class="bk-dialog quiet-controls csv-dialog"
@@ -174,7 +250,7 @@ const importableCount = computed(() => {
         type="info"
         :closable="false"
         show-icon
-        title="导入只新增、不覆盖。本应用导出的 CSV 仍按已有账户和分类名称匹配。微信和支付宝账单会按支付方式匹配或新建账户，分类对不上时记入「待整理」或「待整理收入」。交易关闭、已全额退款和信用卡还款会跳过，同一交易单号不会重复入账。"
+        title="导入只新增、不覆盖。下一步为文件中的每个账户选择记入的已有账户，或按原名新建。分类对不上时记入「待整理」或「待整理收入」。交易关闭、已全额退款和信用卡还款会跳过，同一交易单号不会重复入账。"
       />
     </div>
 
@@ -189,6 +265,45 @@ const importableCount = computed(() => {
         <el-tag type="info" effect="plain">已跳过 {{ preview.ignoredCount ?? 0 }}</el-tag>
       </div>
 
+      <div class="csv-accounts">
+        <div class="csv-accounts__head">
+          <span class="csv-accounts__title">记入账户</span>
+          <el-select
+            v-model="bulkAccountId"
+            class="csv-accounts__bulk"
+            placeholder="全部记入同一账户"
+            clearable
+            :disabled="previewing || !accountNames.length"
+            @change="onBulkAccount"
+          >
+            <el-option v-for="account in dict.activeAccounts" :key="account.id" :label="account.name" :value="account.id">
+              <AccountOption :account="account" />
+            </el-option>
+          </el-select>
+        </div>
+        <p class="csv-accounts__tip">
+          文件里的支付方式或账户名可以改记到已有账户。选「新建」会在导入时按该名称建账户。提现和充值按转出、转入分别记。
+        </p>
+        <div v-if="accountNames.length" class="csv-accounts__list">
+          <div v-for="name in accountNames" :key="name" class="csv-account-row">
+            <span class="csv-account-row__name" :title="name">{{ name }}</span>
+            <el-select
+              v-model="accountChoices[name]"
+              class="csv-account-row__select"
+              placeholder="选择账户"
+              :disabled="previewing"
+              @change="onAccountChoice"
+            >
+              <el-option v-for="account in dict.activeAccounts" :key="account.id" :label="account.name" :value="account.id">
+                <AccountOption :account="account" />
+              </el-option>
+              <el-option :value="CREATE_ACCOUNT" :label="`新建「${name}」`" />
+            </el-select>
+          </div>
+        </div>
+        <p v-else class="csv-accounts__tip">这份文件里没有可选择的账户。</p>
+      </div>
+
       <div class="csv-toolbar">
         <el-radio-group v-model="statusFilter" class="segment" aria-label="校验结果筛选" size="small">
           <el-radio-button value="all">全部</el-radio-button>
@@ -200,7 +315,7 @@ const importableCount = computed(() => {
         <el-checkbox v-model="skipDuplicates">跳过重复行</el-checkbox>
       </div>
 
-      <el-table :data="filteredRows" size="small" height="300" class="csv-table">
+      <el-table :data="filteredRows" size="small" height="240" class="csv-table">
         <el-table-column prop="line" label="行" width="56" />
         <el-table-column prop="date" label="日期" width="150" show-overflow-tooltip />
         <el-table-column prop="type" label="类型" width="72" />
@@ -252,10 +367,10 @@ const importableCount = computed(() => {
           <el-button
             type="primary"
             :loading="importing"
-            :disabled="importableCount === 0"
+            :disabled="importableCount === 0 || !accountsReady || previewing"
             @click="doImport"
           >
-            开始导入（{{ importableCount }}）
+            {{ accountsReady ? `开始导入（${importableCount}）` : '请选择账户' }}
           </el-button>
         </template>
         <template v-else>
@@ -342,6 +457,62 @@ const importableCount = computed(() => {
   margin-right: 4px;
   width: 100%;
   overflow-wrap: anywhere;
+}
+
+.csv-accounts {
+  margin-bottom: 12px;
+  padding: 12px;
+  border: 1px solid var(--el-border-color-lighter);
+  border-radius: var(--bk-radius-lg, 12px);
+  background: var(--bk-surface-2);
+}
+
+.csv-accounts__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 12px;
+}
+
+.csv-accounts__title {
+  font-weight: 600;
+}
+
+.csv-accounts__bulk {
+  width: min(100%, 240px);
+}
+
+.csv-accounts__tip {
+  margin: 8px 0 0;
+  font-size: 13px;
+  color: var(--bk-text-secondary, #909399);
+}
+
+.csv-accounts__list {
+  max-height: 148px;
+  margin-top: 10px;
+  overflow: auto;
+}
+
+.csv-account-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.csv-account-row__name {
+  width: 180px;
+  flex-shrink: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.csv-account-row__select {
+  flex: 1;
+  min-width: 0;
 }
 
 .csv-toolbar {

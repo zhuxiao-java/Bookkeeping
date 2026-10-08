@@ -1,6 +1,7 @@
 package com.bookkeeping.service;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * 备份 / 恢复 / CSV 导入导出 service（GAP-09）。
@@ -67,12 +68,26 @@ public interface BackupService {
     CsvPreviewResult previewTransactions(byte[] bytes, String filename);
 
     /**
+     * 预览流水文件，并按用户选择重写账户。
+     * accountChoices 的键是文件里的账户名，值是已有账户 id；小于等于 0 表示按该名称新建。
+     * 空映射保持原有匹配：账单按支付方式匹配或新建，本应用 CSV 要求账户已存在。
+     */
+    CsvPreviewResult previewTransactions(byte[] bytes, String filename, Map<String, Integer> accountChoices);
+
+    /**
      * 导入流水文件。账单会按支付方式补齐账户、按分类别名归类，并用交易单号去重。
      * 本应用 CSV 仍要求账户和分类事先存在。
      *
      * @param skipDuplicates 为 true 时跳过本应用 CSV 的指纹重复行；账单交易单号始终去重
      */
     CsvImportResult importTransactions(byte[] bytes, String filename, boolean skipDuplicates);
+
+    /**
+     * 导入流水文件，并按用户选择记入账户。映射规则与
+     * {@link #previewTransactions(byte[], String, Map)} 相同。
+     */
+    CsvImportResult importTransactions(byte[] bytes, String filename, boolean skipDuplicates,
+                                       Map<String, Integer> accountChoices);
 
     /**
      * CSV 导入统计。
@@ -122,8 +137,19 @@ public interface BackupService {
      * @param duplicateCount 与库中或文件内重复的行数
      * @param ignoredCount   账单中主动跳过的行数（交易关闭、全额退款、信用卡还款等）
      * @param rows           预览明细（最多 {@code MAX_PREVIEW_ROWS} 行）
+     * @param accountNames   文件中出现的账户名（按首次出现顺序），供导入前选择记入账户
      */
     record CsvPreviewResult(int total, int validCount, int invalidCount, int duplicateCount, int ignoredCount,
-                            List<CsvPreviewRow> rows) {
+                            List<CsvPreviewRow> rows, List<String> accountNames) {
+        public CsvPreviewResult(int total, int validCount, int invalidCount, int duplicateCount, int ignoredCount,
+                                List<CsvPreviewRow> rows) {
+            this(total, validCount, invalidCount, duplicateCount, ignoredCount, rows, List.of());
+        }
+
+        public CsvPreviewResult {
+            if (accountNames == null) {
+                accountNames = List.of();
+            }
+        }
     }
 }

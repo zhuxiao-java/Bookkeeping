@@ -1,5 +1,6 @@
 package com.bookkeeping.controller;
 
+import com.bookkeeping.bill.AccountMaps;
 import com.bookkeeping.service.BackupService;
 import jakarta.servlet.http.HttpServletResponse;
 import org.sf.model.response.DataResponse;
@@ -84,22 +85,28 @@ public class BackupController {
 
     /**
      * 预览流水导入：本应用 CSV，或微信 / 支付宝个人对账 csv、xlsx。不落库。
+     * accountMap 为 JSON，键是文件中的账户名，值是已有账户 id；小于等于 0 表示按该名称新建。
      */
     @PostMapping("csv/transactions/preview")
     public DataResponse<BackupService.CsvPreviewResult> previewTransactionsCsv(
-            @RequestParam("file") MultipartFile file) throws IOException {
-        return DataResponse.of(backupService.previewTransactions(file.getBytes(), file.getOriginalFilename()));
+            @RequestParam("file") MultipartFile file,
+            @RequestParam(value = "accountMap", required = false) String accountMap) throws IOException {
+        return DataResponse.of(backupService.previewTransactions(
+                file.getBytes(), file.getOriginalFilename(), AccountMaps.parse(accountMap)));
     }
 
     /**
      * 导入流水。本应用 CSV 按已有账户名、分类名解析；微信和支付宝账单会补齐账户与分类。
      * skipDuplicates=true（默认）时跳过本应用 CSV 的指纹重复行。账单交易单号始终去重。
+     * accountMap 指定文件中的账户名记入哪个已有账户。
      */
     @PostMapping("csv/transactions")
     public DataResponse<BackupService.CsvImportResult> importTransactionsCsv(
             @RequestParam("file") MultipartFile file,
-            @RequestParam(value = "skipDuplicates", defaultValue = "true") boolean skipDuplicates) throws IOException {
-        return DataResponse.of(backupService.importTransactions(file.getBytes(), file.getOriginalFilename(), skipDuplicates));
+            @RequestParam(value = "skipDuplicates", defaultValue = "true") boolean skipDuplicates,
+            @RequestParam(value = "accountMap", required = false) String accountMap) throws IOException {
+        return DataResponse.of(backupService.importTransactions(
+                file.getBytes(), file.getOriginalFilename(), skipDuplicates, AccountMaps.parse(accountMap)));
     }
 
     private static String stamp() {

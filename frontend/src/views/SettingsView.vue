@@ -601,7 +601,7 @@ async function onPickDb(e: Event) {
             <div class="split-row data-row">
               <div class="row-copy">
                 <h3 class="row-copy__title">导出为表格</h3>
-                <p class="row-copy__desc">带 BOM 的 CSV 格式，可直接使用 Excel 打开。导入微信、支付宝或本应用流水请到「流水」页。</p>
+                <p class="row-copy__desc">带 BOM 的 CSV 格式，可直接使用 Excel 打开。导入微信、支付宝或本应用流水请到「流水」页，并选择记入账户。</p>
               </div>
               <div class="toolbar">
                 <el-button :loading="exportingTx" @click="onExportTx">导出流水</el-button>
