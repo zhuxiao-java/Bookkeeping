@@ -6,7 +6,7 @@ import { MagicStick, Document, Lock, Refresh, Setting } from '@element-plus/icon
 import { periodReportApi, monthlyAiApi } from '@/api/monthlyReport'
 import type { PeriodPreview, AiSettings, PeriodEntry, PeriodDetail, ReportType, MonthlyFact } from '@/types/monthlyReport'
 import { aiFail, currencyName, factEvidence } from '@/utils/monthlyReport'
-import { isReportType, lastClosedPeriod, validPeriod, periodTitle, reportLabels, nextLabels } from '@/utils/reportPeriod'
+import { isReportType, lastClosedPeriod, validPeriod, periodTitle, periodRange, reportLabels, nextLabels } from '@/utils/reportPeriod'
 import AnnualTrend from '@/components/monthly/AnnualTrend.vue'
 import MonthlyOverview from '@/components/monthly/MonthlyOverview.vue'
 import CategoryDiagnosis from '@/components/monthly/CategoryDiagnosis.vue'
@@ -21,7 +21,24 @@ const noData = ref(false), needsCheck = ref(false)
 const preview = ref<PeriodPreview | null>(null), previewVisible = ref(false), consent = ref(false)
 let loadVersion = 0, previewVersion = 0, disposed = false, refreshing = false
 let requestController: AbortController | undefined
-const years = Array.from({ length: new Date().getFullYear() - 1899 }, (_, i) => new Date().getFullYear() - i)
+const years = computed(() => {
+  const latest = Number(lastClosedPeriod(reportType.value).slice(0, 4))
+  const selected = Number(periodKey.value.slice(0, 4))
+  const listed = new Set<number>()
+  for (let year = latest; year > latest - 12 && year >= 1900; year--) listed.add(year)
+  if (selected >= 1900 && selected <= latest) listed.add(selected)
+  for (const entry of entries.value) {
+    const year = Number(entry.periodKey.slice(0, 4))
+    if (year >= 1900 && year <= latest) listed.add(year)
+  }
+  return [...listed].sort((a, b) => b - a)
+})
+function weekOptionLabel(entry: PeriodEntry): string {
+  const [start, end] = entry.start && entry.end ? [entry.start, entry.end] : periodRange('week', entry.periodKey)
+  const short = (iso: string) => `${Number(iso.slice(5, 7))}/${Number(iso.slice(8, 10))}`
+  if (start.slice(0, 4) === end.slice(0, 4)) return `${short(start)}–${short(end)}`
+  return `${start.slice(0, 4)}/${short(start)}–${end.slice(0, 4)}/${short(end)}`
+}
 const title = computed(() => periodTitle(reportType.value, periodKey.value))
 const label = computed(() => reportLabels[reportType.value])
 const budgetCoverage = computed(() => new Set(report.value?.snapshot.budgets.map(b => b.month).filter(Boolean)).size)
@@ -165,11 +182,11 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="page page--comfortable quiet-controls monthly-page">
+  <div class="page page--comfortable page--wide quiet-controls monthly-page">
     <header class="page-head page-head--actions">
       <div>
         <h1 class="page-head__title">AI {{ label }}</h1>
-        <p class="page-head__sub">{{ title }} · 回顾收支变化，发现有依据的省钱办法。</p>
+        <p class="page-head__sub">{{ title }} · 回顾收支变化，发现有依据的省钱办法</p>
       </div>
       <el-button :icon="Setting" :disabled="sending" @click="router.push('/settings?menu=ai')">AI 设置</el-button>
     </header>
@@ -187,8 +204,8 @@ onBeforeUnmount(() => {
     </div>
     <div class="report-workspace">
       <aside class="archive surface" aria-label="报告归档">
-        <div class="archive-heading"><span>{{ label }}归档</span><el-select v-if="reportType !== 'year'" :model-value="Number(periodKey.slice(0, 4))" :disabled="sending" aria-label="归档年份" @update:model-value="selectYear"><el-option v-for="year in years.filter(y => y <= Number(lastClosedPeriod(reportType).slice(0, 4)))" :key="year" :value="year" :label="`${year} 年`" /></el-select></div>
-        <nav class="month-list" aria-label="选择报告周期"><button v-for="entry in entries" :key="entry.periodKey" class="month-option" :class="{ selected: entry.periodKey === periodKey }" :aria-current="entry.periodKey === periodKey ? 'date' : undefined" :disabled="sending" @click="selectPeriod(entry.periodKey)"><span class="period-option-label">{{ reportType === 'week' ? `${entry.start} ~ ${entry.end}` : reportType === 'month' ? `${entry.periodKey.slice(5)} 月` : `${entry.periodKey} 年` }}</span><span class="month-status" :class="{ complete: entry.hasReport }"><i />{{ entry.hasReport ? '已生成' : '未生成' }}</span></button></nav>
+        <div class="archive-heading"><span>{{ label }}归档</span><el-select v-if="reportType !== 'year'" :model-value="Number(periodKey.slice(0, 4))" :disabled="sending" aria-label="归档年份" @update:model-value="selectYear"><el-option v-for="year in years" :key="year" :value="year" :label="`${year} 年`" /></el-select></div>
+        <nav class="month-list" aria-label="选择报告周期"><button v-for="entry in entries" :key="entry.periodKey" class="month-option" :class="{ selected: entry.periodKey === periodKey }" :aria-current="entry.periodKey === periodKey ? 'date' : undefined" :disabled="sending" @click="selectPeriod(entry.periodKey)"><span class="period-option-label">{{ reportType === 'week' ? weekOptionLabel(entry) : reportType === 'month' ? `${entry.periodKey.slice(5)} 月` : `${entry.periodKey} 年` }}</span><span class="month-status" :class="{ complete: entry.hasReport }"><i />{{ entry.hasReport ? '已生成' : '未生成' }}</span></button></nav>
         <p class="archive-note"><el-icon><Lock /></el-icon>仅在你确认后生成<br>不自动发送账单</p>
       </aside>
       <main class="report-main" :aria-busy="loading || sending">
@@ -200,7 +217,6 @@ onBeforeUnmount(() => {
         <section v-if="settingsError" class="notice notice--warning" role="alert"><strong>AI 配置读取失败</strong><p>{{ settingsError }}</p><el-button text :disabled="sending || loading" @click="load">重新读取配置</el-button></section>
         <section v-else-if="!loading && !error && !settings?.available" class="notice" role="status"><strong>先连接你的 AI 服务</strong><p>配置接口地址、模型与密钥后，即可手动生成周报、月报与年报。已保存的报告仍可阅读。</p><el-button text @click="router.push('/settings?menu=ai')">前往 AI 设置 →</el-button></section>
         <section v-if="aiMessage" class="notice notice--warning" role="alert"><strong>本次生成未完成</strong><p>{{ aiMessage }}</p><p v-if="needsCheck">请先重新读取已保存报告，再决定是否重试；重复调用可能再次计费。</p><el-button :icon="Refresh" :disabled="sending || loading" @click="load">重新读取已保存报告</el-button></section>
-        <el-button v-else-if="error" :icon="Refresh" :disabled="loading" @click="load">重新读取</el-button>
         <div v-if="noData" class="notice" role="status"><strong>这个周期还没有可分析的流水</strong><p>没有向 AI 发送请求。可以换一个周期，或先补充记账。</p></div>
         <div v-if="sending" class="generation-note" role="status" aria-live="polite"><span class="pulse" /><div><strong>正在整理你的{{ label }}</strong><p>等待 AI 返回，通常需要一些时间，最多等待约两分钟。请勿重复提交。{{ hasReport ? '下方保留上一次成功报告。' : '' }}</p></div></div>
         <section v-if="loading || (sending && !hasReport)" class="surface skeleton-panel"><el-skeleton :rows="6" animated /></section>
@@ -246,7 +262,7 @@ onBeforeUnmount(() => {
 </template>
 
 <style scoped>
-.monthly-page { max-width: 1120px; }
+.monthly-page { max-width: none; }
 .monthly-page > .el-button { align-self: flex-start; }
 h2 { font-size: 18px; font-weight: 600; line-height: 1.5; margin: 0; }
 h3 { font-size: 15px; margin: 24px 0 10px; }
@@ -259,10 +275,10 @@ p { margin: 8px 0; line-height: 1.75; }
 .report-tabs { align-self: flex-start; }.report-tabs .segment__item:disabled { cursor: wait; }.period-option-label { text-align: left; line-height: 1.6; }.month-status { flex-shrink: 0; }
 .month-list { display: grid; gap: 5px; max-height: 56vh; overflow-y: auto; }.month-option { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 12px; border: 1px solid transparent; border-radius: 10px; background: transparent; color: var(--bk-text-secondary); cursor: pointer; font: inherit; font-size: 12px; }
 .month-option strong { font-size: 17px; font-weight: 500; font-variant-numeric: tabular-nums; margin-right: 5px; }.month-option:hover { background: var(--bk-surface-2); }.month-option.selected { color: var(--bk-primary); background: var(--bk-primary-soft); border-color: var(--bk-border); }.month-option:focus-visible { outline: 2px solid var(--bk-primary); outline-offset: 2px; }.month-option:disabled { cursor: wait; }
-.month-status { font-size: 11px; display: flex; align-items: center; gap: 5px; }.month-status i { width: 4px; height: 4px; border-radius: 50%; background: var(--bk-text-placeholder); }.month-status.complete i { background: var(--bk-primary); }
-.archive-note { font-size: 11px; line-height: 1.8; text-align: center; color: var(--bk-text-secondary); padding-top: 16px; margin-top: 16px; border-top: 1px solid var(--bk-border-light); }.archive-note .el-icon { margin-right: 4px; }
+.month-status { font-size: 12px; display: flex; align-items: center; gap: 5px; }.month-status i { width: 4px; height: 4px; border-radius: 50%; background: var(--bk-text-placeholder); }.month-status.complete i { background: var(--bk-primary); }
+.archive-note { font-size: 12px; line-height: 1.8; text-align: center; color: var(--bk-text-secondary); padding-top: 16px; margin-top: 16px; border-top: 1px solid var(--bk-border-light); }.archive-note .el-icon { margin-right: 4px; }
 .report-main { min-width: 0; display: flex; flex-direction: column; gap: 20px; }.report-main > .el-button { align-self: flex-start; }.report-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 20px 24px; }.report-toolbar p { margin-bottom: 0; }
-.state-chip { font-size: 11px; border-radius: 6px; padding: 4px 8px; background: var(--bk-surface-2); color: var(--bk-text-secondary); }.state-chip.complete { background: var(--bk-primary-soft); color: var(--bk-primary); }.state-chip.pending { background: var(--bk-accent-soft); color: var(--bk-button-accent); }
+.state-chip { font-size: 12px; border-radius: 6px; padding: 4px 8px; background: var(--bk-surface-2); color: var(--bk-text-secondary); }.state-chip.complete { background: var(--bk-primary-soft); color: var(--bk-primary); }.state-chip.pending { background: var(--bk-accent-soft); color: var(--bk-button-accent); }
 .summary-card { padding: 28px var(--bk-panel-padding); }.summary-heading { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }.summary-heading h2 { font-size: 18px; }.summary-text { font-size: 16px; line-height: 1.9; white-space: pre-wrap; overflow-wrap: anywhere; margin: 16px 0 20px; }.summary-meta { border-top: 1px solid var(--bk-border-light); padding-top: 14px; display: flex; justify-content: space-between; gap: 12px; color: var(--bk-text-secondary); font-size: 12px; overflow-wrap: anywhere; }
 .metrics-panel { padding: 20px 24px; }.insights-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }.insights-grid.actions { grid-template-columns: 1fr; }.insight-card { padding: 22px; min-width: 0; }.insight-number { font-size: 22px; color: var(--bk-primary); opacity: .7; font-weight: 500; }.ai-text { white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.9; }.fact-details { margin-top: 18px; border-top: 1px solid var(--bk-border-light); padding-top: 12px; }.fact-details summary { font-size: 12px; color: var(--bk-primary); cursor: pointer; }.fact-item { margin-top: 12px; background: var(--bk-surface-2); border-radius: 8px; padding: 12px; font-size: 12px; color: var(--bk-text-secondary); overflow-wrap: anywhere; }.fact-item strong { font-weight: 500; }.empty-insight { padding: 24px; }
 .evidence-panel { padding: 22px 24px; }.evidence-heading { cursor: pointer; display: flex; justify-content: space-between; gap: 12px; font-size: 14px; }.evidence-heading .el-icon { margin-right: 8px; vertical-align: middle; }.evidence-content { padding-top: 16px; }.budget-row { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--bk-border-light); font-size: 13px; }.budget-row strong { font-weight: 500; }.report-footnote { display: flex; gap: 10px; color: var(--bk-text-secondary); padding: 0 4px; font-size: 12px; }.report-footnote > .el-icon { margin-top: 13px; flex: 0 0 auto; }

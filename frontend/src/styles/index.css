@@ -439,6 +439,19 @@ button { -webkit-tap-highlight-color: transparent; }
   gap: var(--bk-page-gap);
 }
 
+/* 图表、账户和流水需要比设置页更宽，占满主区域。 */
+.page--wide {
+  max-width: none;
+}
+
+.page-data {
+  display: flex;
+  flex-direction: column;
+  gap: var(--bk-page-gap);
+  min-width: 0;
+  min-height: 120px;
+}
+
 .page--settings {
   max-width: var(--bk-page-width);
 }
@@ -517,6 +530,35 @@ button { -webkit-tap-highlight-color: transparent; }
 
 .surface > * + * {
   border-top: 1px solid var(--bk-border-light);
+}
+
+/* 图表块：标题与内容分行，沿用 surface 的分隔线。 */
+.surface.panel > .card-head {
+  padding-block: 14px 12px;
+}
+
+.surface.panel > .panel-body,
+.surface.panel > .expense-breakdown,
+.surface.panel > .el-table,
+.surface.panel > .chart-slot {
+  padding-block: 12px 16px;
+}
+
+/* 账户、预算这类整卡：自身留白，内部不再逐行分隔。 */
+.surface.pad {
+  padding: var(--bk-panel-padding);
+  border: 1px solid transparent;
+  transition: border-color 0.15s ease;
+}
+
+.surface.pad > * + * {
+  border-top: 0;
+}
+
+.account-card:hover,
+.budget-card:hover,
+.total-card:hover {
+  border-color: var(--bk-primary);
 }
 
 .surface-block {
@@ -773,6 +815,8 @@ button { -webkit-tap-highlight-color: transparent; }
   padding: 8px 12px;
   background: transparent;
   color: var(--bk-text-secondary);
+  font-family: inherit;
+  font-size: 13px;
   cursor: pointer;
 }
 .record-tab.is-active {

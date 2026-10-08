@@ -196,7 +196,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="page page--comfortable quiet-controls" v-loading="loading">
+  <div class="page page--comfortable page--wide quiet-controls">
     <!-- 页头叙事（总资产）+ 共享工具条 -->
     <header class="page-head page-head--actions">
       <div class="row-copy">
@@ -208,6 +208,7 @@ onBeforeUnmount(() => {
         <el-button type="primary" :icon="Plus" data-guide="account-create" @click="openCreate">新增账户</el-button>
       </div>
     </header>
+    <div class="page-data" v-loading="loading">
     <div class="surface bk-enter">
       <div class="split-row">
         <div class="row-copy">
@@ -239,11 +240,10 @@ onBeforeUnmount(() => {
 
       <!-- 账户卡片网格 -->
       <div v-if="visibleAccounts.length" class="account-grid" data-guide="account-list">
-        <el-card
+        <section
           v-for="account in visibleAccounts"
           :key="account.id"
-          shadow="hover"
-          class="account-card"
+          class="surface pad account-card"
           :class="{ 'is-archived': account.archived === 1 }"
           :style="{ '--acc': ACCOUNT_TYPE_COLOR[account.type] }"
         >
@@ -279,7 +279,7 @@ onBeforeUnmount(() => {
             <span class="amount-strong">{{ formatAmount(account.currentBalance, decimals) }}</span>
             <el-tag size="small" effect="plain" class="account-card__currency">{{ account.currency }}</el-tag>
           </div>
-        </el-card>
+        </section>
       </div>
 
       <div v-else class="panel">
@@ -288,6 +288,7 @@ onBeforeUnmount(() => {
         </EmptyState>
       </div>
     </section>
+    </div>
 
     <!-- 新增/编辑对话框 -->
     <el-dialog

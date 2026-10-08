@@ -319,7 +319,7 @@ onBeforeUnmount(() => {
     <header class="page-head page-head--actions">
       <div class="row-copy">
         <h1 class="page-head__title">分类管理</h1>
-        <p class="page-head__sub">把收支分门别类，让每一笔钱都有迹可循。</p>
+        <p class="page-head__sub">把收支分门别类，让每一笔钱都有迹可循</p>
       </div>
       <el-button type="primary" :icon="Plus" class="page-head__actions" @click="openCreate()">新增分类</el-button>
     </header>

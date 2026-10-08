@@ -154,7 +154,7 @@ onBeforeUnmount(() => {
     <header class="page-head page-head--actions">
       <div class="row-copy">
         <h1 class="page-head__title">标签管理</h1>
-        <p class="page-head__sub">为交易加个标记，报销、旅行和日常都能轻松找到。</p>
+        <p class="page-head__sub">为交易加个标记，报销、旅行和日常都能轻松找到</p>
       </div>
       <el-button type="primary" :icon="Plus" class="page-head__actions" @click="openCreate">新增标签</el-button>
     </header>
