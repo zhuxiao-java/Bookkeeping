@@ -32,6 +32,7 @@ const router = useRouter()
 const decimals = computed(() => settings.decimalPlaces)
 
 const loading = ref(false)
+const showMore = ref(false)
 const list = ref<Transaction[]>([])
 const total = ref(0)
 const currencyTotal = ref('0.00')
@@ -65,6 +66,13 @@ const filters = reactive({
   amountMin: '',
   amountMax: ''
 })
+
+watch(
+  () => [filters.keyword, filters.amountMin, filters.amountMax, filters.tagId] as const,
+  ([keyword, min, max, tagId]) => {
+    if (keyword.trim() || min.trim() || max.trim() || tagId != null) showMore.value = true
+  }
+)
 
 /** 是否有生效的筛选条件：用于区分“本来就没数据”与“筛选后无匹配”两种空态 */
 const hasActiveFilter = computed(
@@ -510,7 +518,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="page page--comfortable quiet-controls">
+  <div class="page page--comfortable page--wide quiet-controls">
     <!-- 页头叙事 -->
     <header class="page-head page-head--actions">
       <div class="row-copy">
@@ -559,22 +567,6 @@ onBeforeUnmount(() => {
             style="width: 160px"
             @change="search"
           />
-
-          <el-select
-            v-model="filters.tagId"
-            aria-label="流水标签"
-            placeholder="全部标签"
-            clearable
-            style="width: 130px"
-            @change="search"
-          >
-            <el-option v-for="t in dict.tags" :key="t.id" :label="t.name" :value="t.id">
-              <span class="tag-opt">
-                <span class="tag-opt__dot" :style="{ background: t.color || '#909399' }" />
-                {{ t.name }}
-              </span>
-            </el-option>
-          </el-select>
         </div>
       </div>
       <div class="split-row tx-filter-row">
@@ -598,11 +590,23 @@ onBeforeUnmount(() => {
             <el-button size="small" text @click="applyShortcut('month')">本月</el-button>
             <el-button size="small" text @click="applyShortcut('year')">今年</el-button>
           </div>
+          <div class="toolbar__group">
+            <el-button @click="search">查询</el-button>
+            <el-button text @click="resetFilters">重置</el-button>
+          </div>
         </div>
       </div>
 
-      <!-- 分组二：检索条件 + 主操作（视觉分层，操作右对齐） -->
       <div class="split-row tx-filter-row">
+        <h2 id="tx-more-heading" class="row-copy__title">更多筛选</h2>
+        <div class="toolbar">
+          <span class="card-hint">关键字、金额和标签</span>
+          <el-button text :aria-expanded="showMore" aria-controls="tx-more-filters" @click="showMore = !showMore">
+            {{ showMore ? '收起' : '展开' }}
+          </el-button>
+        </div>
+      </div>
+      <div v-show="showMore" id="tx-more-filters" class="split-row tx-filter-row">
         <h2 id="tx-search-heading" class="row-copy__title">关键词与金额</h2>
         <div class="toolbar" role="group" aria-labelledby="tx-search-heading">
           <el-input
@@ -616,6 +620,21 @@ onBeforeUnmount(() => {
           >
             <template #prefix><el-icon><Search /></el-icon></template>
           </el-input>
+          <el-select
+            v-model="filters.tagId"
+            aria-label="流水标签"
+            placeholder="全部标签"
+            clearable
+            style="width: 130px"
+            @change="search"
+          >
+            <el-option v-for="t in dict.tags" :key="t.id" :label="t.name" :value="t.id">
+              <span class="tag-opt">
+                <span class="tag-opt__dot" :style="{ background: t.color || '#909399' }" />
+                {{ t.name }}
+              </span>
+            </el-option>
+          </el-select>
           <div class="toolbar__group tx-amount" role="group" aria-label="金额区间">
             <el-input
               v-model="filters.amountMin"
@@ -640,10 +659,6 @@ onBeforeUnmount(() => {
             >
               <template #prepend>¥</template>
             </el-input>
-          </div>
-          <div class="toolbar__group">
-            <el-button @click="search">查询</el-button>
-            <el-button text @click="resetFilters">重置</el-button>
           </div>
         </div>
       </div>

@@ -133,6 +133,6 @@ const cells = computed<Cell[]>(() => {
 }
 
 .is-compact .cal__wd span {
-  font-size: 10px;
+  font-size: 12px;
 }
 </style>

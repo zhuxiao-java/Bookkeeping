@@ -67,11 +67,17 @@ export const useGuideStore = defineStore('guide', () => {
     activeScope.value = null
   }
 
+  /** 关掉页头提示：记为已看过，但不会开始播放。说明页仍可重新开始。 */
+  function skip(scope: GuideScope) {
+    done.value = { ...done.value, [scope]: true }
+    persist()
+  }
+
   /** 重看全部：清空进度，下次进入各页面时重新引导 */
   function resetAll() {
     done.value = {}
     persist()
   }
 
-  return { done, activeScope, upgraded, isDone, start, finish, cancel, resetAll }
+  return { done, activeScope, upgraded, isDone, start, finish, cancel, skip, resetAll }
 })

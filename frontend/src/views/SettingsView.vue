@@ -348,14 +348,14 @@ function onCsvImported(res: CsvImportResult) {
 
     <!-- 内容区 -->
     <div class="settings__body">
-      <CategoryManage v-show="activeMenu === 'category'" />
-      <TagManage v-show="activeMenu === 'tag'" />
+      <CategoryManage v-if="activeMenu === 'category'" />
+      <TagManage v-if="activeMenu === 'tag'" />
       <AiReportSettings v-if="activeMenu === 'ai'" />
 
-      <div v-show="activeMenu === 'preference'" class="page page--comfortable page--settings quiet-controls preferences">
+      <div v-if="activeMenu === 'preference'" class="page page--comfortable page--settings quiet-controls preferences">
         <header class="page-head">
           <h1 class="page-head__title">个性化</h1>
-          <p class="page-head__sub">选一个喜欢的外观，按自己的习惯记账。</p>
+          <p class="page-head__sub">选一个喜欢的外观，按自己的习惯记账</p>
         </header>
 
         <section class="preference-section" aria-labelledby="appearance-heading">
@@ -557,10 +557,10 @@ function onCsvImported(res: CsvImportResult) {
         </section>
       </div>
 
-      <div v-show="activeMenu === 'data'" class="page page--comfortable page--settings">
+      <div v-if="activeMenu === 'data'" class="page page--comfortable page--settings">
         <header class="page-head">
           <h1 class="page-head__title">数据管理</h1>
-          <p class="page-head__sub">给账本留一份备份，让每一笔记录都安心。</p>
+          <p class="page-head__sub">给账本留一份备份，让每一笔记录都安心</p>
         </header>
         <section class="page-section" aria-labelledby="data-storage-heading">
           <h2 id="data-storage-heading" class="section-heading">存储位置</h2>
@@ -633,18 +633,18 @@ function onCsvImported(res: CsvImportResult) {
       </div>
 
       <!-- 使用说明：与顶栏「?」抽屉共用同一面板组件 -->
-      <div v-show="activeMenu === 'help'" class="page page--comfortable page--settings">
+      <div v-if="activeMenu === 'help'" class="page page--comfortable page--settings">
         <header class="page-head">
           <h1 class="page-head__title">使用说明</h1>
-          <p class="page-head__sub">从第一笔记账开始，慢慢熟悉你的账本。</p>
+          <p class="page-head__sub">从第一笔记账开始，慢慢熟悉你的账本</p>
         </header>
         <HelpPanel />
       </div>
 
-      <div v-show="activeMenu === 'about'" class="page page--comfortable page--settings">
+      <div v-if="activeMenu === 'about'" class="page page--comfortable page--settings">
         <header class="page-head">
           <h1 class="page-head__title">关于</h1>
-          <p class="page-head__sub">温暖理财，从一笔开始。</p>
+          <p class="page-head__sub">温暖理财，从一笔开始</p>
         </header>
         <section class="page-section" aria-labelledby="about-app-heading">
           <h2 id="about-app-heading" class="section-heading">你的本地账本</h2>

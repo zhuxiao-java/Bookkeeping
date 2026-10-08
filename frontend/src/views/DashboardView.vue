@@ -215,8 +215,13 @@ const budgetLabel = computed(() => {
   return budgetPct.value >= 80 ? '临近上限' : '预算充足'
 })
 const budgetTone = computed(() => {
-  if (budgetExceeded.value) return 'exception'
-  return budgetDifference.value === 0 || budgetPct.value >= 80 ? 'warning' : 'success'
+  if (budgetExceeded.value) return 'over'
+  return budgetDifference.value === 0 || budgetPct.value >= 80 ? 'near' : 'ok'
+})
+const budgetBarColor = computed(() => {
+  if (budgetTone.value === 'over') return 'var(--bk-expense)'
+  if (budgetTone.value === 'near') return 'var(--bk-accent)'
+  return 'var(--bk-income)'
 })
 const budgetHint = computed(() => {
   if (budgetExceeded.value) return '支出已超过本月计划，留意接下来的每一笔。'
@@ -444,14 +449,15 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="page page--comfortable quiet-controls dash" v-loading="loading && transactions.length > 0">
+  <div class="page page--comfortable page--wide quiet-controls dash">
     <header class="page-head page-head--actions">
       <div>
         <h1 class="page-head__title">总览</h1>
-        <p class="page-head__sub">从今天的小记录，看见生活与收支的变化。</p>
+        <p class="page-head__sub">从今天的小记录，看见生活与收支的变化</p>
       </div>
       <span class="month-stamp"><el-icon aria-hidden="true"><Calendar /></el-icon>{{ monthLabel }}</span>
     </header>
+    <div class="page-data" v-loading="loading && transactions.length > 0">
     <!-- Hero：本月结余大数字 + 环比 + 等级 chip（叙事化首屏，弱化后台看板感） -->
     <section class="hero bk-enter">
       <div class="hero__main">
@@ -544,22 +550,19 @@ onBeforeUnmount(() => {
     <section class="page-section" aria-labelledby="dashboard-analysis-heading">
       <h2 id="dashboard-analysis-heading" class="section-heading">收支分析</h2>
     <div class="chart-row">
-      <el-card shadow="never" class="chart-card trend-card" data-guide="trend">
-        <template #header>
+      <section class="surface panel chart-card trend-card" data-guide="trend">
           <div class="card-head">
             <h2 class="card-head__title">{{ monthLabel }} 收支趋势</h2>
             <span class="card-hint">点击图表查看对应流水</span>
           </div>
-        </template>
         <div class="chart-slot">
           <div ref="trendEl" class="chart-box" title="点击查看当天流水" />
           <el-skeleton v-if="loading && !monthTransactions.length" class="chart-skel" animated :rows="5" />
           <EmptyState v-else-if="!monthTransactions.length" description="本月暂无记录" :size="80" class="chart-empty" />
         </div>
-      </el-card>
+      </section>
 
-      <el-card shadow="never" class="chart-card expense-card" data-guide="pie">
-        <template #header>
+      <section class="surface panel chart-card expense-card" data-guide="pie">
           <div class="card-head">
             <h2 class="card-head__title">支出分类占比</h2>
             <el-radio-group v-model="pieGroupBy" class="segment" aria-label="支出分类层级" size="small">
@@ -567,7 +570,6 @@ onBeforeUnmount(() => {
               <el-radio-button value="self">子分类</el-radio-button>
             </el-radio-group>
           </div>
-        </template>
         <div class="chart-slot">
           <div ref="pieEl" class="chart-box" title="点击查看该分类流水" />
           <el-skeleton v-if="loading && !expenseAgg.length" class="chart-skel" animated :rows="5" />
@@ -593,12 +595,11 @@ onBeforeUnmount(() => {
             查看全部支出<el-icon aria-hidden="true"><ArrowRight /></el-icon>
           </el-button>
         </div>
-      </el-card>
+      </section>
     </div>
 
     <!-- 近 N 个月盈亏 -->
-    <el-card shadow="never" class="chart-card pl-card" data-guide="pl">
-      <template #header>
+    <section class="surface panel chart-card pl-card" data-guide="pl">
         <div class="card-head">
           <div class="card-head__copy">
             <h2 class="card-head__title">近 {{ PL_MONTHS }} 个月盈亏</h2>
@@ -613,13 +614,12 @@ onBeforeUnmount(() => {
           </div>
           <el-button text type="primary" @click="router.push('/report')">查看报表</el-button>
         </div>
-      </template>
       <div class="chart-slot">
         <div ref="plEl" class="pl-box" title="点击查看该月流水" />
         <el-skeleton v-if="loading && !transactions.length" class="chart-skel" animated :rows="4" />
         <EmptyState v-else-if="!transactions.length" description="还没有记录" :size="72" class="chart-empty" />
       </div>
-    </el-card>
+    </section>
 
     </section>
 
@@ -627,13 +627,12 @@ onBeforeUnmount(() => {
     <section class="page-section" aria-labelledby="dashboard-record-heading">
       <h2 id="dashboard-record-heading" class="section-heading">账本动态</h2>
     <div class="bottom-row" data-guide="recent">
-      <el-card shadow="never" class="bottom-card">
-        <template #header>
+      <section class="surface panel bottom-card">
           <div class="card-head">
             <h2 class="card-head__title">最近流水</h2>
             <el-button text type="primary" @click="router.push('/transaction')">查看全部</el-button>
           </div>
-        </template>
+        <div class="panel-body">
         <template v-if="recentTransactions.length">
           <router-link v-for="row in recentTransactions" :key="row.id" :to="{ path: '/transaction', query: { bizId: row.id } }" class="recent-row">
             <CategoryDot
@@ -667,15 +666,15 @@ onBeforeUnmount(() => {
         </template>
         <el-skeleton v-else-if="loading" animated :rows="5" />
         <EmptyState v-else description="还没有记录，点击顶栏「记一笔」开始记账" />
-      </el-card>
+        </div>
+      </section>
 
-      <el-card shadow="never" class="bottom-card">
-        <template #header>
+      <section class="surface panel bottom-card">
           <div class="card-head">
             <h2 class="card-head__title">{{ monthLabel }} 预算</h2>
             <el-button text type="primary" @click="router.push('/budget')">管理预算</el-button>
           </div>
-        </template>
+        <div class="panel-body">
         <template v-if="monthTotalBudget">
           <div class="budget-overview" :class="`is-${budgetTone}`">
             <div class="budget-line">
@@ -687,7 +686,7 @@ onBeforeUnmount(() => {
               <span>预算使用情况</span>
               <strong>{{ Number(monthTotalBudget.amount) > 0 ? budgetPct + '%' : '—' }}</strong>
             </div>
-            <el-progress :percentage="budgetExceeded ? 100 : Math.min(100, budgetPct)" :status="budgetTone" :show-text="false" :stroke-width="8" aria-label="本月预算使用情况" />
+            <el-progress :percentage="budgetExceeded ? 100 : Math.min(100, budgetPct)" :color="budgetBarColor" :show-text="false" :stroke-width="8" aria-label="本月预算使用情况" />
             <dl class="budget-details">
               <div><dt>已支出</dt><dd>¥{{ formatAmount(monthTotalBudget.amountUsed, decimals) }}</dd></div>
               <div><dt>总预算</dt><dd>¥{{ formatAmount(monthTotalBudget.amount, decimals) }}</dd></div>
@@ -699,9 +698,11 @@ onBeforeUnmount(() => {
         <EmptyState v-else description="本月未设置预算">
           <el-button type="primary" @click="router.push('/budget')">去设置预算</el-button>
         </EmptyState>
-      </el-card>
+        </div>
+      </section>
     </div>
     </section>
+    </div>
   </div>
 </template>
 
@@ -727,7 +728,7 @@ onBeforeUnmount(() => {
   flex-wrap: wrap;
   padding: var(--bk-row-padding) var(--bk-panel-padding);
   border-radius: var(--bk-radius-lg);
-  background: linear-gradient(110deg, color-mix(in srgb, var(--bk-primary-soft) 52%, var(--bk-surface)), var(--bk-surface));
+  background: var(--bk-surface);
   border: 0;
 }
 
@@ -922,7 +923,6 @@ onBeforeUnmount(() => {
   min-width: 0;
 }
 .trend-card { display: flex; flex-direction: column; }
-.trend-card :deep(.el-card__body) { flex: 1; display: flex; }
 .trend-card .chart-slot { flex: 1; min-width: 0; min-height: 360px; }
 .trend-card .chart-box { position: absolute; inset: 0; height: 100%; }
 .expense-card .chart-box { height: 210px; }
@@ -1089,9 +1089,9 @@ onBeforeUnmount(() => {
   font-size: 13px;
 }
 
-.budget-overview { --budget-tone: var(--bk-button-primary); }
-.budget-overview.is-warning { --budget-tone: var(--bk-button-warning); }
-.budget-overview.is-exception { --budget-tone: var(--bk-expense-text); }
+.budget-overview { --budget-tone: var(--bk-income); }
+.budget-overview.is-near { --budget-tone: var(--bk-accent); }
+.budget-overview.is-over { --budget-tone: var(--bk-expense); }
 .budget-badge { padding: 3px 9px; border-radius: var(--bk-radius-pill); font-size: 12px; color: var(--budget-tone); background: color-mix(in srgb, var(--budget-tone) 10%, var(--bk-surface)); }
 .budget-balance { font-size: 32px; font-weight: 650; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
 .budget-usage { margin-top: 22px; margin-bottom: 10px; font-size: 12px; color: var(--bk-text-secondary); }

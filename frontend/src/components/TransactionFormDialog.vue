@@ -303,7 +303,7 @@ async function save(continueRecording = false) {
       </button>
     </div>
 
-    <el-form ref="formRef" label-position="top" :disabled="saving || initializing" :aria-busy="saving || initializing" @submit.prevent>
+    <el-form ref="formRef" class="record-form" label-position="top" :disabled="saving || initializing" :aria-busy="saving || initializing" @submit.prevent>
       <template v-if="isBackfill">
         <p class="tf-backfill-note">按发生日期计入账本；奖励计入今日额度，已完成的月结经验不重算。</p>
         <el-form-item label="发生时间" required :error="fieldErrors.transactionDate" class="tf-backfill-date">
@@ -416,6 +416,10 @@ async function save(continueRecording = false) {
 </template>
 
 <style scoped>
+.record-form :deep(.el-form-item) {
+  margin-bottom: 28px;
+}
+
 .tf-backfill-note {
   margin: 0 0 18px;
   padding: 12px 14px;

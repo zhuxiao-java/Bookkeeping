@@ -82,7 +82,7 @@ function test() {
     <header class="page-head page-head--actions">
       <div>
         <h1 class="page-head__title">AI 报告设置</h1>
-        <p class="page-head__sub">连接你的模型，每次生成都由你亲自确认。</p>
+        <p class="page-head__sub">连接你的模型，每次生成都由你亲自确认</p>
       </div>
       <el-button @click="router.push('/ai-report')">前往 AI 报告</el-button>
     </header>

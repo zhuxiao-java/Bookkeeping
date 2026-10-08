@@ -51,12 +51,17 @@ function monthLabel(row: ExperienceLog): string {
 </script>
 
 <template>
-  <div class="page page--comfortable level-page" v-loading="loading">
+  <div class="page page--comfortable level-page">
     <!-- 页头叙事 -->
     <div class="page-head">
       <h1 class="page-head__title">等级</h1>
       <p class="page-head__sub">良好的记账习惯会换来经验与成长</p>
     </div>
+
+    <div class="page-data" v-loading="loading && !!level.info">
+    <section v-if="loading && !level.info" class="surface pad" aria-busy="true">
+      <el-skeleton :rows="6" animated />
+    </section>
 
     <!-- 后端等级接口不可用：给出契约提示与重试 -->
     <section v-if="!loading && !level.available" class="surface lv-surface">
@@ -177,6 +182,7 @@ function monthLabel(row: ExperienceLog): string {
         </section>
       </div>
     </template>
+    </div>
   </div>
 </template>
 

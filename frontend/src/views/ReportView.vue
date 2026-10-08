@@ -597,7 +597,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="page page--comfortable quiet-controls" v-loading="loading && allTransactions.length > 0">
+  <div class="page page--comfortable page--wide quiet-controls">
     <!-- 页头叙事 -->
     <header class="page-head page-head--actions">
       <div class="row-copy">
@@ -652,6 +652,7 @@ onBeforeUnmount(() => {
 
     </div>
 
+    <div class="page-data" v-loading="loading && allTransactions.length > 0">
     <section class="page-section" aria-labelledby="report-summary-heading">
       <h2 id="report-summary-heading" class="section-heading">区间汇总</h2>
       <div class="surface report-summary">
@@ -660,8 +661,8 @@ onBeforeUnmount(() => {
       </div>
 
     <!-- 区间对比（RP-02）：本期 vs 环比上期 / 同比去年 -->
-    <el-card v-if="compareData" shadow="never" class="compare-card">
-      <template #header>
+    <section class="surface panel compare-card" v-if="compareData">
+      
         <div class="card-head">
           <h2 class="card-head__title">区间对比</h2>
           <span class="card-hint">
@@ -669,7 +670,7 @@ onBeforeUnmount(() => {
             · 对比期 {{ compareData.range[0] }} ~ {{ compareData.range[1] }}
           </span>
         </div>
-      </template>
+      
       <el-table :data="compareRows" style="width: 100%">
         <el-table-column prop="label" label="项目" min-width="100" />
         <el-table-column label="本期" min-width="140" align="right">
@@ -687,7 +688,7 @@ onBeforeUnmount(() => {
           </template>
         </el-table-column>
       </el-table>
-    </el-card>
+    </section>
 
     </section>
 
@@ -695,8 +696,8 @@ onBeforeUnmount(() => {
     <section class="page-section" aria-labelledby="report-analysis-heading">
       <h2 id="report-analysis-heading" class="section-heading">图表分析</h2>
     <div class="chart-row">
-      <el-card shadow="never" class="chart-card chart-card--wide" data-guide="rp-trend">
-        <template #header>
+      <section class="surface panel chart-card chart-card--wide" data-guide="rp-trend">
+        
           <div class="card-head">
             <h2 class="card-head__title">收支趋势</h2>
             <el-radio-group v-model="trendChartType" class="segment" aria-label="趋势图样式" size="small" @change="renderTrend">
@@ -704,16 +705,16 @@ onBeforeUnmount(() => {
               <el-radio-button value="line">折线</el-radio-button>
             </el-radio-group>
           </div>
-        </template>
+        
         <div class="chart-slot">
           <div ref="trendEl" class="chart-box" />
           <el-skeleton v-if="loading && !rangeCount" class="chart-skel" animated :rows="6" />
           <EmptyState v-else-if="!rangeCount" :size="88" description="范围内暂无数据" class="chart-empty" />
         </div>
-      </el-card>
+      </section>
 
-      <el-card shadow="never" class="chart-card" data-guide="rp-pie">
-        <template #header>
+      <section class="surface panel chart-card" data-guide="rp-pie">
+        
           <div class="card-head">
             <h2 class="card-head__title">分类占比</h2>
             <div class="card-head__ctrls">
@@ -727,7 +728,7 @@ onBeforeUnmount(() => {
               </el-radio-group>
             </div>
           </div>
-        </template>
+        
         <div class="chart-slot">
           <div ref="pieEl" class="chart-box chart-box--drill" title="点击查看该分类流水" />
           <el-skeleton v-if="loading && !categoryAgg.length" class="chart-skel" animated :rows="6" />
@@ -737,12 +738,12 @@ onBeforeUnmount(() => {
             <div class="pie-center__label">总{{ incomeExpense === 'expense' ? '支出' : '收入' }}</div>
           </div>
         </div>
-      </el-card>
+      </section>
     </div>
 
     <!-- 月度盈亏 -->
-    <el-card shadow="never" class="chart-card pl-card" data-guide="rp-pl">
-      <template #header>
+    <section class="surface panel chart-card pl-card" data-guide="rp-pl">
+      
         <div class="card-head">
           <h2 class="card-head__title">月度盈亏（按月）</h2>
           <span class="card-metric">
@@ -754,41 +755,41 @@ onBeforeUnmount(() => {
             </b>
           </span>
         </div>
-      </template>
+      
       <div class="chart-slot">
         <div ref="balanceEl" class="chart-box chart-box--drill" title="点击查看该月流水" />
         <el-skeleton v-if="loading && !rangeCount" class="chart-skel" animated :rows="6" />
         <EmptyState v-else-if="!rangeCount" :size="88" description="范围内暂无数据" class="chart-empty" />
       </div>
-    </el-card>
+    </section>
 
     <!-- 账户余额变化（FR-RPT-03） -->
-    <el-card shadow="never" class="chart-card" data-guide="rp-balance">
-      <template #header>
+    <section class="surface panel chart-card" data-guide="rp-balance">
+      
         <div class="card-head">
           <h2 class="card-head__title">账户余额变化</h2>
           <span class="card-hint">按流水推演（期初余额 + 区间净变动）</span>
         </div>
-      </template>
+      
       <div class="chart-slot">
         <div ref="balanceTrendEl" class="chart-box" />
         <el-skeleton v-if="loading && !accountBalance.series.length" class="chart-skel" animated :rows="6" />
         <EmptyState v-else-if="!accountBalance.series.length" :size="88" description="范围内暂无账户变动" class="chart-empty" />
       </div>
-    </el-card>
+    </section>
 
     </section>
 
     <section class="page-section" aria-labelledby="report-detail-heading">
       <h2 id="report-detail-heading" class="section-heading">收支明细</h2>
     <!-- 月度盈亏明细 -->
-    <el-card shadow="never">
-      <template #header>
+    <section class="surface panel">
+      
         <div class="card-head">
           <h2 class="card-head__title">月度盈亏明细</h2>
           <el-button text @click="exportBalance">导出 CSV</el-button>
         </div>
-      </template>
+      
       <el-table :data="balanceTable" style="width: 100%">
         <el-table-column label="月份" min-width="110">
           <template #default="{ row }">{{ row.year }}年{{ row.month }}月</template>
@@ -825,16 +826,16 @@ onBeforeUnmount(() => {
           <EmptyState :size="88" description="范围内暂无数据" />
         </template>
       </el-table>
-    </el-card>
+    </section>
 
     <!-- 分类明细 -->
-    <el-card shadow="never">
-      <template #header>
+    <section class="surface panel">
+      
         <div class="card-head">
           <h2 class="card-head__title">分类明细（{{ incomeExpense === 'expense' ? '支出' : '收入' }} · {{ categoryGroupBy === 'root' ? '父分类' : '子分类' }}）</h2>
           <el-button text data-guide="rp-export" @click="exportDetail">导出 CSV</el-button>
         </div>
-      </template>
+      
       <el-table :data="categoryAgg" style="width: 100%">
         <el-table-column label="分类" min-width="160">
           <template #default="{ row }">
@@ -861,8 +862,9 @@ onBeforeUnmount(() => {
           <EmptyState :size="88" description="范围内暂无数据" />
         </template>
       </el-table>
-    </el-card>
     </section>
+    </section>
+    </div>
   </div>
 </template>
 

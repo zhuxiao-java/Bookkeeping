@@ -72,7 +72,7 @@ const dateText = computed(() =>
   cursor: pointer;
   overflow: hidden;
   /* 图片加载前/透明区域的兜底底色 */
-  background: #0b1020;
+  background: #14181a;
 }
 
 .screensaver__bg {

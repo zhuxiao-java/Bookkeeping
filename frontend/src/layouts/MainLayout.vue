@@ -1,7 +1,6 @@
 <script setup lang="ts">
-import { computed, h, onMounted, onUnmounted, ref, watch } from 'vue'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
-import { ElButton, ElNotification } from 'element-plus'
 import {
   DataAnalysis,
   Calendar,
@@ -105,62 +104,15 @@ function onKeydown(e: KeyboardEvent) {
 /** Electron IPC 订阅的取消函数 */
 let unsubscribeQuickRecord: (() => void) | undefined
 
-/** 首启全局引导的延时器与页面引导通知（离开布局时需清理） */
+/** 首启全局引导的延时器（离开布局时需清理） */
 let guideTimer: number | undefined
-let guideNotice: { close: () => void } | null = null
 
-/**
- * 页面引导不自动播放，只在右下角通知里给一个「开始」入口，避免打断操作。
- * 正在播其他引导、或本页已看过时不提示。
- */
-function promptPageGuide(path: string) {
-  const scope = scopeOfPath(path)
-  if (!scope || guide.activeScope || guide.isDone(scope)) return
-
-  guideNotice?.close()
-  // 开始引导：关通知后播放本页引导
-  const start = () => {
-    guideNotice?.close()
-    guideNotice = null
-    guide.start(scope)
-  }
-  // 稍后再说：仅关闭本次提示（下次换页仍会再问）
-  const dismiss = () => {
-    guideNotice?.close()
-    guideNotice = null
-  }
-  guideNotice = ElNotification({
-    title: `${SCOPE_LABEL[scope]}指引`,
-    // 通知挂在 body 下，scoped 样式作用不到：布局用内联样式，按钮视觉用全局类 .bk-guide-start
-    message: h('div', { style: { display: 'flex', flexDirection: 'column', gap: '14px' } }, [
-      h(
-        'p',
-        { style: { margin: '0', fontSize: '13px', lineHeight: '1.6' } },
-        `花 20 秒了解${SCOPE_LABEL[scope]}的主要功能？`
-      ),
-      h('div', { style: { display: 'flex', alignItems: 'center', gap: '10px' } }, [
-        // 柔和填充主按钮（样式见全局 .bk-guide-start），轻量提示不喧宾夺主
-        h(ElButton, { round: true, class: 'bk-guide-start', onClick: start }, () => '开始引导'),
-        // 次要操作降为灰色文字按钮，层级更清晰、观感更松弛
-        h(ElButton, { text: true, type: 'info', style: { marginLeft: '0' }, onClick: dismiss }, () => '稍后再说')
-      ])
-    ]),
-    position: 'bottom-right',
-    duration: 8000,
-    onClose: () => {
-      guideNotice = null
-    }
-  })
-}
-
-// 全局引导播完后顺势提示当前页；此后每次换页各自提示一次
-watch(
-  () => guide.activeScope,
-  (scope, prev) => {
-    if (prev === 'global' && !scope) promptPageGuide(route.path)
-  }
-)
-watch(() => route.path, (path) => promptPageGuide(path))
+/** 页头一行提示：关掉后记为已看过，说明页仍可重新开始。 */
+const pageHint = computed(() => {
+  const scope = scopeOfPath(route.path)
+  if (!scope || guide.activeScope || guide.isDone(scope)) return null
+  return { scope, label: SCOPE_LABEL[scope] }
+})
 
 onMounted(() => {
   window.addEventListener('keydown', onKeydown)
@@ -197,8 +149,6 @@ onUnmounted(() => {
   unsubscribeQuickRecord?.()
   unsubscribeQuickRecord = undefined
   window.clearTimeout(guideTimer)
-  guideNotice?.close()
-  guideNotice = null
 })
 </script>
 
@@ -224,25 +174,11 @@ onUnmounted(() => {
         class="level-entry"
         data-guide="level-entry"
         :class="{ 'level-entry--collapsed': collapsed }"
-        :title="collapsed ? level.info.leveName : '查看我的等级'"
-        aria-label="查看我的等级"
+        :title="level.info.nextLevelName ? `${level.info.leveName}，距「${level.info.nextLevelName}」还差 ${level.remainExp} 经验` : level.info.leveName"
+        :aria-label="level.info.leveName"
       >
         <LevelLogo :level="level.info.level" :size="collapsed ? 30 : 34" />
-        <template v-if="!collapsed">
-          <div class="level-entry__meta">
-            <div class="level-entry__name">{{ level.info.leveName }}</div>
-            <div class="level-entry__hint">
-              {{ level.info.nextLevelName ? `距「${level.info.nextLevelName}」还差 ${level.remainExp} 经验` : '已达最高等级' }}
-            </div>
-          </div>
-          <el-progress
-            class="level-entry__bar"
-            :percentage="level.progress"
-            :show-text="false"
-            :stroke-width="4"
-            color="var(--bk-primary)"
-          />
-        </template>
+        <span v-if="!collapsed" class="level-entry__name">{{ level.info.leveName }}</span>
       </router-link>
 
       <el-menu
@@ -288,6 +224,11 @@ onUnmounted(() => {
       </el-header>
 
       <el-main class="main-layout__main">
+        <div v-if="pageHint" class="page-hint" role="status">
+          <span>花 20 秒了解{{ pageHint.label }}的主要功能</span>
+          <el-button text size="small" @click="guide.start(pageHint.scope)">开始引导</el-button>
+          <el-button text size="small" @click="guide.skip(pageHint.scope)">关闭</el-button>
+        </div>
         <router-view />
       </el-main>
     </el-container>
@@ -372,12 +313,11 @@ onUnmounted(() => {
 }
 
 .level-entry {
-  display: grid;
-  grid-template-columns: auto 1fr;
+  display: flex;
   align-items: center;
-  gap: 4px 10px;
+  gap: 10px;
   margin: 0 12px 12px;
-  padding: 11px;
+  padding: 8px 11px;
   border-radius: var(--bk-radius-md);
   border: none;
   background: var(--bk-surface-2);
@@ -398,29 +338,13 @@ onUnmounted(() => {
   padding: 8px 0;
 }
 
-.level-entry__meta {
-  min-width: 0;
-}
-
 .level-entry__name {
+  min-width: 0;
   font-size: 13px;
   font-weight: 600;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-
-.level-entry__hint {
-  color: var(--bk-text-secondary);
-  font-size: 11px;
-  margin-top: 2px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.level-entry__bar {
-  grid-column: 1 / -1;
 }
 
 .main-layout__menu {
@@ -537,6 +461,16 @@ onUnmounted(() => {
   overflow-y: auto;
   scrollbar-gutter: stable;
   container: content / inline-size;
+}
+
+.page-hint {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px 8px;
+  margin: 0 0 8px;
+  font-size: 13px;
+  color: var(--bk-text-secondary);
 }
 
 @media (max-width: 1100px) {

@@ -86,46 +86,54 @@ onUnmounted(() => {
       </template>
 
       <div class="msg-panel">
-        <div class="msg-toolbar">
-          <el-checkbox
-            :model-value="message.onlyUnread"
-            size="small"
-            @change="message.setOnlyUnread($event as boolean)"
-          >
-            只看未读
-          </el-checkbox>
-          <el-select
-            v-model="typeFilter"
-            class="msg-toolbar__type"
-            size="small"
-            clearable
-            placeholder="全部类型"
-            aria-label="消息类型"
-          >
-            <el-option v-for="o in MESSAGE_TYPE_OPTIONS" :key="o.value" :label="o.label" :value="o.value" />
-          </el-select>
-          <div class="msg-toolbar__ops">
-            <el-tooltip content="刷新" placement="bottom">
-              <el-button text circle size="small" :icon="Refresh" aria-label="刷新消息" @click="message.load(true)" />
-            </el-tooltip>
-            <el-button
-              text
-              type="primary"
-              size="small"
-              :disabled="!message.unreadCount"
-              @click="message.markAllRead()"
-            >
-              全部已读
-            </el-button>
-            <el-button
-              text
-              type="danger"
-              size="small"
-              :disabled="!message.readCount"
-              @click="message.clearRead()"
-            >
-              清空已读
-            </el-button>
+        <div class="msg-toolbar surface">
+          <div class="split-row">
+            <div class="row-copy">
+              <h2 class="row-copy__title">筛选</h2>
+              <p class="row-copy__desc">按已读状态和类型查看</p>
+            </div>
+            <div class="msg-toolbar__filters">
+              <el-checkbox
+                :model-value="message.onlyUnread"
+                @change="message.setOnlyUnread($event as boolean)"
+              >
+                只看未读
+              </el-checkbox>
+              <el-select
+                v-model="typeFilter"
+                class="msg-toolbar__type"
+                clearable
+                placeholder="全部类型"
+                aria-label="消息类型"
+              >
+                <el-option v-for="o in MESSAGE_TYPE_OPTIONS" :key="o.value" :label="o.label" :value="o.value" />
+              </el-select>
+            </div>
+          </div>
+          <div class="split-row">
+            <div class="row-copy">
+              <h2 class="row-copy__title">处理</h2>
+              <p class="row-copy__desc">刷新、标记或清理</p>
+            </div>
+            <div class="msg-toolbar__ops">
+              <el-button text :icon="Refresh" aria-label="刷新消息" @click="message.load(true)">刷新</el-button>
+              <el-button
+                text
+                type="primary"
+                :disabled="!message.unreadCount"
+                @click="message.markAllRead()"
+              >
+                全部已读
+              </el-button>
+              <el-button
+                text
+                type="danger"
+                :disabled="!message.readCount"
+                @click="message.clearRead()"
+              >
+                清空已读
+              </el-button>
+            </div>
           </div>
         </div>
 
@@ -226,28 +234,19 @@ onUnmounted(() => {
 }
 
 .msg-toolbar {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 10px;
-  padding-bottom: var(--bk-gap);
   margin-bottom: var(--bk-section-gap);
-  border-bottom: 1px solid var(--el-border-color-lighter);
+}
+
+.msg-toolbar__filters,
+.msg-toolbar__ops {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 12px;
 }
 
 .msg-toolbar__type {
   width: 150px;
-  margin-left: auto;
-}
-
-.msg-toolbar__ops {
-  width: 100%;
-  justify-content: flex-end;
-  flex-wrap: wrap;
-  display: flex;
-  align-items: center;
-  gap: var(--bk-action-gap);
-  margin-left: auto;
 }
 
 .msg-toolbar__ops > .el-button + .el-button { margin-left: 0; }

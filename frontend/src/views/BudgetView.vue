@@ -104,10 +104,10 @@ const forecast = computed<{ avgDaily: number; projected: number; over: boolean }
 })
 
 /** 预算使用率颜色：<80% success、80~100 warning、>=100 danger */
-function progressStatus(pct: number): 'success' | 'warning' | 'exception' {
-  if (pct >= 100) return 'exception'
-  if (pct >= 80) return 'warning'
-  return 'success'
+function progressColor(pct: number): string {
+  if (pct >= 100) return 'var(--bk-expense)'
+  if (pct >= 80) return 'var(--bk-accent)'
+  return 'var(--bk-income)'
 }
 
 function pctOf(spent: number, amount: number): number {
@@ -444,7 +444,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="page page--comfortable quiet-controls" ref="pageRef" v-loading="loading">
+  <div class="page page--comfortable page--wide quiet-controls" ref="pageRef">
     <!-- 页头叙事 + 月份导航工具行 -->
     <header class="page-head page-head--actions">
       <div class="row-copy">
@@ -456,6 +456,7 @@ onBeforeUnmount(() => {
         <el-button type="primary" :icon="Plus" data-guide="bd-create" @click="openCreate">设置预算</el-button>
       </div>
     </header>
+    <div class="page-data" v-loading="loading">
     <section class="page-section" aria-labelledby="budget-month-heading">
       <div class="toolbar page-section__head">
         <h2 id="budget-month-heading" class="section-heading">月度计划</h2>
@@ -467,10 +468,9 @@ onBeforeUnmount(() => {
       </div>
 
       <!-- 总预算卡片 -->
-      <el-card
+      <section
         v-if="totalBudget"
-        shadow="never"
-        class="total-card"
+        class="surface pad total-card"
         data-guide="bd-total"
         :class="{ 'is-focused': focusId === totalBudget.id }"
       >
@@ -503,7 +503,7 @@ onBeforeUnmount(() => {
         <el-progress
           class="total-card__progress"
           :percentage="pctOf(spentOf(totalBudget), Number(totalBudget.amount))"
-          :status="progressStatus(pctOf(spentOf(totalBudget), Number(totalBudget.amount)))"
+          :color="progressColor(pctOf(spentOf(totalBudget), Number(totalBudget.amount)))"
           :stroke-width="10"
           :show-text="true"
         />
@@ -515,24 +515,23 @@ onBeforeUnmount(() => {
           show-icon
           class="total-card__alert"
         />
-      </el-card>
+      </section>
 
-      <el-card v-else shadow="never">
+      <section v-else class="surface pad">
         <EmptyState description="本月还未设置总预算" :size="104">
           <el-button type="primary" @click="openCreate">设置月度总预算</el-button>
         </EmptyState>
-      </el-card>
+      </section>
     </section>
 
     <!-- 分类预算卡片 -->
     <section v-if="categoryBudgets.length" class="page-section" aria-labelledby="budget-category-heading">
       <h2 id="budget-category-heading" class="section-heading">分类规划</h2>
       <div class="budget-grid" data-guide="bd-list">
-        <el-card
+        <section
           v-for="budget in categoryBudgets"
           :key="budget.id"
-          shadow="hover"
-          class="budget-card"
+          class="surface pad budget-card"
           :class="{ 'is-focused': focusId === budget.id }"
         >
           <div class="budget-card__header">
@@ -563,7 +562,7 @@ onBeforeUnmount(() => {
           </div>
           <el-progress
             :percentage="pctOf(spentOf(budget), Number(budget.amount))"
-            :status="progressStatus(pctOf(spentOf(budget), Number(budget.amount)))"
+            :color="progressColor(pctOf(spentOf(budget), Number(budget.amount)))"
             :stroke-width="10"
           />
           <el-tag v-if="spentOf(budget) > Number(budget.amount)" type="danger" size="small" effect="light" class="budget-card__over">
@@ -572,20 +571,19 @@ onBeforeUnmount(() => {
           <el-button text type="primary" size="small" class="budget-card__link" @click="viewTransactions(budget)">
             查看该分类流水 →
           </el-button>
-        </el-card>
+        </section>
       </div>
     </section>
 
     <!-- 预算执行历史对比（RP-03） -->
-    <el-card v-if="budgetHistory.length" shadow="never" class="history-card">
-      <template #header>
+    <section v-if="budgetHistory.length" class="surface panel history-card">
         <div class="card-head">
           <h2 class="card-head__title">预算执行历史对比</h2>
           <span class="card-hint">近 {{ budgetHistory.length }} 个月总预算 vs 已用</span>
         </div>
-      </template>
-      <div ref="historyEl" class="history-card__chart" />
-    </el-card>
+      <div ref="historyEl" class="history-card__chart panel-body" />
+    </section>
+    </div>
 
     <!-- 新增/编辑预算 -->
     <el-dialog
@@ -715,7 +713,7 @@ onBeforeUnmount(() => {
   gap: var(--bk-gap);
 }
 
-.budget-card :deep(.el-card__body) {
+.budget-card {
   display: flex;
   flex-direction: column;
   gap: var(--bk-gap);
@@ -755,8 +753,7 @@ onBeforeUnmount(() => {
 
 /* 站内信跳转定位：命中的预算卡片高亮 */
 .is-focused {
-  --el-card-border-color: var(--el-color-primary);
-  box-shadow: 0 0 0 2px var(--el-color-primary-light-8);
+  border-color: var(--bk-primary);
 }
 
 .history-card__chart {

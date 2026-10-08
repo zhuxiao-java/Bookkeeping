@@ -774,7 +774,7 @@ async function save(keepOpen: boolean) {
 }
 
 .qr-form :deep(.el-form-item) {
-  margin-bottom: var(--bk-row-padding);
+  margin-bottom: 28px;
 }
 
 .qr-tpls {
