@@ -1,15 +1,18 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import { useSettingsStore } from '@/stores/settings'
+import { usePetStore } from '@/stores/pet'
 import { useIdle } from '@/composables/useIdle'
 import { PRESET_BACKGROUNDS } from '@/utils/constants'
 import { resolveBackgroundUrl } from '@/utils/background'
+import PetSprite from '@/components/PetSprite.vue'
 
 /**
  * 屏保：长时间无操作时全屏展示背景图 + 大时钟，任意操作（点击/按键/移动）退出。
  * 背景复用 settings.backgroundImage；未设置时回退内置「夜航」深色预设，保证始终有画面。
  */
 const settings = useSettingsStore()
+const pet = usePetStore()
 const { active } = useIdle(() => settings.screensaverMinutes)
 
 /** 屏保背景：用户设置的背景图，未设置则回退内置深色预设 */
@@ -24,6 +27,7 @@ let clockTimer: number | undefined
 watch(active, (on) => {
   if (on) {
     now.value = new Date()
+    void pet.load(true)
     clockTimer = window.setInterval(() => (now.value = new Date()), 1000)
   } else if (clockTimer !== undefined) {
     window.clearInterval(clockTimer)
@@ -57,6 +61,10 @@ const dateText = computed(() =>
         <div class="screensaver__clock">
           <div class="screensaver__time">{{ timeText }}</div>
           <div class="screensaver__date">{{ dateText }}</div>
+          <div v-if="pet.adopted" class="screensaver__pet">
+            <PetSprite :species="pet.view?.species" :mood="pet.view?.moodKey" :stage="pet.view?.stage" />
+            <span>{{ pet.view?.name }} · {{ pet.view?.moodLabel }}</span>
+          </div>
         </div>
         <div class="screensaver__hint">点击任意处或按任意键退出</div>
       </div>
@@ -116,6 +124,18 @@ const dateText = computed(() =>
   color: rgba(255, 255, 255, 0.88);
   text-shadow: 0 1px 12px rgba(0, 0, 0, 0.45);
 }
+
+.screensaver__pet {
+  margin-top: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: #fff;
+  font-size: 16px;
+  text-shadow: 0 1px 12px rgba(0, 0, 0, 0.45);
+}
+.screensaver__pet :deep(.pet-sprite) { width: 64px; height: 64px; color: #fff; fill: rgba(255, 255, 255, 0.2); }
 
 .screensaver__hint {
   position: absolute;

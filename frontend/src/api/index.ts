@@ -13,6 +13,8 @@ import type {
   LevelConfig,
   LevelInfo,
   Message,
+  PetSpecies,
+  PetView,
   SearchQuery,
   Tag,
   Transaction,
@@ -221,6 +223,26 @@ export const levelApi = {
   /** 设置生日（yyyy-MM-dd）；传空串则清除。写入类接口，失败由拦截器提示 */
   async setBirthday(birthday: string): Promise<void> {
     await request({ url: '/level/birthday', method: 'post', params: { birthday }, noRetry: true })
+  }
+}
+
+/** 陪伴宠物。查询失败时静默降级；领养和改名失败由拦截器提示。 */
+export const petApi = {
+  async current(): Promise<PetView> {
+    const resp = await request<DataResponse<PetView>>({ url: '/pet', method: 'get', silent: true })
+    return resp.data
+  },
+  async adopt(name: string, species: PetSpecies): Promise<PetView> {
+    const resp = await request<DataResponse<PetView>>({
+      url: '/pet', method: 'post', data: { name, species }, noRetry: true
+    })
+    return resp.data
+  },
+  async rename(name: string): Promise<PetView> {
+    const resp = await request<DataResponse<PetView>>({
+      url: '/pet', method: 'put', data: { name }, noRetry: true
+    })
+    return resp.data
   }
 }
 

@@ -52,7 +52,13 @@ public enum BookkeepingResp implements RespInfo {
 
     MONTH_INVALID("B0024", "只能生成已结束月份的月报，格式应为 yyyy-MM"),
 
-    REPORT_NOT_FOUND("B0025", "月报不存在")
+    REPORT_NOT_FOUND("B0025", "月报不存在"),
+
+    PET_EXISTS("B0026", "已经领养过陪伴宠物"),
+
+    PET_NOT_ADOPTED("B0027", "还没有领养陪伴宠物"),
+
+    PET_INVALID("B0028", "请填写 1 到 12 个字的名字，并选择猫、狗或鸟")
     ;
 
 

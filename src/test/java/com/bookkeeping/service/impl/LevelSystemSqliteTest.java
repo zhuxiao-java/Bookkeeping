@@ -302,6 +302,7 @@ class LevelSystemSqliteTest {
             context.getBeanFactory().registerSingleton("checkInService", checkins);
             context.registerBean(WeatherService.class, () -> mock(WeatherService.class));
             context.registerBean(GreetingService.class, () -> mock(GreetingService.class));
+            context.registerBean(PetService.class, () -> mock(PetService.class));
             context.registerBean(TaskServiceImpl.class);
             context.refresh();
             var ready = new ApplicationReadyEvent(new SpringApplication(), new String[0], context, Duration.ZERO);
