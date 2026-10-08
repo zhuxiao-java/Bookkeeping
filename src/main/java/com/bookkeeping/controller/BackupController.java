@@ -83,25 +83,23 @@ public class BackupController {
     }
 
     /**
-     * 预览流水 CSV 导入结果（NEW-11）：不落库，逐行标注 valid / invalid / duplicate 与原因。
+     * 预览流水导入：本应用 CSV，或微信 / 支付宝个人对账 csv、xlsx。不落库。
      */
     @PostMapping("csv/transactions/preview")
     public DataResponse<BackupService.CsvPreviewResult> previewTransactionsCsv(
             @RequestParam("file") MultipartFile file) throws IOException {
-        String content = new String(file.getBytes(), StandardCharsets.UTF_8);
-        return DataResponse.of(backupService.previewTransactionsCsv(content));
+        return DataResponse.of(backupService.previewTransactions(file.getBytes(), file.getOriginalFilename()));
     }
 
     /**
-     * 导入流水 CSV：按账户名/分类名解析、仅新增，返回导入统计。
-     * skipDuplicates=true（默认）时跳过与库中或文件内重复的流水。
+     * 导入流水。本应用 CSV 按已有账户名、分类名解析；微信和支付宝账单会补齐账户与分类。
+     * skipDuplicates=true（默认）时跳过本应用 CSV 的指纹重复行。账单交易单号始终去重。
      */
     @PostMapping("csv/transactions")
     public DataResponse<BackupService.CsvImportResult> importTransactionsCsv(
             @RequestParam("file") MultipartFile file,
             @RequestParam(value = "skipDuplicates", defaultValue = "true") boolean skipDuplicates) throws IOException {
-        String content = new String(file.getBytes(), StandardCharsets.UTF_8);
-        return DataResponse.of(backupService.importTransactionsCsv(content, skipDuplicates));
+        return DataResponse.of(backupService.importTransactions(file.getBytes(), file.getOriginalFilename(), skipDuplicates));
     }
 
     private static String stamp() {

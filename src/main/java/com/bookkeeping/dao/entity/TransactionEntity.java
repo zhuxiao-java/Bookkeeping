@@ -63,4 +63,14 @@ public class TransactionEntity extends BaseEntity<Integer> {
      */
     @TableField(value = "f_tags")
     private String tags;
+    /**
+     * 外部账单来源（wechat / alipay）。本应用录入或 CSV 为空。
+     */
+    @TableField(value = "f_source")
+    private String source;
+    /**
+     * 外部交易单号。与 source 一起用于再次导入去重。
+     */
+    @TableField(value = "f_source_id")
+    private String sourceId;
 }

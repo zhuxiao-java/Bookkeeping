@@ -25,4 +25,8 @@ public class TransactionDTO extends BaseDTO<Integer> {
     private LocalDateTime transactionDate;
     private String note;
     private String tags;
+    /** 外部账单来源：wechat / alipay */
+    private String source;
+    /** 外部交易单号 */
+    private String sourceId;
 }

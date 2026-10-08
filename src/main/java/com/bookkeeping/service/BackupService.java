@@ -58,6 +58,23 @@ public interface BackupService {
     CsvImportResult importTransactionsCsv(String csvContent, boolean skipDuplicates);
 
     /**
+     * 预览流水文件。识别微信、支付宝个人对账 csv / xlsx 时走账单解析；
+     * 否则按本应用导出的 UTF-8 CSV 解析。预览不创建账户或分类。
+     *
+     * @param bytes    文件字节
+     * @param filename 原始文件名，用于区分 xlsx
+     */
+    CsvPreviewResult previewTransactions(byte[] bytes, String filename);
+
+    /**
+     * 导入流水文件。账单会按支付方式补齐账户、按分类别名归类，并用交易单号去重。
+     * 本应用 CSV 仍要求账户和分类事先存在。
+     *
+     * @param skipDuplicates 为 true 时跳过本应用 CSV 的指纹重复行；账单交易单号始终去重
+     */
+    CsvImportResult importTransactions(byte[] bytes, String filename, boolean skipDuplicates);
+
+    /**
      * CSV 导入统计。
      *
      * @param total      数据行总数（不含表头、不含空行）
@@ -89,8 +106,8 @@ public interface BackupService {
      * @param toAccountName 转入账户名原文
      * @param categoryName  分类名原文
      * @param note          备注原文
-     * @param status        valid / invalid / duplicate
-     * @param reason        invalid / duplicate 时的原因说明，valid 为空串
+     * @param status        valid / invalid / duplicate / ignored
+     * @param reason        非 valid 时的原因；账单预览里 valid 也可能提示将新建账户或分类
      */
     record CsvPreviewRow(int line, String date, String type, String amount, String accountName,
                          String toAccountName, String categoryName, String note, String status, String reason) {
@@ -103,8 +120,10 @@ public interface BackupService {
      * @param validCount     可成功导入的行数
      * @param invalidCount   无法解析的行数
      * @param duplicateCount 与库中或文件内重复的行数
+     * @param ignoredCount   账单中主动跳过的行数（交易关闭、全额退款、信用卡还款等）
      * @param rows           预览明细（最多 {@code MAX_PREVIEW_ROWS} 行）
      */
-    record CsvPreviewResult(int total, int validCount, int invalidCount, int duplicateCount, List<CsvPreviewRow> rows) {
+    record CsvPreviewResult(int total, int validCount, int invalidCount, int duplicateCount, int ignoredCount,
+                            List<CsvPreviewRow> rows) {
     }
 }

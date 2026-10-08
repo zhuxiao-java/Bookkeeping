@@ -46,9 +46,16 @@ CREATE TABLE IF NOT EXISTS t_transaction (
     f_date          DATE    NOT NULL,
     f_note          TEXT,
     f_tags          TEXT,
+    f_source        TEXT,                           -- 外部账单来源：wechat / alipay，本应用 CSV 为空
+    f_source_id     TEXT,                           -- 外部交易单号，用于再次导入时去重
     f_create_time    DATETIME DEFAULT CURRENT_TIMESTAMP,
     f_update_time    DATETIME DEFAULT CURRENT_TIMESTAMP
     );
+-- 存量库补列。SQLite 的 ADD COLUMN 没有 IF NOT EXISTS，重复执行报 duplicate column，
+-- 依赖 spring.sql.init.continue-on-error=true 继续。交易单号为空的行不参与唯一约束。
+ALTER TABLE t_transaction ADD COLUMN f_source TEXT;
+ALTER TABLE t_transaction ADD COLUMN f_source_id TEXT;
+CREATE UNIQUE INDEX IF NOT EXISTS idx_transaction_source ON t_transaction(f_source, f_source_id);
 
 -- =====================================================
 -- 预算表：按分类设置的月度预算

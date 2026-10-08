@@ -8,7 +8,7 @@ import { formatAmount } from '@/utils/format'
 import { PRESET_BACKGROUNDS, isPresetBackground } from '@/utils/constants'
 import { compressImage, resolveBackgroundUrl, toRemoteBackground } from '@/utils/background'
 import { imageApi, levelApi, backupApi, ApiError } from '@/api'
-import { bus, TRANSACTION_CHANGED, ACCOUNT_CHANGED } from '@/utils/bus'
+import { bus, TRANSACTION_CHANGED, ACCOUNT_CHANGED, CATEGORY_CHANGED } from '@/utils/bus'
 import CategoryManage from './settings/CategoryManage.vue'
 import TagManage from './settings/TagManage.vue'
 import AiReportSettings from './settings/AiReportSettings.vue'
@@ -322,6 +322,7 @@ function onCsvImported(res: CsvImportResult) {
   if (res.imported > 0) {
     bus.emit(TRANSACTION_CHANGED)
     bus.emit(ACCOUNT_CHANGED)
+    bus.emit(CATEGORY_CHANGED)
   }
 }
 </script>
@@ -608,7 +609,7 @@ function onCsvImported(res: CsvImportResult) {
           </div>
         </section>
         <section class="page-section" aria-labelledby="data-csv-heading">
-          <h2 id="data-csv-heading" class="section-heading">CSV 导入与导出</h2>
+          <h2 id="data-csv-heading" class="section-heading">导入与导出</h2>
           <div class="surface">
             <div class="split-row data-row">
               <div class="row-copy">
@@ -623,9 +624,9 @@ function onCsvImported(res: CsvImportResult) {
             <div class="split-row data-row">
               <div class="row-copy">
                 <h3 class="row-copy__title">导入流水</h3>
-                <p class="row-copy__desc">按账户名与分类名匹配已有数据，仅新增、不覆盖；导入前可预览校验结果。</p>
+                <p class="row-copy__desc">支持本应用导出的 CSV，以及微信、支付宝个人对账 csv、xlsx。支付方式对不上时会新建账户，分类对不上时记入待整理。</p>
               </div>
-              <el-button type="primary" @click="csvDialogVisible = true">导入流水 CSV</el-button>
+              <el-button type="primary" @click="csvDialogVisible = true">导入流水</el-button>
             </div>
           </div>
           <CsvImportDialog v-model="csvDialogVisible" @imported="onCsvImported" />

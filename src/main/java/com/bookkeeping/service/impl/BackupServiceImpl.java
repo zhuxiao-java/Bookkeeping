@@ -1,5 +1,9 @@
 package com.bookkeeping.service.impl;
 
+import com.bookkeeping.bill.BillFiles;
+import com.bookkeeping.bill.PaymentBillImporter;
+import com.bookkeeping.bill.PaymentBillParser;
+import com.bookkeeping.bill.PaymentBillParser.BillDocument;
 import com.bookkeeping.constant.BookkeepingResp;
 import com.bookkeeping.constant.TransactionType;
 import com.bookkeeping.dao.dto.AccountDTO;
@@ -322,7 +326,7 @@ public class BackupServiceImpl implements BackupService {
     public CsvPreviewResult previewTransactionsCsv(String csvContent) {
         List<List<String>> records = CsvUtil.parse(csvContent);
         if (records.isEmpty()) {
-            return new CsvPreviewResult(0, 0, 0, 0, List.of());
+            return new CsvPreviewResult(0, 0, 0, 0, 0, List.of());
         }
         int start = isHeaderRow(records.get(0)) ? 1 : 0;
         Map<String, Integer> accountIds = accountNameToId();
@@ -367,7 +371,45 @@ public class BackupServiceImpl implements BackupService {
                         cell(row, 4), cell(row, 5), cell(row, 6), cell(row, 7), status, reason));
             }
         }
-        return new CsvPreviewResult(total, valid, invalid, duplicate, rows);
+        return new CsvPreviewResult(total, valid, invalid, duplicate, 0, rows);
+    }
+
+    @Override
+    public CsvPreviewResult previewTransactions(byte[] bytes, String filename) {
+        List<List<String>> grid = readGrid(bytes, filename);
+        BillDocument document = PaymentBillParser.tryParse(grid);
+        if (document != null) {
+            return bills().preview(document);
+        }
+        if (BillFiles.isSpreadsheet(bytes, filename)) {
+            throw new BusinessException("B0017", "没有在表格里找到微信或支付宝账单表头");
+        }
+        return previewTransactionsCsv(BillFiles.decode(bytes));
+    }
+
+    @Override
+    public CsvImportResult importTransactions(byte[] bytes, String filename, boolean skipDuplicates) {
+        List<List<String>> grid = readGrid(bytes, filename);
+        BillDocument document = PaymentBillParser.tryParse(grid);
+        if (document != null) {
+            return bills().importRows(document);
+        }
+        if (BillFiles.isSpreadsheet(bytes, filename)) {
+            throw new BusinessException("B0017", "没有在表格里找到微信或支付宝账单表头");
+        }
+        return importTransactionsCsv(BillFiles.decode(bytes), skipDuplicates);
+    }
+
+    private PaymentBillImporter bills() {
+        return new PaymentBillImporter(accountService, categoryService, transactionService);
+    }
+
+    private List<List<String>> readGrid(byte[] bytes, String filename) {
+        try {
+            return BillFiles.read(bytes == null ? new byte[0] : bytes, filename);
+        } catch (IOException e) {
+            throw new BusinessException("B0017", "无法读取这个文件。请先解压微信或支付宝的个人对账文件，再导入 csv 或 xlsx");
+        }
     }
 
     @Override
