@@ -8,6 +8,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
+import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
@@ -30,6 +31,8 @@ class MonthlyAiModelClientTest {
     volatile long delay;
     volatile String requestPath;
     volatile String requestBody;
+    /** 第一次只返回思考内容，第二次在收到补救提醒后返回正文。 */
+    volatile boolean reasoningThenContent;
     static final String TEST_KEY = "test-only-not-a-real-key";
 
     @BeforeEach
@@ -47,9 +50,15 @@ class MonthlyAiModelClientTest {
             requestBody = new String(exchange.getRequestBody().readAllBytes(), StandardCharsets.UTF_8);
             try {
                 Thread.sleep(delay);
+                String message = reasoningThenContent && requests.get() == 1
+                        ? "{\"role\":\"assistant\",\"content\":null,\"reasoning_content\":\"{\\\"summary\\\":\\\"只在思考里\\\"}\"}"
+                        : reasoningThenContent
+                        ? "{\"role\":\"assistant\",\"content\":\"{\\\"summary\\\":\\\"正文\\\"}\"}"
+                        : "{\"role\":\"assistant\",\"content\":\"" + content + "\"}";
+                if (reasoningThenContent && requests.get() == 2 && !requestBody.contains("empty content"))
+                    throw new IOException("missing reminder");
                 String json = "{\"id\":\"test\",\"object\":\"chat.completion\",\"created\":1,\"model\":\"test\","
-                        + "\"choices\":[{\"index\":0,\"message\":{\"role\":\"assistant\",\"content\":\"" + content
-                        + "\"},\"finish_reason\":\"stop\"}]}";
+                        + "\"choices\":[{\"index\":0,\"message\":" + message + ",\"finish_reason\":\"stop\"}]}";
                 byte[] body = (status == 200 ? json : "供应商正文不得外泄-" + TEST_KEY).getBytes(StandardCharsets.UTF_8);
                 if (status >= 300 && status < 400) exchange.getResponseHeaders().set("Location", "/redirect-target");
                 exchange.getResponseHeaders().set("Content-Type", "application/json");
@@ -93,6 +102,14 @@ class MonthlyAiModelClientTest {
         assertFalse(error.toString().contains(TEST_KEY));
         assertFalse(error.toString().contains("供应商正文"));
         assertEquals(0, redirected.get());
+    }
+
+    @Test
+    void thinkingOnlyReplyIsRetriedUntilContentHasJson() {
+        reasoningThenContent = true;
+        assertEquals("{\"summary\":\"正文\"}",
+                client.call(config, "只返回 JSON", "{}", 256, Duration.ofSeconds(20)).block(Duration.ofSeconds(20)));
+        assertEquals(2, requests.get());
     }
 
     @Test

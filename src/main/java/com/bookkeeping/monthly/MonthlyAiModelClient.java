@@ -68,8 +68,10 @@ public class MonthlyAiModelClient {
                     .baseUrl(config.getBaseUrl()).modelName(config.getModel()).stream(false)
                     .httpTransport(transport).generateOptions(GenerateOptions.builder().maxTokens(tokens).build()).build();
             // SDK 的超时包装会丢失原因；稍后触发其兜底，由外层统一执行实际请求时限。
+            // 思考型模型会把整段回答写进 reasoning、正文留空。AgentScope 发现后会插入提醒再请求一次；
+            // 迭代上限为 1 时这次补救来不及发生，循环直接总结，返回的不是约定 JSON。
             ReActAgent agent = ReActAgent.builder().name("monthly_report_interpreter").sysPrompt(system)
-                    .model(model).toolkit(new Toolkit()).maxIters(1)
+                    .model(model).toolkit(new Toolkit()).maxIters(2)
                     .modelExecutionConfig(ExecutionConfig.builder().maxAttempts(1).timeout(timeout.plusSeconds(1)).build()).build();
             return agent.call(List.of(new UserMessage(payload)), RuntimeContext.empty())
                     .flatMap(reply -> reply.getTextContent() == null || reply.getTextContent().isBlank()

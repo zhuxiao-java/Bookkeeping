@@ -326,7 +326,7 @@ class MonthlyReportTest {
         assertTrue(service.list(2024).stream().filter(e -> e.month().equals("2024-02")).findFirst().orElseThrow().hasReport());
         assertTrue(jdbc.queryForObject("SELECT f_content FROM t_message LIMIT 1", String.class).contains("AI 月报已生成"));
         assertThrows(RuntimeException.class, () -> ai.generate(request));
-        verify(client, times(1)).call(any(), anyString(), anyString(), eq(2000), eq(java.time.Duration.ofSeconds(120)));
+        verify(client, times(1)).call(any(), anyString(), anyString(), eq(8192), eq(java.time.Duration.ofSeconds(120)));
         assertEquals(2, submit("2024-02").version());
         assertEquals(1, count("SELECT count(*) FROM t_message"));
     }
@@ -661,7 +661,7 @@ class MonthlyReportTest {
         PeriodDetail saved = ai.generate(periodRequest(type, key));
         assertEquals(1, saved.result().path("actions").size());
         var payload = org.mockito.ArgumentCaptor.forClass(String.class);
-        verify(client, times(3)).call(any(), anyString(), payload.capture(), eq(2000), any());
+        verify(client, times(3)).call(any(), anyString(), payload.capture(), eq(8192), any());
         assertEquals(json.valueToTree(preview.summary()), json.readTree(payload.getValue()));
         assertFalse(payload.getValue().contains("不应发送的备注"));
         assertFalse(payload.getValue().contains("隐私账户"));
