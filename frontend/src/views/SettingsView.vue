@@ -8,13 +8,10 @@ import { formatAmount } from '@/utils/format'
 import { PRESET_BACKGROUNDS, isPresetBackground } from '@/utils/constants'
 import { compressImage, resolveBackgroundUrl, toRemoteBackground } from '@/utils/background'
 import { imageApi, levelApi, backupApi, ApiError } from '@/api'
-import { bus, TRANSACTION_CHANGED, ACCOUNT_CHANGED, CATEGORY_CHANGED } from '@/utils/bus'
 import CategoryManage from './settings/CategoryManage.vue'
 import TagManage from './settings/TagManage.vue'
 import AiReportSettings from './settings/AiReportSettings.vue'
 import HelpPanel from '@/components/HelpPanel.vue'
-import CsvImportDialog from '@/components/CsvImportDialog.vue'
-import type { CsvImportResult } from '@/api'
 
 /** 设置中心（需求文档 4.7）：个性化 / 分类管理 / 标签管理 / 数据管理 / 使用说明 / 关于 */
 const settings = useSettingsStore()
@@ -211,14 +208,12 @@ async function onBirthdayChange(value: string | null) {
   }
 }
 
-/** 数据管理：整库备份/恢复 + CSV 导入导出（后端 /backup/**，GAP-09） */
+/** 数据管理：整库备份/恢复 + CSV 导出（后端 /backup/**，GAP-09）。流水导入在交易流水页。 */
 const dbFileInput = ref<HTMLInputElement>()
 const backuping = ref(false)
 const restoring = ref(false)
 const exportingTx = ref(false)
 const exportingAcc = ref(false)
-/** CSV 导入向导（NEW-11）：选择/预览/结果三步在弹窗内完成 */
-const csvDialogVisible = ref(false)
 
 /** 由后端解析数据目录，避免将开发目录或 Electron 配置目录误当作账本位置。 */
 const storagePath = ref('')
@@ -317,14 +312,6 @@ async function onPickDb(e: Event) {
   }
 }
 
-/** CSV 导入向导完成后：有新增则广播变更事件刷新各页（NEW-11） */
-function onCsvImported(res: CsvImportResult) {
-  if (res.imported > 0) {
-    bus.emit(TRANSACTION_CHANGED)
-    bus.emit(ACCOUNT_CHANGED)
-    bus.emit(CATEGORY_CHANGED)
-  }
-}
 </script>
 
 <template>
@@ -609,27 +596,19 @@ function onCsvImported(res: CsvImportResult) {
           </div>
         </section>
         <section class="page-section" aria-labelledby="data-csv-heading">
-          <h2 id="data-csv-heading" class="section-heading">导入与导出</h2>
+          <h2 id="data-csv-heading" class="section-heading">导出</h2>
           <div class="surface">
             <div class="split-row data-row">
               <div class="row-copy">
                 <h3 class="row-copy__title">导出为表格</h3>
-                <p class="row-copy__desc">带 BOM 的 CSV 格式，可直接使用 Excel 打开。</p>
+                <p class="row-copy__desc">带 BOM 的 CSV 格式，可直接使用 Excel 打开。导入微信、支付宝或本应用流水请到「流水」页。</p>
               </div>
               <div class="toolbar">
                 <el-button :loading="exportingTx" @click="onExportTx">导出流水</el-button>
                 <el-button :loading="exportingAcc" @click="onExportAcc">导出账户</el-button>
               </div>
             </div>
-            <div class="split-row data-row">
-              <div class="row-copy">
-                <h3 class="row-copy__title">导入流水</h3>
-                <p class="row-copy__desc">支持本应用导出的 CSV，以及微信、支付宝个人对账 csv、xlsx。支付方式对不上时会新建账户，分类对不上时记入待整理。</p>
-              </div>
-              <el-button type="primary" @click="csvDialogVisible = true">导入流水</el-button>
-            </div>
           </div>
-          <CsvImportDialog v-model="csvDialogVisible" @imported="onCsvImported" />
         </section>
       </div>
 
