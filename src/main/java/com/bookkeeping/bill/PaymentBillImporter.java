@@ -23,6 +23,7 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -48,13 +49,17 @@ public final class PaymentBillImporter {
     }
 
     public CsvPreviewResult preview(BillDocument document) {
-        List<Prepared> rows = prepare(document, false);
+        return preview(document, Map.of());
+    }
+
+    public CsvPreviewResult preview(BillDocument document, Map<String, Integer> accountChoices) {
+        PreparedBatch batch = prepare(document, false, accountChoices);
         List<CsvPreviewRow> previewRows = new ArrayList<>();
         int valid = 0;
         int invalid = 0;
         int duplicate = 0;
         int ignored = 0;
-        for (Prepared row : rows) {
+        for (Prepared row : batch.rows) {
             switch (row.status) {
                 case "valid" -> valid++;
                 case "invalid" -> invalid++;
@@ -65,11 +70,16 @@ public final class PaymentBillImporter {
                 previewRows.add(row.toPreview());
             }
         }
-        return new CsvPreviewResult(rows.size(), valid, invalid, duplicate, ignored, previewRows);
+        return new CsvPreviewResult(batch.rows.size(), valid, invalid, duplicate, ignored, previewRows, batch.accountNames);
     }
 
     public CsvImportResult importRows(BillDocument document) {
-        List<Prepared> rows = prepare(document, true);
+        return importRows(document, Map.of());
+    }
+
+    public CsvImportResult importRows(BillDocument document, Map<String, Integer> accountChoices) {
+        PreparedBatch batch = prepare(document, true, accountChoices);
+        List<Prepared> rows = batch.rows;
         List<CsvFailure> failures = new ArrayList<>();
         int imported = 0;
         int skipped = 0;
@@ -100,21 +110,26 @@ public final class PaymentBillImporter {
         return new CsvImportResult(rows.size(), imported, skipped, duplicates, failures);
     }
 
-    private List<Prepared> prepare(BillDocument document, boolean createMissing) {
+    private PreparedBatch prepare(BillDocument document, boolean createMissing, Map<String, Integer> accountChoices) {
+        Map<String, Integer> choices = accountChoices == null ? Map.of() : accountChoices;
         Map<String, Integer> accountIds = loadAccountIds();
+        Map<Integer, AccountDTO> accountsById = loadAccountsById();
         Map<String, CategoryDTO> categories = loadCategories();
         Set<String> existingKeys = loadSourceKeys();
         Set<String> seen = new HashSet<>();
+        Set<String> accountNames = new LinkedHashSet<>();
         List<Prepared> rows = new ArrayList<>();
         for (BillEntry entry : document.entries()) {
             if (!"data".equals(entry.kind())) {
                 rows.add(Prepared.from(entry, entry.kind(), entry.reason(), entry.categoryHint(), null));
                 continue;
             }
-            AccountRef from = resolveAccount(entry.accountName(), entry.accountType(), accountIds);
-            AccountRef to = StringUtils.isBlank(entry.toAccountName())
+            AccountRef fromResolved = resolveAccount(entry.accountName(), entry.accountType(), accountIds);
+            AccountRef toResolved = StringUtils.isBlank(entry.toAccountName())
                     ? null
                     : resolveAccount(entry.toAccountName(), entry.toAccountType(), accountIds);
+            AccountRef from = retarget(fromResolved, choices, accountsById);
+            AccountRef to = toResolved == null ? null : retarget(toResolved, choices, accountsById);
             boolean transfer = entry.type() == TransactionType.TRANSFER;
             CategoryType want = entry.type() == TransactionType.INCOME ? CategoryType.INCOME : CategoryType.EXPENSE;
             CategoryAliases.Match category = transfer
@@ -125,6 +140,16 @@ public final class PaymentBillImporter {
             if (existingKeys.contains(key) || seen.contains(key)) {
                 String reason = existingKeys.contains(key) ? "交易单号已导入" : "文件内交易单号重复";
                 rows.add(new Prepared(entry, "duplicate", reason, from.name, to == null ? "" : to.name, categoryName, null));
+                continue;
+            }
+            remember(accountNames, fromResolved);
+            remember(accountNames, toResolved);
+            if (from.missing || (to != null && to.missing)) {
+                rows.add(Prepared.from(entry, "invalid", "所选账户不存在", categoryName, null));
+                continue;
+            }
+            if (transfer && to != null && from.id != null && from.id.equals(to.id)) {
+                rows.add(new Prepared(entry, "invalid", "转出账户和转入账户不能相同", from.name, to.name, categoryName, null));
                 continue;
             }
             List<String> reasons = new ArrayList<>();
@@ -155,6 +180,10 @@ public final class PaymentBillImporter {
                 rows.add(Prepared.from(entry, "invalid", "账户「" + missing + "」创建失败", categoryName, null));
                 continue;
             }
+            if (transfer && toAccountId != null && accountId.equals(toAccountId)) {
+                rows.add(new Prepared(entry, "invalid", "转出账户和转入账户不能相同", from.name, to.name, categoryName, null));
+                continue;
+            }
             Integer categoryId = null;
             if (!transfer) {
                 categoryId = categoryId(categories, category.name());
@@ -181,7 +210,7 @@ public final class PaymentBillImporter {
             rows.add(new Prepared(entry, "valid", String.join("；", reasons), from.name,
                     to == null ? "" : to.name, categoryName, dto));
         }
-        return rows;
+        return new PreparedBatch(rows, List.copyOf(accountNames));
     }
 
     private Integer categoryId(Map<String, CategoryDTO> categories, String name) {
@@ -235,19 +264,56 @@ public final class PaymentBillImporter {
 
     private AccountRef resolveAccount(String canonical, AccountType type, Map<String, Integer> accountIds) {
         if (accountIds.containsKey(canonical)) {
-            return new AccountRef(canonical, type, accountIds.get(canonical));
+            return AccountRef.known(canonical, type, accountIds.get(canonical));
         }
         if ("微信零钱".equals(canonical) && accountIds.containsKey("零钱")) {
-            return new AccountRef("零钱", type, accountIds.get("零钱"));
+            return AccountRef.known("零钱", type, accountIds.get("零钱"));
         }
         if ("支付宝".equals(canonical)) {
             for (String alt : List.of("余额", "账户余额", "支付宝余额")) {
                 if (accountIds.containsKey(alt)) {
-                    return new AccountRef(alt, type, accountIds.get(alt));
+                    return AccountRef.known(alt, type, accountIds.get(alt));
                 }
             }
         }
-        return new AccountRef(canonical, type, null);
+        return AccountRef.known(canonical, type, null);
+    }
+
+    /** 用户为文件中的账户名指定了已有账户时，改记到该账户；小于等于 0 则仍按原名新建。 */
+    private AccountRef retarget(AccountRef resolved, Map<String, Integer> choices, Map<Integer, AccountDTO> accountsById) {
+        if (resolved == null || choices.isEmpty() || !choices.containsKey(resolved.name())) {
+            return resolved;
+        }
+        Integer chosen = choices.get(resolved.name());
+        if (chosen == null || chosen <= 0) {
+            return resolved;
+        }
+        AccountDTO account = accountsById.get(chosen);
+        if (account == null || StringUtils.isBlank(account.getName())) {
+            return AccountRef.missing(resolved.name());
+        }
+        AccountType type = account.getType() == null ? resolved.type() : account.getType();
+        return AccountRef.known(account.getName(), type, account.getId());
+    }
+
+    private Map<Integer, AccountDTO> loadAccountsById() {
+        Map<Integer, AccountDTO> map = new HashMap<>();
+        List<AccountDTO> accounts = accountService.selectAll();
+        if (accounts == null) {
+            return map;
+        }
+        for (AccountDTO account : accounts) {
+            if (account.getId() != null) {
+                map.put(account.getId(), account);
+            }
+        }
+        return map;
+    }
+
+    private static void remember(Set<String> names, AccountRef account) {
+        if (account != null && StringUtils.isNotBlank(account.name())) {
+            names.add(account.name());
+        }
     }
 
     private Map<String, Integer> loadAccountIds() {
@@ -298,7 +364,17 @@ public final class PaymentBillImporter {
         }
     }
 
-    private record AccountRef(String name, AccountType type, Integer id) {
+    private record AccountRef(String name, AccountType type, Integer id, boolean missing) {
+        private static AccountRef known(String name, AccountType type, Integer id) {
+            return new AccountRef(name, type, id, false);
+        }
+
+        private static AccountRef missing(String name) {
+            return new AccountRef(name, null, null, true);
+        }
+    }
+
+    private record PreparedBatch(List<Prepared> rows, List<String> accountNames) {
     }
 
     private static final class Prepared {

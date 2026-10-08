@@ -1,6 +1,8 @@
 package com.bookkeeping.service.impl;
 
+import com.bookkeeping.bill.AccountMaps;
 import com.bookkeeping.constant.AccountType;
+import com.bookkeeping.exception.BusinessException;
 import com.bookkeeping.constant.CategoryType;
 import com.bookkeeping.constant.TransactionType;
 import com.bookkeeping.controller.BackupController;
@@ -28,13 +30,16 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
@@ -353,6 +358,7 @@ class BackupServiceImplTest {
         assertEquals("转账", withdraw.type());
         assertEquals("微信零钱", withdraw.accountName());
         assertEquals("招商银行储蓄卡(5678)", withdraw.toAccountName());
+        assertEquals(List.of("微信零钱", "招商银行信用卡(1234)", "招商银行储蓄卡(5678)"), preview.accountNames());
         verify(accountService, never()).insert(any());
         verify(categoryService, never()).insert(any());
     }
@@ -481,6 +487,69 @@ class BackupServiceImplTest {
         assertEquals(0, preview.ignoredCount());
         assertEquals("valid", preview.rows().get(0).status());
         assertEquals("现金", preview.rows().get(0).accountName());
+        assertEquals(List.of("现金"), preview.accountNames());
+    }
+
+    @Test
+    void preview_wechatBillUsesChosenAccount() {
+        givenBillDict();
+
+        CsvPreviewResult preview = service.previewTransactions(
+                WECHAT_BILL.getBytes(StandardCharsets.UTF_8), "微信支付账单.csv", Map.of("微信零钱", 1));
+
+        CsvPreviewRow meal = rowWithAmount(preview, "25.50");
+        assertEquals("现金", meal.accountName());
+        assertEquals("valid", meal.status());
+        assertFalse(meal.reason().contains("将新建账户「微信零钱」"));
+        assertEquals("招商银行信用卡(1234)", rowWithAmount(preview, "30.00").accountName());
+        assertEquals(List.of("微信零钱", "招商银行信用卡(1234)", "招商银行储蓄卡(5678)"), preview.accountNames());
+        verify(accountService, never()).insert(any());
+    }
+
+    @Test
+    void import_wechatBillUsesChosenAccount() {
+        givenBillDict();
+        Map<String, Integer> choices = new LinkedHashMap<>();
+        choices.put("微信零钱", 1);
+        choices.put("招商银行信用卡(1234)", 0);
+        choices.put("招商银行储蓄卡(5678)", 0);
+
+        CsvImportResult result = service.importTransactions(
+                WECHAT_BILL.getBytes(StandardCharsets.UTF_8), "微信支付账单.csv", true, choices);
+
+        assertEquals(3, result.imported());
+        assertEquals(1, tx(savedTx, "4200000001").getAccountId());
+        assertEquals(idOf("招商银行信用卡(1234)"), tx(savedTx, "4200000004").getAccountId());
+        TransactionDTO withdraw = tx(savedTx, "4200000006");
+        assertEquals(1, withdraw.getAccountId());
+        assertEquals(idOf("招商银行储蓄卡(5678)"), withdraw.getToAccountId());
+        verify(accountService, times(2)).insert(any());
+        assertFalse(billAccounts.stream().anyMatch(account -> "微信零钱".equals(account.getName())));
+    }
+
+    @Test
+    void import_appCsvUsesChosenAccountInsteadOfName() {
+        givenDict();
+        when(transactionService.selectAll()).thenReturn(List.of());
+        when(transactionService.insert(any())).thenReturn(true);
+        String csv = HEADER + "\n2026-08-15 10:00:00,expense,100,,未知账户,,餐饮,午餐,\n";
+
+        CsvImportResult result = service.importTransactions(
+                csv.getBytes(StandardCharsets.UTF_8), "transactions.csv", true, Map.of("未知账户", 1));
+
+        assertEquals(1, result.imported());
+        ArgumentCaptor<TransactionDTO> captor = ArgumentCaptor.forClass(TransactionDTO.class);
+        verify(transactionService).insert(captor.capture());
+        assertEquals(1, captor.getValue().getAccountId());
+        verify(accountService, never()).insert(any());
+    }
+
+    @Test
+    void accountMap_parsesChosenIds() {
+        assertEquals(1, AccountMaps.parse("{\"现金\":1}").get("现金"));
+        assertEquals(-1, AccountMaps.parse("{\"现金\":-1}").get("现金"));
+        assertTrue(AccountMaps.parse("  ").isEmpty());
+        assertThrows(BusinessException.class, () -> AccountMaps.parse("[]"));
     }
 
     private Integer idOf(String name) {

@@ -4,7 +4,10 @@ import com.bookkeeping.bill.BillFiles;
 import com.bookkeeping.bill.PaymentBillImporter;
 import com.bookkeeping.bill.PaymentBillParser;
 import com.bookkeeping.bill.PaymentBillParser.BillDocument;
+import com.bookkeeping.constant.AccountType;
+import com.bookkeeping.constant.Archived;
 import com.bookkeeping.constant.BookkeepingResp;
+import com.bookkeeping.constant.Currency;
 import com.bookkeeping.constant.TransactionType;
 import com.bookkeeping.dao.dto.AccountDTO;
 import com.bookkeeping.dao.dto.CategoryDTO;
@@ -46,6 +49,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -324,15 +328,22 @@ public class BackupServiceImpl implements BackupService {
 
     @Override
     public CsvPreviewResult previewTransactionsCsv(String csvContent) {
+        return previewTransactionsCsv(csvContent, Map.of());
+    }
+
+    private CsvPreviewResult previewTransactionsCsv(String csvContent, Map<String, Integer> accountChoices) {
         List<List<String>> records = CsvUtil.parse(csvContent);
         if (records.isEmpty()) {
             return new CsvPreviewResult(0, 0, 0, 0, 0, List.of());
         }
         int start = isHeaderRow(records.get(0)) ? 1 : 0;
+        Map<String, Integer> choices = accountChoices == null ? Map.of() : accountChoices;
         Map<String, Integer> accountIds = accountNameToId();
+        Map<Integer, AccountDTO> accountsById = accountIdToDto();
         Map<String, Integer> categoryIds = categoryNameToId();
         Set<String> existing = existingFingerprints();
         Set<String> seenInFile = new HashSet<>();
+        Set<String> accountNames = new LinkedHashSet<>();
         List<CsvPreviewRow> rows = new ArrayList<>();
         int total = 0;
         int valid = 0;
@@ -345,7 +356,9 @@ public class BackupServiceImpl implements BackupService {
             }
             int lineNo = i + 1;
             total++;
-            RowParse parsed = parseRow(row, accountIds, categoryIds);
+            rememberAccountName(accountNames, cell(row, 4));
+            rememberAccountName(accountNames, cell(row, 5));
+            RowParse parsed = parseRow(row, accountIds, accountsById, categoryIds, choices, false);
             String status;
             String reason;
             if (parsed.dto == null) {
@@ -363,41 +376,56 @@ public class BackupServiceImpl implements BackupService {
             } else {
                 seenInFile.add(parsed.fingerprint);
                 status = "valid";
-                reason = "";
+                reason = StringUtils.defaultString(parsed.reason);
                 valid++;
             }
             if (rows.size() < MAX_PREVIEW_ROWS) {
                 rows.add(new CsvPreviewRow(lineNo, cell(row, 0), cell(row, 1), cell(row, 2),
-                        cell(row, 4), cell(row, 5), cell(row, 6), cell(row, 7), status, reason));
+                        shownAccount(parsed.accountName, cell(row, 4)),
+                        shownAccount(parsed.toAccountName, cell(row, 5)),
+                        cell(row, 6), cell(row, 7), status, reason));
             }
         }
-        return new CsvPreviewResult(total, valid, invalid, duplicate, 0, rows);
+        return new CsvPreviewResult(total, valid, invalid, duplicate, 0, rows, List.copyOf(accountNames));
     }
 
     @Override
     public CsvPreviewResult previewTransactions(byte[] bytes, String filename) {
+        return previewTransactions(bytes, filename, Map.of());
+    }
+
+    @Override
+    public CsvPreviewResult previewTransactions(byte[] bytes, String filename, Map<String, Integer> accountChoices) {
+        Map<String, Integer> choices = accountChoices == null ? Map.of() : accountChoices;
         List<List<String>> grid = readGrid(bytes, filename);
         BillDocument document = PaymentBillParser.tryParse(grid);
         if (document != null) {
-            return bills().preview(document);
+            return bills().preview(document, choices);
         }
         if (BillFiles.isSpreadsheet(bytes, filename)) {
             throw new BusinessException("B0017", "没有在表格里找到微信或支付宝账单表头");
         }
-        return previewTransactionsCsv(BillFiles.decode(bytes));
+        return previewTransactionsCsv(BillFiles.decode(bytes), choices);
     }
 
     @Override
     public CsvImportResult importTransactions(byte[] bytes, String filename, boolean skipDuplicates) {
+        return importTransactions(bytes, filename, skipDuplicates, Map.of());
+    }
+
+    @Override
+    public CsvImportResult importTransactions(byte[] bytes, String filename, boolean skipDuplicates,
+                                              Map<String, Integer> accountChoices) {
+        Map<String, Integer> choices = accountChoices == null ? Map.of() : accountChoices;
         List<List<String>> grid = readGrid(bytes, filename);
         BillDocument document = PaymentBillParser.tryParse(grid);
         if (document != null) {
-            return bills().importRows(document);
+            return bills().importRows(document, choices);
         }
         if (BillFiles.isSpreadsheet(bytes, filename)) {
             throw new BusinessException("B0017", "没有在表格里找到微信或支付宝账单表头");
         }
-        return importTransactionsCsv(BillFiles.decode(bytes), skipDuplicates);
+        return importTransactionsCsv(BillFiles.decode(bytes), skipDuplicates, choices);
     }
 
     private PaymentBillImporter bills() {
@@ -414,12 +442,19 @@ public class BackupServiceImpl implements BackupService {
 
     @Override
     public CsvImportResult importTransactionsCsv(String csvContent, boolean skipDuplicates) {
+        return importTransactionsCsv(csvContent, skipDuplicates, Map.of());
+    }
+
+    private CsvImportResult importTransactionsCsv(String csvContent, boolean skipDuplicates,
+                                                  Map<String, Integer> accountChoices) {
         List<List<String>> records = CsvUtil.parse(csvContent);
         if (records.isEmpty()) {
             return new CsvImportResult(0, 0, 0, 0, List.of());
         }
         int start = isHeaderRow(records.get(0)) ? 1 : 0;
+        Map<String, Integer> choices = accountChoices == null ? Map.of() : accountChoices;
         Map<String, Integer> accountIds = accountNameToId();
+        Map<Integer, AccountDTO> accountsById = accountIdToDto();
         Map<String, Integer> categoryIds = categoryNameToId();
         Set<String> existing = skipDuplicates ? existingFingerprints() : new HashSet<>();
         Set<String> seenInFile = new HashSet<>();
@@ -435,7 +470,7 @@ public class BackupServiceImpl implements BackupService {
             }
             int lineNo = i + 1;
             total++;
-            RowParse parsed = parseRow(row, accountIds, categoryIds);
+            RowParse parsed = parseRow(row, accountIds, accountsById, categoryIds, choices, true);
             if (parsed.dto == null) {
                 skipped++;
                 addFailure(failures, lineNo, parsed.reason);
@@ -473,10 +508,10 @@ public class BackupServiceImpl implements BackupService {
 
     /**
      * 解析一行流水（NEW-11）：必填项缺失或账户/分类名无法解析时返回带原因的 invalid 结果；
-     * 成功时携带 dto 与用于去重的 fingerprint。
+     * 成功时携带 dto 与用于去重的 fingerprint。用户指定账户时改记到所选账户。
      */
-    private RowParse parseRow(List<String> row, Map<String, Integer> accountIds,
-                              Map<String, Integer> categoryIds) {
+    private RowParse parseRow(List<String> row, Map<String, Integer> accountIds, Map<Integer, AccountDTO> accountsById,
+                              Map<String, Integer> categoryIds, Map<String, Integer> choices, boolean createMissing) {
         String dateStr = cell(row, 0);
         String typeStr = cell(row, 1);
         String amountStr = cell(row, 2);
@@ -487,39 +522,50 @@ public class BackupServiceImpl implements BackupService {
 
         LocalDateTime date = parseDateTime(dateStr);
         if (date == null) {
-            return RowParse.invalid(StringUtils.isBlank(dateStr) ? "缺少日期" : "日期「" + dateStr + "」无法解析");
+            return RowParse.invalid(StringUtils.isBlank(dateStr) ? "缺少日期" : "日期「" + dateStr + "」无法解析",
+                    accountName, toAccountName);
         }
         if (StringUtils.isBlank(typeStr)) {
-            return RowParse.invalid("缺少类型");
+            return RowParse.invalid("缺少类型", accountName, toAccountName);
         }
         TransactionType type = parseType(typeStr);
         if (type == null) {
-            return RowParse.invalid("类型「" + typeStr + "」无法识别");
+            return RowParse.invalid("类型「" + typeStr + "」无法识别", accountName, toAccountName);
         }
         if (StringUtils.isBlank(amountStr)) {
-            return RowParse.invalid("缺少金额");
+            return RowParse.invalid("缺少金额", accountName, toAccountName);
         }
         BigDecimal amount = parseDecimal(amountStr);
         if (amount == null) {
-            return RowParse.invalid("金额「" + amountStr + "」格式非法");
+            return RowParse.invalid("金额「" + amountStr + "」格式非法", accountName, toAccountName);
         }
-        Integer accountId = accountIds.get(accountName);
-        if (accountId == null) {
-            return RowParse.invalid(StringUtils.isBlank(accountName) ? "缺少账户" : "账户「" + accountName + "」不存在");
+        AccountDecision account = decideAccount(accountName, accountIds, accountsById, choices, createMissing);
+        if (account.error != null) {
+            return RowParse.invalid(account.error, account.displayName, toAccountName);
         }
         Integer toAccountId = null;
+        String toDisplay = toAccountName;
+        String reason = account.reason;
         Integer categoryId = null;
         if (type == TransactionType.TRANSFER) {
-            toAccountId = accountIds.get(toAccountName);
-            if (toAccountId == null) {
-                return RowParse.invalid(StringUtils.isBlank(toAccountName)
-                        ? "转账缺少转入账户" : "转入账户「" + toAccountName + "」不存在");
+            if (StringUtils.isBlank(toAccountName)) {
+                return RowParse.invalid("转账缺少转入账户", account.displayName, "");
             }
+            AccountDecision target = decideAccount(toAccountName, accountIds, accountsById, choices, createMissing);
+            if (target.error != null) {
+                return RowParse.invalid(target.error, account.displayName, target.displayName);
+            }
+            if (account.id != null && account.id.equals(target.id)) {
+                return RowParse.invalid("转出账户和转入账户不能相同", account.displayName, target.displayName);
+            }
+            toAccountId = target.id;
+            toDisplay = target.displayName;
+            reason = joinReason(account.reason, target.reason);
         } else {
             categoryId = categoryIds.get(categoryName);
             if (categoryId == null) {
                 return RowParse.invalid(StringUtils.isBlank(categoryName)
-                        ? "缺少分类" : "分类「" + categoryName + "」不存在");
+                        ? "缺少分类" : "分类「" + categoryName + "」不存在", account.displayName, toAccountName);
             }
         }
         TransactionDTO dto = new TransactionDTO();
@@ -527,13 +573,117 @@ public class BackupServiceImpl implements BackupService {
         dto.setType(type);
         dto.setAmount(amount);
         dto.setFee(parseDecimal(feeStr));
-        dto.setAccountId(accountId);
+        dto.setAccountId(account.id);
         dto.setToAccountId(toAccountId);
         dto.setCategoryId(categoryId);
         dto.setNote(emptyToNull(cell(row, 7)));
         dto.setTags(emptyToNull(cell(row, 8)));
-        String fp = fingerprint(date, type, amount, accountId, toAccountId, categoryId);
-        return new RowParse(dto, "", fp);
+        String fp = fingerprint(date, type, amount, account.id, toAccountId, categoryId);
+        return new RowParse(dto, reason, fp, account.displayName, toDisplay);
+    }
+
+    private AccountDecision decideAccount(String name, Map<String, Integer> accountIds, Map<Integer, AccountDTO> accountsById,
+                                          Map<String, Integer> choices, boolean createMissing) {
+        if (StringUtils.isBlank(name)) {
+            return AccountDecision.error("缺少账户", "");
+        }
+        if (choices.containsKey(name)) {
+            Integer chosen = choices.get(name);
+            if (chosen != null && chosen > 0) {
+                AccountDTO account = accountsById.get(chosen);
+                if (account == null || StringUtils.isBlank(account.getName())) {
+                    return AccountDecision.error("所选账户不存在", name);
+                }
+                return AccountDecision.ok(account.getId(), account.getName(), "");
+            }
+        }
+        Integer existing = accountIds.get(name);
+        if (existing != null) {
+            return AccountDecision.ok(existing, name, "");
+        }
+        boolean create = choices.containsKey(name) && (choices.get(name) == null || choices.get(name) <= 0);
+        if (create && !createMissing) {
+            return AccountDecision.ok(syntheticId(name), name, "将新建账户「" + name + "」");
+        }
+        if (create) {
+            Integer created = ensureAppAccount(name, accountIds, accountsById);
+            if (created == null) {
+                return AccountDecision.error("账户「" + name + "」创建失败", name);
+            }
+            return AccountDecision.ok(created, name, "");
+        }
+        return AccountDecision.error("账户「" + name + "」不存在", name);
+    }
+
+    private Integer ensureAppAccount(String name, Map<String, Integer> accountIds, Map<Integer, AccountDTO> accountsById) {
+        Integer existing = accountIds.get(name);
+        if (existing != null) {
+            return existing;
+        }
+        AccountDTO dto = new AccountDTO();
+        dto.setName(name);
+        dto.setType(guessAccountType(name));
+        dto.setInitialBalance(BigDecimal.ZERO);
+        dto.setCurrentBalance(BigDecimal.ZERO);
+        dto.setCurrency(Currency.CNY);
+        dto.setArchived(Archived.NORMAL);
+        try {
+            accountService.insert(dto);
+        } catch (RuntimeException ignored) {
+            // 名称已存在时下面重新读取
+        }
+        accountIds.clear();
+        accountsById.clear();
+        for (AccountDTO account : accountService.selectAll()) {
+            if (account.getId() == null) {
+                continue;
+            }
+            accountsById.put(account.getId(), account);
+            if (StringUtils.isNotBlank(account.getName())) {
+                accountIds.put(account.getName(), account.getId());
+            }
+        }
+        return accountIds.get(name);
+    }
+
+    private static AccountType guessAccountType(String name) {
+        String compact = name == null ? "" : name.replace(" ", "");
+        if (compact.contains("银行") || compact.contains("信用卡") || compact.contains("储蓄卡")
+                || compact.contains("借记卡") || compact.contains("贷记卡")) {
+            return AccountType.BANK;
+        }
+        if (compact.contains("花呗") || compact.contains("余额宝") || compact.contains("支付宝")) {
+            return AccountType.ALI_PAY;
+        }
+        if (compact.contains("零钱") || compact.contains("微信")) {
+            return AccountType.WECHAT_PAY;
+        }
+        return AccountType.CASH;
+    }
+
+    private static int syntheticId(String name) {
+        int id = -Math.abs(name.hashCode());
+        return id == 0 ? -1 : id;
+    }
+
+    private static String joinReason(String left, String right) {
+        if (StringUtils.isBlank(left)) {
+            return StringUtils.defaultString(right);
+        }
+        if (StringUtils.isBlank(right)) {
+            return left;
+        }
+        return left + "；" + right;
+    }
+
+    private static void rememberAccountName(Set<String> names, String name) {
+        if (StringUtils.isNotBlank(name)) {
+            names.add(name);
+        }
+    }
+
+    private static String shownAccount(String chosen, String raw) {
+        return StringUtils.isNotBlank(chosen) ? chosen : StringUtils.defaultString(raw);
     }
 
     /** 去重指纹：日期时间 + 类型 + 金额（2 位）+ 账户 + 转入账户 + 分类 */
@@ -566,15 +716,41 @@ public class BackupServiceImpl implements BackupService {
         private final TransactionDTO dto;
         private final String reason;
         private final String fingerprint;
+        private final String accountName;
+        private final String toAccountName;
 
-        private RowParse(TransactionDTO dto, String reason, String fingerprint) {
+        private RowParse(TransactionDTO dto, String reason, String fingerprint, String accountName, String toAccountName) {
             this.dto = dto;
             this.reason = reason;
             this.fingerprint = fingerprint;
+            this.accountName = accountName;
+            this.toAccountName = toAccountName;
         }
 
-        private static RowParse invalid(String reason) {
-            return new RowParse(null, reason, null);
+        private static RowParse invalid(String reason, String accountName, String toAccountName) {
+            return new RowParse(null, reason, null, accountName, toAccountName);
+        }
+    }
+
+    private static final class AccountDecision {
+        private final Integer id;
+        private final String displayName;
+        private final String reason;
+        private final String error;
+
+        private AccountDecision(Integer id, String displayName, String reason, String error) {
+            this.id = id;
+            this.displayName = displayName;
+            this.reason = reason;
+            this.error = error;
+        }
+
+        private static AccountDecision ok(Integer id, String displayName, String reason) {
+            return new AccountDecision(id, displayName, reason, null);
+        }
+
+        private static AccountDecision error(String error, String displayName) {
+            return new AccountDecision(null, displayName, "", error);
         }
     }
 
@@ -599,6 +775,20 @@ public class BackupServiceImpl implements BackupService {
 
     private static String emptyToNull(String s) {
         return StringUtils.isBlank(s) ? null : s;
+    }
+
+    private Map<Integer, AccountDTO> accountIdToDto() {
+        Map<Integer, AccountDTO> map = new HashMap<>();
+        List<AccountDTO> accounts = accountService.selectAll();
+        if (accounts == null) {
+            return map;
+        }
+        for (AccountDTO account : accounts) {
+            if (account.getId() != null) {
+                map.put(account.getId(), account);
+            }
+        }
+        return map;
     }
 
     private Map<Integer, String> accountIdToName() {
