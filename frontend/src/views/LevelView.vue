@@ -59,16 +59,17 @@ function monthLabel(row: ExperienceLog): string {
     </div>
 
     <!-- 后端等级接口不可用：给出契约提示与重试 -->
-    <el-card v-if="!loading && !level.available" shadow="never">
+    <section v-if="!loading && !level.available" class="surface lv-surface">
       <EmptyState description="暂时无法获取等级信息">
         <p class="empty-tip">你的记账记录不受影响，稍后可以再试一次。</p>
         <el-button type="primary" @click="load(true)">重新加载</el-button>
       </EmptyState>
-    </el-card>
+    </section>
 
     <template v-else-if="level.info">
-      <!-- 页头：徽章 + 等级名 + 经验统计 + 升级进度 -->
-      <el-card shadow="never" data-guide="lv-current">
+      <section class="page-section" aria-labelledby="level-current-heading">
+        <h2 id="level-current-heading" class="section-heading">当前等级</h2>
+        <div class="surface lv-surface" data-guide="lv-current">
         <div class="lv-head__row">
           <LevelLogo :level="level.info.level" :size="72" />
           <div class="lv-head__meta">
@@ -102,20 +103,21 @@ function monthLabel(row: ExperienceLog): string {
           </div>
           <el-progress :percentage="level.progress" :stroke-width="10" color="var(--bk-primary)" :show-text="false" />
         </div>
-      </el-card>
+        </div>
+      </section>
 
-      <!-- 签到专区（后端签到接口可用时展示） -->
-      <CheckInPanel data-guide="lv-checkin" />
+      <section v-if="checkin.available" class="page-section" aria-labelledby="level-checkin-heading">
+        <h2 id="level-checkin-heading" class="section-heading">签到日历</h2>
+        <CheckInPanel data-guide="lv-checkin" />
+      </section>
 
       <div class="lv-cols">
-        <!-- 等级阶梯 -->
-        <el-card shadow="never" class="lv-col" data-guide="lv-ladder">
-          <template #header>
-            <div class="card-head">
-              <h2 class="card-head__title">等级阶梯</h2>
-              <span class="card-hint">每一步，都算数</span>
-            </div>
-          </template>
+        <section class="page-section lv-col" aria-labelledby="level-ladder-heading">
+          <div class="toolbar page-section__head">
+            <h2 id="level-ladder-heading" class="section-heading">等级阶梯</h2>
+            <span class="card-hint">每一步，都算数</span>
+          </div>
+          <div class="surface lv-surface" data-guide="lv-ladder">
           <div class="ladder">
             <div
               v-for="c in level.configs"
@@ -131,18 +133,15 @@ function monthLabel(row: ExperienceLog): string {
               <span class="ladder__th">{{ Number(c.expThreshold).toLocaleString('zh-CN') }}</span>
             </div>
           </div>
-        </el-card>
+          </div>
+        </section>
 
-        <!-- 月度经验明细 -->
-        <el-card shadow="never" class="lv-col" data-guide="lv-logs">
-          <template #header>
-            <div class="card-head">
-              <h2 class="card-head__title">月度经验明细</h2>
-              <div class="card-head__ctrls">
-                <el-button text type="primary" @click="load(true)">刷新</el-button>
-              </div>
-            </div>
-          </template>
+        <section class="page-section lv-col" aria-labelledby="level-logs-heading">
+          <div class="toolbar page-section__head">
+            <h2 id="level-logs-heading" class="section-heading">月度经验明细</h2>
+            <el-button text type="primary" @click="load(true)">刷新</el-button>
+          </div>
+          <div class="surface lv-surface" data-guide="lv-logs">
           <el-table v-if="level.logs.length" :data="level.logs" size="small">
             <el-table-column label="年月" min-width="90">
               <template #default="{ row }">{{ monthLabel(row) }}</template>
@@ -174,7 +173,8 @@ function monthLabel(row: ExperienceLog): string {
           <EmptyState v-else :size="96" description="暂无月度结算记录" class="empty-block">
             <div class="empty-tip">每月预算结算后：未超支加经验、超支扣经验，并在此留痕。</div>
           </EmptyState>
-        </el-card>
+          </div>
+        </section>
       </div>
     </template>
   </div>
@@ -225,9 +225,7 @@ function monthLabel(row: ExperienceLog): string {
 }
 
 .lv-head__progress {
-  margin-top: var(--bk-row-padding);
   padding-top: var(--bk-row-padding);
-  border-top: 1px solid var(--bk-border-light);
 }
 
 .lv-head__ptext {
@@ -252,6 +250,10 @@ function monthLabel(row: ExperienceLog): string {
 
 .lv-col {
   min-width: 0;
+}
+
+.lv-surface {
+  padding-block: 4px 8px;
 }
 
 .ladder {
