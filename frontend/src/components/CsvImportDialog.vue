@@ -7,9 +7,9 @@ import { backupApi, ApiError } from '@/api'
 import type { CsvImportResult, CsvPreviewResult, CsvRowStatus } from '@/api'
 
 /**
- * CSV 流水导入向导（NEW-11）：三步流程
- * 1) 选择文件 → 2) 预览（逐行 valid/invalid/duplicate 标注 + 是否跳过重复）→ 3) 导入结果
- * 仅新增、不覆盖；解析规则与后端一致（账户名/分类名须能匹配到已有账户与分类）。
+ * 流水导入向导：三步流程
+ * 1) 选择文件 → 2) 预览（可导入 / 重复 / 无法解析 / 已跳过）→ 3) 导入结果
+ * 本应用 CSV 仍按已有账户、分类名称匹配。微信和支付宝个人对账文件会在确认导入时补齐账户与分类。
  */
 const props = defineProps<{ modelValue: boolean }>()
 const emit = defineEmits<{
@@ -43,11 +43,17 @@ const filteredRows = computed(() => {
   return rows.filter((r) => r.status === statusFilter.value)
 })
 
-function statusTagType(status: CsvRowStatus): 'success' | 'danger' | 'warning' {
-  return status === 'valid' ? 'success' : status === 'invalid' ? 'danger' : 'warning'
+function statusTagType(status: CsvRowStatus): 'success' | 'danger' | 'warning' | 'info' {
+  if (status === 'valid') return 'success'
+  if (status === 'invalid') return 'danger'
+  if (status === 'ignored') return 'info'
+  return 'warning'
 }
 function statusLabel(status: CsvRowStatus): string {
-  return status === 'valid' ? '可导入' : status === 'invalid' ? '无法解析' : '重复'
+  if (status === 'valid') return '可导入'
+  if (status === 'invalid') return '无法解析'
+  if (status === 'ignored') return '已跳过'
+  return '重复'
 }
 
 /** 打开时重置向导；关闭时清理状态 */
@@ -134,7 +140,7 @@ const importableCount = computed(() => {
 <template>
   <el-dialog
     v-model="visible"
-    title="导入流水 CSV"
+    title="导入流水"
     width="760px"
     :close-on-click-modal="false"
     append-to-body
@@ -150,16 +156,16 @@ const importableCount = computed(() => {
     <div v-if="step === 0" class="csv-body">
       <button type="button" class="csv-drop" :class="{ 'is-busy': previewing }" :disabled="previewing" @click="pickFile">
         <el-icon class="csv-drop__icon"><UploadFilled /></el-icon>
-        <div class="csv-drop__title">点击选择 CSV 文件</div>
+        <div class="csv-drop__title">点击选择 CSV 或 Excel 文件</div>
         <div class="csv-drop__tip">
-          仅支持导出的流水 CSV 格式：日期, 类型, 金额, 手续费, 账户, 转入账户, 分类, 备注, 标签
+          支持本应用导出的流水 CSV，以及微信、支付宝「用于个人对账」的 csv、xlsx。请先自行解压官方压缩包。
         </div>
         <div v-if="previewing" class="csv-drop__loading">正在解析…</div>
       </button>
       <input
         ref="fileInput"
         type="file"
-        accept=".csv,text/csv"
+        accept=".csv,.xlsx,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
         class="csv-file"
         @change="onFileChange"
       />
@@ -168,7 +174,7 @@ const importableCount = computed(() => {
         type="info"
         :closable="false"
         show-icon
-        title="导入仅新增、不覆盖已有数据。账户与分类需按名称匹配到当前已有账户/分类，否则该行会被标记为无法解析。"
+        title="导入只新增、不覆盖。本应用导出的 CSV 仍按已有账户和分类名称匹配。微信和支付宝账单会按支付方式匹配或新建账户，分类对不上时记入「待整理」或「待整理收入」。交易关闭、已全额退款和信用卡还款会跳过，同一交易单号不会重复入账。"
       />
     </div>
 
@@ -180,6 +186,7 @@ const importableCount = computed(() => {
         <el-tag type="success" effect="plain">可导入 {{ preview.validCount }}</el-tag>
         <el-tag type="warning" effect="plain">重复 {{ preview.duplicateCount }}</el-tag>
         <el-tag type="danger" effect="plain">无法解析 {{ preview.invalidCount }}</el-tag>
+        <el-tag type="info" effect="plain">已跳过 {{ preview.ignoredCount ?? 0 }}</el-tag>
       </div>
 
       <div class="csv-toolbar">
@@ -188,6 +195,7 @@ const importableCount = computed(() => {
           <el-radio-button value="valid">可导入</el-radio-button>
           <el-radio-button value="duplicate">重复</el-radio-button>
           <el-radio-button value="invalid">无法解析</el-radio-button>
+          <el-radio-button value="ignored">已跳过</el-radio-button>
         </el-radio-group>
         <el-checkbox v-model="skipDuplicates">跳过重复行</el-checkbox>
       </div>

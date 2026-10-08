@@ -358,8 +358,8 @@ export interface CsvFailure {
   reason: string
 }
 
-/** CSV 预览行状态：valid 可导入 / invalid 无法解析 / duplicate 重复 */
-export type CsvRowStatus = 'valid' | 'invalid' | 'duplicate'
+/** 预览行状态：valid 可导入 / invalid 无法解析 / duplicate 重复 / ignored 账单主动跳过 */
+export type CsvRowStatus = 'valid' | 'invalid' | 'duplicate' | 'ignored'
 
 export interface CsvPreviewRow {
   line: number
@@ -379,6 +379,8 @@ export interface CsvPreviewResult {
   validCount: number
   invalidCount: number
   duplicateCount: number
+  /** 账单中主动跳过的行（交易关闭、全额退款等）；旧接口可能不返回 */
+  ignoredCount?: number
   rows: CsvPreviewRow[]
 }
 
@@ -421,7 +423,7 @@ export const backupApi = {
     })
     return resp.data
   },
-  /** 预览流水 CSV 导入结果（不落库），返回逐行 valid/invalid/duplicate 标注 */
+  /** 预览流水导入（本应用 CSV，或微信/支付宝个人对账 csv、xlsx），不落库 */
   async previewTransactionsCsv(file: File): Promise<CsvPreviewResult> {
     const form = new FormData()
     form.append('file', file, file.name || 'transactions.csv')
@@ -434,7 +436,7 @@ export const backupApi = {
     })
     return resp.data
   },
-  /** 导入流水 CSV（仅新增，按账户名/分类名解析），skipDuplicates 控制是否跳过重复行 */
+  /** 导入流水。skipDuplicates 控制本应用 CSV 的指纹去重；微信和支付宝按交易单号始终去重 */
   async importTransactionsCsv(file: File, skipDuplicates = true): Promise<CsvImportResult> {
     const form = new FormData()
     form.append('file', file, file.name || 'transactions.csv')
