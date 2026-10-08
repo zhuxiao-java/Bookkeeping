@@ -128,14 +128,21 @@ const dateText = computed(() =>
 .screensaver__pet {
   margin-top: 28px;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: 6px;
   color: #fff;
   font-size: 16px;
   text-shadow: 0 1px 12px rgba(0, 0, 0, 0.45);
 }
-.screensaver__pet :deep(.pet-sprite) { width: 64px; height: 64px; color: #fff; fill: rgba(255, 255, 255, 0.2); }
+.screensaver__pet :deep(.pet-sprite) {
+  width: 108px;
+  height: 92px;
+  color: #fff;
+  --pet-fill: rgba(255, 255, 255, 0.22);
+  --pet-muzzle: rgba(255, 255, 255, 0.42);
+}
 
 .screensaver__hint {
   position: absolute;
