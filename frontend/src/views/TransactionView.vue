@@ -4,6 +4,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Search, Edit, DocumentCopy, Delete, Wallet, Plus } from '@element-plus/icons-vue'
 import { transactionApi, ApiError } from '@/api'
+import type { CsvImportResult } from '@/api'
 import { monthlyReportApi, type MonthlyRangeTransaction } from '@/api/monthlyReport'
 import { cents, currencyName, lastClosedMonth, monthRange } from '@/utils/monthlyReport'
 import { useDictStore } from '@/stores/dict'
@@ -16,6 +17,7 @@ import { inDateRange } from '@/utils/aggregate'
 import CategoryDot from '@/components/CategoryDot.vue'
 import AccountOption from '@/components/AccountOption.vue'
 import TransactionFormDialog from '@/components/TransactionFormDialog.vue'
+import CsvImportDialog from '@/components/CsvImportDialog.vue'
 import EmptyState from '@/components/EmptyState.vue'
 
 /**
@@ -422,6 +424,17 @@ function onChanged() {
   load()
 }
 
+const importDialogVisible = ref(false)
+
+/** 导入成功后刷新字典和各页：账单可能新建了账户和分类 */
+async function onImported(res: CsvImportResult) {
+  if (res.imported <= 0) return
+  await Promise.all([dict.refreshAccounts(), dict.refreshCategories()]).catch(() => {})
+  bus.emit(TRANSACTION_CHANGED)
+  bus.emit(ACCOUNT_CHANGED)
+  bus.emit(CATEGORY_CHANGED)
+}
+
 /** 退出定位模式，恢复完整列表 */
 function clearFocus() {
   focusId.value = null
@@ -529,6 +542,7 @@ onBeforeUnmount(() => {
         <el-button :type="batchMode ? 'warning' : 'default'" text data-guide="tx-batch" @click="toggleBatchMode">
           {{ batchMode ? '退出批量' : '批量管理' }}
         </el-button>
+        <el-button @click="importDialogVisible = true">导入流水</el-button>
         <el-button data-guide="tx-backfill" @click="openBackfill">补流水</el-button>
         <el-button type="primary" :icon="Plus" data-guide="tx-create" @click="openCreate">新增记录</el-button>
       </div>
@@ -791,6 +805,7 @@ onBeforeUnmount(() => {
     </div>
 
     <TransactionFormDialog v-model="formDialog.visible" :mode="formDialog.mode" :initial="formDialog.initial" />
+    <CsvImportDialog v-model="importDialogVisible" @imported="onImported" />
 
     <!-- 批量修改分类对话框（NEW-06） -->
     <el-dialog v-model="batchCategoryDialog.visible" title="批量修改分类" width="440px" class="bk-dialog quiet-controls" append-to-body>
