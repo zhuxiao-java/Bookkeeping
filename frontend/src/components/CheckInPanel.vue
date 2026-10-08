@@ -44,9 +44,8 @@ function rowLabel(date: string): string {
 </script>
 
 <template>
-  <el-card v-if="checkin.available" shadow="never" class="checkin-panel">
+  <section v-if="checkin.available" class="surface checkin-panel">
     <div class="ci__head">
-      <span class="ci__title">签到日历</span>
       <span class="ci__nav">
         <el-button text circle :icon="ArrowLeft" aria-label="上个月" @click="prevMonth" />
         <span class="ci__month">{{ year }} 年 {{ month }} 月</span>
@@ -86,12 +85,13 @@ function rowLabel(date: string): string {
         <EmptyState v-else description="暂无签到记录" :size="80" />
       </div>
     </div>
-  </el-card>
+  </section>
 </template>
 
 <style scoped>
 .checkin-panel {
   container: checkin-panel / inline-size;
+  padding-block: var(--bk-row-padding);
 }
 
 .ci__head {
@@ -99,12 +99,6 @@ function rowLabel(date: string): string {
   align-items: center;
   flex-wrap: wrap;
   gap: 16px;
-  margin-bottom: 24px;
-}
-
-.ci__title {
-  font-size: 15px;
-  font-weight: 600;
 }
 
 .ci__nav {
@@ -152,6 +146,7 @@ function rowLabel(date: string): string {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
   gap: var(--bk-gap-lg);
+  padding-top: var(--bk-row-padding);
 }
 
 .ci__cal {
